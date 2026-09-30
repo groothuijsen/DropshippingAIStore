@@ -1,7 +1,8 @@
 {%- comment -%}
-  mq-page-sections: Renders page sections from metaobject.
+  mq-page-sections: Renders all page section types from 05 §3.
   Target: sections (mainSection). Templates: product, page, index.
   Renders nothing if metafield/metaobject is missing.
+  Accessible markup: heading hierarchy, alt texts, FAQ as <details>.
 {%- endcomment -%}
 
 {%- liquid
@@ -11,50 +12,169 @@
   endif
 -%}
 
-{%- if page_metafield -%}
+{%- if page_metafield and page_metafield.sections -%}
   <div class="mq-page-sections">
     {%- for section in page_metafield.sections -%}
       <section class="mq-section mq-section--{{ section.type }}" data-mq-section="{{ section.type }}">
+
         {%- case section.type -%}
+
           {%- when 'hero' -%}
-            {%- if section.heading -%}
-              <h2 class="mq-hero__heading">{{ section.heading }}</h2>
-            {%- endif -%}
-            {%- if section.subheading -%}
-              <p class="mq-hero__subheading">{{ section.subheading }}</p>
-            {%- endif -%}
-            {%- if section.body -%}
-              <div class="mq-hero__body">{{ section.body }}</div>
-            {%- endif -%}
+            <div class="mq-hero">
+              {%- if section.headline -%}
+                <h1 class="mq-hero__headline">{{ section.headline }}</h1>
+              {%- endif -%}
+              {%- if section.subheadline -%}
+                <p class="mq-hero__subheadline">{{ section.subheadline }}</p>
+              {%- endif -%}
+              {%- if section.cta_label -%}
+                <a href="#mq-cta" class="mq-hero__cta mq-button">{{ section.cta_label }}</a>
+              {%- endif -%}
+            </div>
 
           {%- when 'benefits' -%}
-            {%- if section.heading -%}
-              <h2>{{ section.heading }}</h2>
-            {%- endif -%}
-            <ul class="mq-benefits">
-              {%- for benefit in section.items -%}
-                <li class="mq-benefits__item">
-                  {%- if benefit.title -%}<strong>{{ benefit.title }}</strong>{%- endif -%}
-                  {%- if benefit.text -%}<span>{{ benefit.text }}</span>{%- endif -%}
-                </li>
-              {%- endfor -%}
-            </ul>
+            <div class="mq-benefits">
+              {%- if section.title -%}
+                <h2 class="mq-benefits__title">{{ section.title }}</h2>
+              {%- endif -%}
+              <ul class="mq-benefits__list">
+                {%- for item in section.items -%}
+                  <li class="mq-benefits__item">
+                    {%- if item.icon -%}
+                      <span class="mq-benefits__icon mq-icon--{{ item.icon }}" aria-hidden="true"></span>
+                    {%- endif -%}
+                    <div class="mq-benefits__content">
+                      {%- if item.title -%}<strong class="mq-benefits__item-title">{{ item.title }}</strong>{%- endif -%}
+                      {%- if item.text -%}<span class="mq-benefits__item-text">{{ item.text }}</span>{%- endif -%}
+                    </div>
+                  </li>
+                {%- endfor -%}
+              </ul>
+            </div>
+
+          {%- when 'problem_solution' -%}
+            <div class="mq-problem-solution">
+              <div class="mq-problem-solution__problem">
+                <h2 class="mq-problem-solution__heading">{{ 'sections.problem' | t | default: 'The Problem' }}</h2>
+                <p>{{ section.problem }}</p>
+              </div>
+              <div class="mq-problem-solution__solution">
+                <h3 class="mq-problem-solution__heading">{{ 'sections.solution' | t | default: 'The Solution' }}</h3>
+                <p>{{ section.solution }}</p>
+              </div>
+            </div>
+
+          {%- when 'how_it_works' -%}
+            <div class="mq-how-it-works">
+              <h2 class="mq-how-it-works__title">{{ 'sections.how_it_works' | t | default: 'How It Works' }}</h2>
+              <ol class="mq-how-it-works__steps">
+                {%- for step in section.steps -%}
+                  <li class="mq-how-it-works__step">
+                    <span class="mq-how-it-works__number" aria-hidden="true">{{ forloop.index }}</span>
+                    <div class="mq-how-it-works__content">
+                      {%- if step.title -%}<strong>{{ step.title }}</strong>{%- endif -%}
+                      {%- if step.text -%}<p>{{ step.text }}</p>{%- endif -%}
+                    </div>
+                  </li>
+                {%- endfor -%}
+              </ol>
+            </div>
+
+          {%- when 'specs' -%}
+            <div class="mq-specs">
+              <h2 class="mq-specs__title">{{ 'sections.specs' | t | default: 'Specifications' }}</h2>
+              <table class="mq-specs__table">
+                <tbody>
+                  {%- for row in section.rows -%}
+                    <tr class="mq-specs__row">
+                      <th scope="row" class="mq-specs__label">{{ row.label }}</th>
+                      <td class="mq-specs__value">{{ row.value }}</td>
+                    </tr>
+                  {%- endfor -%}
+                </tbody>
+              </table>
+            </div>
+
+          {%- when 'comparison' -%}
+            <div class="mq-comparison">
+              <h2 class="mq-comparison__title">{{ 'sections.comparison' | t | default: 'Comparison' }}</h2>
+              <table class="mq-comparison__table">
+                <thead>
+                  <tr>
+                    <th scope="col">{{ 'sections.feature' | t | default: 'Feature' }}</th>
+                    <th scope="col" class="mq-comparison__ours">{{ section.ours_label }}</th>
+                    <th scope="col" class="mq-comparison__other">{{ section.other_label }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {%- for row in section.rows -%}
+                    <tr class="mq-comparison__row">
+                      <td class="mq-comparison__feature">{{ row.feature }}</td>
+                      <td class="mq-comparison__cell">
+                        {%- if row.ours -%}<span class="mq-comparison__check" aria-label="{{ 'sections.yes' | t | default: 'Yes' }}">✓</span>{%- else -%}<span class="mq-comparison__cross" aria-label="{{ 'sections.no' | t | default: 'No' }}">✗</span>{%- endif -%}
+                      </td>
+                      <td class="mq-comparison__cell">
+                        {%- if row.other -%}<span class="mq-comparison__check" aria-label="{{ 'sections.yes' | t | default: 'Yes' }}">✓</span>{%- else -%}<span class="mq-comparison__cross" aria-label="{{ 'sections.no' | t | default: 'No' }}">✗</span>{%- endif -%}
+                      </td>
+                    </tr>
+                  {%- endfor -%}
+                </tbody>
+              </table>
+            </div>
 
           {%- when 'faq' -%}
-            {%- if section.heading -%}
-              <h2>{{ section.heading }}</h2>
-            {%- endif -%}
-            {%- for qa in section.items -%}
-              <details class="mq-faq__item">
-                <summary>{{ qa.question }}</summary>
-                <div class="mq-faq__answer">{{ qa.answer }}</div>
-              </details>
-            {%- endfor -%}
+            <div class="mq-faq">
+              <h2 class="mq-faq__title">{{ 'sections.faq' | t | default: 'Frequently Asked Questions' }}</h2>
+              {%- for item in section.items -%}
+                <details class="mq-faq__item">
+                  <summary class="mq-faq__question">{{ item.question }}</summary>
+                  <div class="mq-faq__answer">{{ item.answer }}</div>
+                </details>
+              {%- endfor -%}
+            </div>
 
-          {%- else -%}
-            {%- if section.heading -%}<h2>{{ section.heading }}</h2>{%- endif -%}
-            {%- if section.body -%}<div>{{ section.body }}</div>{%- endif -%}
+          {%- when 'guarantee' -%}
+            <div class="mq-guarantee">
+              <h2 class="mq-guarantee__title">{{ 'sections.guarantee' | t | default: 'Our Guarantee' }}</h2>
+              <p class="mq-guarantee__text">{{ section.text }}</p>
+            </div>
+
+          {%- when 'rich_text' -%}
+            <div class="mq-rich-text">
+              {%- if section.title -%}
+                <h2 class="mq-rich-text__title">{{ section.title }}</h2>
+              {%- endif -%}
+              <div class="mq-rich-text__body">
+                {%- for paragraph in section.paragraphs -%}
+                  <p>{{ paragraph }}</p>
+                {%- endfor -%}
+              </div>
+            </div>
+
+          {%- when 'listicle_item' -%}
+            <div class="mq-listicle-item">
+              <span class="mq-listicle-item__number" aria-hidden="true">{{ section.number | default: forloop.index }}</span>
+              <div class="mq-listicle-item__content">
+                {%- if section.title -%}<h3>{{ section.title }}</h3>{%- endif -%}
+                {%- if section.text -%}<p>{{ section.text }}</p>{%- endif -%}
+              </div>
+            </div>
+
+          {%- when 'cta' -%}
+            <div class="mq-cta" id="mq-cta">
+              {%- if section.heading -%}
+                <h2 class="mq-cta__heading">{{ section.heading }}</h2>
+              {%- endif -%}
+              {%- if section.text -%}
+                <p class="mq-cta__text">{{ section.text }}</p>
+              {%- endif -%}
+              {%- if section.button_label -%}
+                <a href="{{ section.button_url | default: '#' }}" class="mq-cta__button mq-button">{{ section.button_label }}</a>
+              {%- endif -%}
+            </div>
+
         {%- endcase -%}
+
       </section>
     {%- endfor -%}
   </div>
