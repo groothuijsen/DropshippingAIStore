@@ -11,6 +11,7 @@ Order:
 
 from __future__ import annotations
 
+import json
 import logging
 from typing import TYPE_CHECKING, Any
 
@@ -178,8 +179,33 @@ def run_publish(job: GenerationJob, step: JobStep) -> dict[str, Any] | None:
             )
 
         # 3. Set metafield 'page' on product/page/shop
-        # TODO: Implement metafield write when metafield mutation is available
-        # For now, store the GIDs in Page model
+        from apps.core.shopify_client import load_query
+
+        metafield_owner = shopify_page_gid or page.shopify_page_gid
+        if metafield_owner:
+            try:
+                query = load_query("metafields_set")
+                metafield_value = json.dumps(
+                    {
+                        "metaobject_gids": page.metaobject_gids,
+                        "metaobject_handles": page.metaobject_handles,
+                    }
+                )
+                variables = {
+                    "input": [
+                        {
+                            "ownerId": metafield_owner,
+                            "namespace": "$app:mosaiq",
+                            "key": "page",
+                            "type": "json",
+                            "value": metafield_value,
+                        }
+                    ]
+                }
+                client.execute(query, variables)
+                logger.info("Metafield 'page' set on %s", metafield_owner)
+            except Exception as exc:
+                logger.warning("Failed to set metafield: %s", exc)
 
         # 4. Update Page model
         page.shopify_page_gid = shopify_page_gid or page.shopify_page_gid

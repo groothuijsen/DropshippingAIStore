@@ -1,0 +1,9 @@
+mutation MetaobjectDelete($id: ID!) {
+    metaobjectDelete(id: $id) {
+        deletedId
+        userErrors {
+            field
+            message
+        }
+    }
+}

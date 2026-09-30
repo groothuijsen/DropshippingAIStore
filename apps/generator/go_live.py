@@ -113,6 +113,8 @@ def go_live(page: Page) -> dict[str, Any]:
     3. Page → isPublished:true
     4. Page.status = live
     """
+    from apps.core.shopify_client import load_query
+
     allowed, missing = check_can_go_live(page)
     if not allowed:
         raise ValueError(f"Cannot go live: {'; '.join(missing)}")
@@ -123,14 +125,32 @@ def go_live(page: Page) -> dict[str, Any]:
         for locale, _handle in page.metaobject_handles.items():
             metaobject_gid = page.metaobject_gids.get(locale)
             if metaobject_gid:
-                # TODO: Update metaobject status to ACTIVE via GraphQL
-                # For now, update the Page model
-                pass
+                try:
+                    query = load_query("metaobject_upsert")
+                    # Update status to ACTIVE via metaobjectUpsert
+                    variables = {
+                        "handle": {"type": "mosaiq_page", "handle": _handle},
+                        "metaobject": {"capabilities": {"publishable": {"status": "ACTIVE"}}},
+                    }
+                    client.execute(query, variables)
+                    logger.info("Metaobject %s set ACTIVE for locale %s", _handle, locale)
+                except Exception as exc:
+                    logger.warning("Failed to set metaobject %s ACTIVE: %s", _handle, exc)
 
         # 2. Page → isPublished:true (for page types that have a Shopify page)
         if page.page_type in PAGE_TYPES_NEEDING_SHOPIFY_PAGE and page.shopify_page_gid:
-            # TODO: Update Shopify page isPublished via GraphQL
-            pass
+            try:
+                query = load_query("page_publish")
+                variables = {
+                    "page": {
+                        "id": page.shopify_page_gid,
+                        "isPublished": True,
+                    }
+                }
+                client.execute(query, variables)
+                logger.info("Shopify page %s published", page.shopify_page_gid)
+            except Exception as exc:
+                logger.warning("Failed to publish Shopify page: %s", exc)
 
         # 3. Update Page model
         page.status = "live"
@@ -156,22 +176,51 @@ def archive_page(page: Page) -> dict[str, Any]:
     2. Page unpublished
     3. Metafield deleted
     """
+    from apps.core.shopify_client import load_query
+
     client = _get_client(page.shop)
     try:
         # 1. Metaobjects → DRAFT
         for locale, _handle in page.metaobject_handles.items():
             metaobject_gid = page.metaobject_gids.get(locale)
             if metaobject_gid:
-                # TODO: Update metaobject status to DRAFT via GraphQL
-                pass
+                try:
+                    query = load_query("metaobject_upsert")
+                    variables = {
+                        "handle": {"type": "mosaiq_page", "handle": _handle},
+                        "metaobject": {"capabilities": {"publishable": {"status": "DRAFT"}}},
+                    }
+                    client.execute(query, variables)
+                    logger.info("Metaobject %s set DRAFT for locale %s", _handle, locale)
+                except Exception as exc:
+                    logger.warning("Failed to set metaobject %s DRAFT: %s", _handle, exc)
 
         # 2. Page unpublished
         if page.page_type in PAGE_TYPES_NEEDING_SHOPIFY_PAGE and page.shopify_page_gid:
-            # TODO: Update Shopify page isPublished=false via GraphQL
-            pass
+            try:
+                query = load_query("page_publish")
+                variables = {
+                    "page": {
+                        "id": page.shopify_page_gid,
+                        "isPublished": False,
+                    }
+                }
+                client.execute(query, variables)
+                logger.info("Shopify page %s unpublished", page.shopify_page_gid)
+            except Exception as exc:
+                logger.warning("Failed to unpublish Shopify page: %s", exc)
 
         # 3. Metafield deleted
-        # TODO: Delete metafield via GraphQL
+        if page.shopify_page_gid:
+            try:
+                query = load_query("metafields_delete")
+                variables = {
+                    "metafields": [{"ownerId": page.shopify_page_gid, "namespace": "$app:mosaiq", "key": "page"}]
+                }
+                client.execute(query, variables)
+                logger.info("Metafield deleted for page %s", page.shopify_page_gid)
+            except Exception as exc:
+                logger.warning("Failed to delete metafield: %s", exc)
 
         # 4. Update Page model
         page.status = "archived"

@@ -1,0 +1,13 @@
+mutation PageUpdate($page: PageUpdateInput!) {
+    pageUpdate(page: $page) {
+        page {
+            id
+            handle
+            isPublished
+        }
+        userErrors {
+            field
+            message
+        }
+    }
+}

@@ -1,0 +1,9 @@
+mutation DiscountAutomaticAppDelete($id: ID!) {
+    discountAutomaticAppDelete(automaticAppDiscountId: $id) {
+        deletedAutomaticAppDiscountId
+        userErrors {
+            field
+            message
+        }
+    }
+}
