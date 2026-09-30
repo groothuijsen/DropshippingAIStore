@@ -39,3 +39,10 @@ EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.MD5PasswordHasher",
 ]
+
+# Fernet encryption key for tests (valid 32-byte base64 key)
+FERNET_KEYS = ["3kwXrVP3-p8esvMQI4YkGGq8HKfgoTsO1SyU6uy-djs="]
+
+# Shopify test secrets
+SHOPIFY_API_KEY = "test-api-key-1234567890"
+SHOPIFY_API_SECRET = "test-secret-32-chars-long-for-hmac!!!"

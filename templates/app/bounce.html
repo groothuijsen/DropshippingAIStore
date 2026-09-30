@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Mosaiq — Loading…</title>
+    <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"
+            data-api-key="{{ shopify_api_key }}"></script>
+</head>
+<body>
+    <script>
+        // App Bridge is loaded by the data-api-key attribute above.
+        // Fetch a fresh session token and reload the page with it.
+        (async function() {
+            try {
+                const token = await shopify.idToken();
+                const url = new URL(window.location.href);
+                url.searchParams.set('id_token', token);
+                window.location.replace(url.toString());
+            } catch (e) {
+                document.body.textContent = 'Unable to authenticate. Please reload the page.';
+            }
+        })();
+    </script>
+</body>
+</html>
