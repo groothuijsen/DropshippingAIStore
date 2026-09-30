@@ -1,0 +1,87 @@
+{% extends "app/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Store Settings" %}{% endblock %}
+
+{% block content %}
+<div class="mq-store-settings">
+  <h1>{% trans "Store Settings" %}</h1>
+  <p class="mq-subtitle">{% trans "Warranty policy, shipping cut-off, AI label, stock threshold" %}</p>
+
+  {% if messages %}
+  <div class="mq-messages">
+    {% for message in messages %}
+    <div class="mq-message mq-message-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <form method="post" class="mq-form">
+    {% csrf_token %}
+
+    <div class="mq-field">
+      <label for="guarantee_policy">{% trans "Guarantee policy" %}</label>
+      <textarea id="guarantee_policy" name="guarantee_policy" rows="4"
+                placeholder="{% trans 'e.g. 30-day money-back guarantee' %}">{{ shop.guarantee_policy }}</textarea>
+      <p class="mq-help">{% trans "Shown on product pages and in the withdrawal form." %}</p>
+    </div>
+
+    <div class="mq-field">
+      <label for="stock_threshold">{% trans "Stock threshold" %}</label>
+      <input type="number" id="stock_threshold" name="stock_threshold" min="0" max="10"
+             value="{{ shop.stock_threshold }}">
+      <p class="mq-help">{% trans "Show 'low stock' warning when stock is below this number. Max 10." %}</p>
+    </div>
+
+    <div class="mq-field mq-field-checkbox">
+      <label>
+        <input type="checkbox" name="ai_label_default" {% if shop.ai_label_default %}checked{% endif %}>
+        {% trans "Show AI-generated label by default" %}
+      </label>
+      <p class="mq-help">{% trans "Displays a small 'AI-generated content' label on generated pages." %}</p>
+    </div>
+
+    <fieldset class="mq-fieldset">
+      <legend>{% trans "Shipping cut-off" %}</legend>
+
+      <div class="mq-field">
+        <label for="ship_cutoff_time">{% trans "Cut-off time" %}</label>
+        <input type="time" id="ship_cutoff_time" name="ship_cutoff_time"
+               value="{% if shop.ship_cutoff %}{{ shop.ship_cutoff.time }}{% endif %}">
+        <p class="mq-help">{% trans "Orders before this time ship the same day." %}</p>
+      </div>
+
+      <div class="mq-field">
+        <label>{% trans "Cut-off days" %}</label>
+        <div class="mq-checkbox-group">
+          <label><input type="checkbox" name="ship_cutoff_days" value="mon"
+                        {% if shop.ship_cutoff and "mon" in shop.ship_cutoff.days %}checked{% endif %}> {% trans "Mon" %}</label>
+          <label><input type="checkbox" name="ship_cutoff_days" value="tue"
+                        {% if shop.ship_cutoff and "tue" in shop.ship_cutoff.days %}checked{% endif %}> {% trans "Tue" %}</label>
+          <label><input type="checkbox" name="ship_cutoff_days" value="wed"
+                        {% if shop.ship_cutoff and "wed" in shop.ship_cutoff.days %}checked{% endif %}> {% trans "Wed" %}</label>
+          <label><input type="checkbox" name="ship_cutoff_days" value="thu"
+                        {% if shop.ship_cutoff and "thu" in shop.ship_cutoff.days %}checked{% endif %}> {% trans "Thu" %}</label>
+          <label><input type="checkbox" name="ship_cutoff_days" value="fri"
+                        {% if shop.ship_cutoff and "fri" in shop.ship_cutoff.days %}checked{% endif %}> {% trans "Fri" %}</label>
+          <label><input type="checkbox" name="ship_cutoff_days" value="sat"
+                        {% if shop.ship_cutoff and "sat" in shop.ship_cutoff.days %}checked{% endif %}> {% trans "Sat" %}</label>
+          <label><input type="checkbox" name="ship_cutoff_days" value="sun"
+                        {% if shop.ship_cutoff and "sun" in shop.ship_cutoff.days %}checked{% endif %}> {% trans "Sun" %}</label>
+        </div>
+      </div>
+
+      <div class="mq-field">
+        <label for="delivery_days">{% trans "Delivery days" %}</label>
+        <input type="number" id="delivery_days" name="delivery_days" min="1" max="30"
+               value="{% if shop.ship_cutoff %}{{ shop.ship_cutoff.delivery_days }}{% else %}1{% endif %}">
+        <p class="mq-help">{% trans "Business days from dispatch to delivery." %}</p>
+      </div>
+    </fieldset>
+
+    <div class="mq-actions">
+      <button type="submit" class="mq-button mq-button-primary">{% trans "Save settings" %}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
