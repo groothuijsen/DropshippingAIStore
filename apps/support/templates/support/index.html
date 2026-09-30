@@ -1,0 +1,35 @@
+{% extends "app/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Support" %}{% endblock %}
+
+{% block content %}
+<div class="mq-support">
+  <h1>{% trans "Support" %}</h1>
+
+  <div class="mq-support__status">
+    <a href="{{ status_url }}" target="_blank" rel="noopener">
+      {% trans "Bekijk de statuspagina / View the status page" %}
+    </a>
+  </div>
+
+  <div class="mq-support__form">
+    <h2>{% trans "Neem contact op / Contact us" %}</h2>
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="mq-btn">{% trans "Versturen / Send" %}</button>
+    </form>
+  </div>
+
+  <div class="mq-support__faq">
+    <h2>{% trans "Veelgestelde vragen / FAQ" %}</h2>
+    {% for item in faq %}
+    <details class="mq-faq__item">
+      <summary>{{ item.question }}</summary>
+      <p>{{ item.answer }}</p>
+    </details>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -7,5 +7,6 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("healthz/", include("apps.core.urls")),
     path("app/", include("apps.core.dashboard_urls")),
+    path("app/support/", include("apps.support.urls")),
     path("webhooks/shopify/", include("apps.webhooks.urls")),
 ]
