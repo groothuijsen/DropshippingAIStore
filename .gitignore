@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Environment and secrets
+.env
+*.pem
+*.key
+secrets/
+
+# Node / Shopify CLI
+node_modules/
+.shopify/
+extensions/*/dist/
+
+# Django
+staticfiles/
+media/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
