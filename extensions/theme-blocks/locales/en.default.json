@@ -1,0 +1,36 @@
+{
+  "gpsr": {
+    "heading": "Product information",
+    "manufacturer": "Manufacturer",
+    "responsible_person": "Responsible person",
+    "origin": "Country of origin",
+    "safety_warnings": "Safety warnings"
+  },
+  "withdrawal": {
+    "link": "Cancel this agreement",
+    "confirm": "Confirm cancellation"
+  },
+  "cart_drawer": {
+    "title": "Your cart",
+    "empty": "Your cart is empty",
+    "checkout": "Proceed to checkout",
+    "subtotal": "Subtotal",
+    "free_shipping": "Free shipping",
+    "reward_progress": "Add {{ amount }} more for {{ reward }}"
+  },
+  "bundle_picker": {
+    "choose_bundle": "Choose your bundle",
+    "save": "Save",
+    "per_item": "per item",
+    "limited_time": "Limited time offer"
+  },
+  "price": {
+    "sale_price": "Sale price",
+    "regular_price": "Regular price",
+    "unit_price": "Unit price",
+    "you_save": "You save"
+  },
+  "compliance": {
+    "ai_generated": "This content was generated with AI assistance and reviewed for accuracy."
+  }
+}

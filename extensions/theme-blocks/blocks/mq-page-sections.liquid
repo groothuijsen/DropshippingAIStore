@@ -1,0 +1,70 @@
+{%- comment -%}
+  mq-page-sections: Renders page sections from metaobject.
+  Target: sections (mainSection). Templates: product, page, index.
+  Renders nothing if metafield/metaobject is missing.
+{%- endcomment -%}
+
+{%- liquid
+  assign page_metafield = product.metafields["$app:mosaiq"].page.value
+  if page_metafield == nil
+    assign page_metafield = page.metafields["$app:mosaiq"].page.value
+  endif
+-%}
+
+{%- if page_metafield -%}
+  <div class="mq-page-sections">
+    {%- for section in page_metafield.sections -%}
+      <section class="mq-section mq-section--{{ section.type }}" data-mq-section="{{ section.type }}">
+        {%- case section.type -%}
+          {%- when 'hero' -%}
+            {%- if section.heading -%}
+              <h2 class="mq-hero__heading">{{ section.heading }}</h2>
+            {%- endif -%}
+            {%- if section.subheading -%}
+              <p class="mq-hero__subheading">{{ section.subheading }}</p>
+            {%- endif -%}
+            {%- if section.body -%}
+              <div class="mq-hero__body">{{ section.body }}</div>
+            {%- endif -%}
+
+          {%- when 'benefits' -%}
+            {%- if section.heading -%}
+              <h2>{{ section.heading }}</h2>
+            {%- endif -%}
+            <ul class="mq-benefits">
+              {%- for benefit in section.items -%}
+                <li class="mq-benefits__item">
+                  {%- if benefit.title -%}<strong>{{ benefit.title }}</strong>{%- endif -%}
+                  {%- if benefit.text -%}<span>{{ benefit.text }}</span>{%- endif -%}
+                </li>
+              {%- endfor -%}
+            </ul>
+
+          {%- when 'faq' -%}
+            {%- if section.heading -%}
+              <h2>{{ section.heading }}</h2>
+            {%- endif -%}
+            {%- for qa in section.items -%}
+              <details class="mq-faq__item">
+                <summary>{{ qa.question }}</summary>
+                <div class="mq-faq__answer">{{ qa.answer }}</div>
+              </details>
+            {%- endfor -%}
+
+          {%- else -%}
+            {%- if section.heading -%}<h2>{{ section.heading }}</h2>{%- endif -%}
+            {%- if section.body -%}<div>{{ section.body }}</div>{%- endif -%}
+        {%- endcase -%}
+      </section>
+    {%- endfor -%}
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "mq-page-sections",
+  "target": "section",
+  "templates": ["product", "page", "index"],
+  "settings": []
+}
+{% endschema %}

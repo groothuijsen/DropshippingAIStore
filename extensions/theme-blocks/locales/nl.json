@@ -1,0 +1,36 @@
+{
+  "gpsr": {
+    "heading": "Productinformatie",
+    "manufacturer": "Fabrikant",
+    "responsible_person": "Verantwoordelijke persoon",
+    "origin": "Herkomst",
+    "safety_warnings": "Veiligheidswaarschuwingen"
+  },
+  "withdrawal": {
+    "link": "Overeenkomst ontbinden",
+    "confirm": "Ontbinding bevestigen"
+  },
+  "cart_drawer": {
+    "title": "Je winkelwagen",
+    "empty": "Je winkelwagen is leeg",
+    "checkout": "Naar de kassa",
+    "subtotal": "Subtotaal",
+    "free_shipping": "Gratis verzending",
+    "reward_progress": "Voeg {{ amount }} toe voor {{ reward }}"
+  },
+  "bundle_picker": {
+    "choose_bundle": "Kies je bundel",
+    "save": "Bespaar",
+    "per_item": "per stuk",
+    "limited_time": "Tijdelijke aanbieding"
+  },
+  "price": {
+    "sale_price": "Actieprijs",
+    "regular_price": "Normale prijs",
+    "unit_price": "Eenheidsprijs",
+    "you_save": "Je bespaart"
+  },
+  "compliance": {
+    "ai_generated": "Deze inhoud is gegenereerd met AI-ondersteuning en gecontroleerd op nauwkeurigheid."
+  }
+}

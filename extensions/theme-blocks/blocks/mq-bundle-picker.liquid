@@ -1,0 +1,38 @@
+{%- comment -%}
+  mq-bundle-picker: Bundle/volume discount picker.
+  Reads from shop.metafields["$app:mosaiq"].cart.value or offer metaobject.
+  Renders nothing if no bundle configuration exists.
+{%- endcomment -%}
+
+{%- liquid
+  assign cart_config = shop.metafields["$app:mosaiq"].cart.value
+  assign offer = product.metafields["$app:mosaiq"].offer.value
+-%}
+
+{%- if offer and offer.bundle_tiers -%}
+  <div class="mq-bundle-picker" data-mq-bundle-picker>
+    <h3>{{ 'bundle_picker.choose_bundle' | t }}</h3>
+    <div class="mq-bundle-picker__tiers">
+      {%- for tier in offer.bundle_tiers -%}
+        <label class="mq-bundle-picker__tier">
+          <input type="radio" name="mq-bundle-tier" value="{{ tier.quantity }}"
+                 data-price="{{ tier.price }}" data-savings="{{ tier.savings }}">
+          <span class="mq-bundle-picker__qty">{{ tier.quantity }}x</span>
+          <span class="mq-bundle-picker__price">{{ tier.price | money }}</span>
+          {%- if tier.savings > 0 -%}
+            <span class="mq-bundle-picker__savings">{{ tier.savings | money }} {{ 'bundle_picker.save' | t }}</span>
+          {%- endif -%}
+        </label>
+      {%- endfor -%}
+    </div>
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "mq-bundle-picker",
+  "target": "section",
+  "templates": ["product"],
+  "settings": []
+}
+{% endschema %}

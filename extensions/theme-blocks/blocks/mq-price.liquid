@@ -1,0 +1,39 @@
+{%- comment -%}
+  mq-price: Price display with Omnibus compliance.
+  Shows sale price, regular price, savings, unit price.
+  Renders nothing if no price metafield is set.
+{%- endcomment -%}
+
+{%- liquid
+  assign price_metafield = product.metafields["$app:mosaiq"].price_display.value
+-%}
+
+{%- if price_metafield -%}
+  <div class="mq-price">
+    {%- if price_metafield.show_savings and price_metafield.prior_price -%}
+      <span class="mq-price__prior">{{ price_metafield.prior_price | money }}</span>
+      <span class="mq-price__sale">{{ price_metafield.current_price | money }}</span>
+      {%- if price_metafield.reduction_pct -%}
+        <span class="mq-price__savings">-{{ price_metafield.reduction_pct }}%</span>
+      {%- endif -%}
+    {%- else -%}
+      <span class="mq-price__current">{{ price_metafield.current_price | money }}</span>
+    {%- endif -%}
+    {%- if price_metafield.unit_price -%}
+      <span class="mq-price__unit">{{ price_metafield.unit_price | money }} / {{ price_metafield.unit_label }}</span>
+    {%- endif -%}
+  </div>
+{%- elsif product.price -%}
+  <div class="mq-price">
+    <span class="mq-price__current">{{ product.price | money }}</span>
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "mq-price",
+  "target": "section",
+  "templates": ["product"],
+  "settings": []
+}
+{% endschema %}

@@ -1,0 +1,42 @@
+{%- comment -%}
+  mq-gpsr: GPSR compliance information block.
+  Reads from product.metafields["$app:mosaiq"].gpsr.value.
+  Renders nothing if metafield is missing.
+{%- endcomment -%}
+
+{%- liquid
+  assign gpsr = product.metafields["$app:mosaiq"].gpsr.value
+-%}
+
+{%- if gpsr -%}
+  <div class="mq-gpsr">
+    <h2>{{ 'gpsr.heading' | t }}</h2>
+    <dl class="mq-gpsr__list">
+      {%- if gpsr.manufacturer -%}
+        <dt>{{ 'gpsr.manufacturer' | t }}</dt>
+        <dd>{{ gpsr.manufacturer }}</dd>
+      {%- endif -%}
+      {%- if gpsr.responsible_person -%}
+        <dt>{{ 'gpsr.responsible_person' | t }}</dt>
+        <dd>{{ gpsr.responsible_person }}</dd>
+      {%- endif -%}
+      {%- if gpsr.origin -%}
+        <dt>{{ 'gpsr.origin' | t }}</dt>
+        <dd>{{ gpsr.origin }}</dd>
+      {%- endif -%}
+      {%- if gpsr.safety_warnings -%}
+        <dt>{{ 'gpsr.safety_warnings' | t }}</dt>
+        <dd>{{ gpsr.safety_warnings }}</dd>
+      {%- endif -%}
+    </dl>
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "mq-gpsr",
+  "target": "section",
+  "templates": ["product"],
+  "settings": []
+}
+{% endschema %}

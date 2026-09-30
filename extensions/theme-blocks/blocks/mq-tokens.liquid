@@ -1,0 +1,48 @@
+{%- comment -%}
+  mq-tokens: Sets CSS variables from shop.metafields["$app:mosaiq"].design_tokens.value
+  Target: head. Bundled OFL fonts only — no Google Fonts CDN.
+{%- endcomment -%}
+
+{%- liquid
+  assign tokens = shop.metafields["$app:mosaiq"].design_tokens.value
+-%}
+
+{%- if tokens -%}
+<style>
+  :root {
+    {%- if tokens.palette -%}
+      --mq-primary: {{ tokens.palette.primary | default: '#000000' }};
+      --mq-secondary: {{ tokens.palette.secondary | default: '#666666' }};
+      --mq-accent: {{ tokens.palette.accent | default: '#FF6B35' }};
+      --mq-background: {{ tokens.palette.background | default: '#FFFFFF' }};
+      --mq-text: {{ tokens.palette.text | default: '#1A1A1A' }};
+    {%- endif -%}
+    {%- if tokens.radius -%}
+      --mq-radius: {{ tokens.radius.base | default: '8px' }};
+      --mq-radius-button: {{ tokens.radius.button | default: '6px' }};
+      --mq-radius-card: {{ tokens.radius.card | default: '10px' }};
+    {%- endif -%}
+    {%- if tokens.spacing -%}
+      --mq-section-padding: {{ tokens.spacing.section_padding | default: '48px' }};
+    {%- endif -%}
+    {%- if tokens.fonts -%}
+      {%- if tokens.fonts.heading and tokens.fonts.heading != 'inherit' -%}
+        --mq-font-heading: {{ tokens.fonts.heading }};
+      {%- else -%}
+        --mq-font-heading: inherit;
+      {%- endif -%}
+      {%- if tokens.fonts.body and tokens.fonts.body != 'inherit' -%}
+        --mq-font-body: {{ tokens.fonts.body }};
+      {%- else -%}
+        --mq-font-body: inherit;
+      {%- endif -%}
+    {%- endif -%}
+  }
+</style>
+{%- endif -%}
+
+{% comment %}
+  Note: Fonts are bundled in assets/fonts/ as woff2 (OFL license).
+  No font_picker in app extensions (unreliable).
+  No Google Fonts CDN (legally risky in Germany).
+{% endcomment %}

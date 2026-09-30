@@ -1,0 +1,36 @@
+{
+  "gpsr": {
+    "heading": "Produktinformationen",
+    "manufacturer": "Hersteller",
+    "responsible_person": "Verantwortliche Person",
+    "origin": "Herkunftsland",
+    "safety_warnings": "Sicherheitshinweise"
+  },
+  "withdrawal": {
+    "link": "Vertrag widerrufen",
+    "confirm": "Widerruf bestätigen"
+  },
+  "cart_drawer": {
+    "title": "Ihr Warenkorb",
+    "empty": "Ihr Warenkorb ist leer",
+    "checkout": "Zur Kasse",
+    "subtotal": "Zwischensumme",
+    "free_shipping": "Kostenloser Versand",
+    "reward_progress": "Fügen Sie {{ amount }} hinzu für {{ reward }}"
+  },
+  "bundle_picker": {
+    "choose_bundle": "Wählen Sie Ihr Bundle",
+    "save": "Sparen",
+    "per_item": "pro Stück",
+    "limited_time": "Zeitlich begrenztes Angebot"
+  },
+  "price": {
+    "sale_price": "Angebotspreis",
+    "regular_price": "Regulärer Preis",
+    "unit_price": "Grundpreis",
+    "you_save": "Sie sparen"
+  },
+  "compliance": {
+    "ai_generated": "Dieser Inhalt wurde mit KI-Unterstützung erstellt und auf Genauigkeit geprüft."
+  }
+}
