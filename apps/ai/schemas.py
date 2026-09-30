@@ -294,6 +294,12 @@ class FieldRewrite(BaseModel):
 # ── Step 6 and 7 ──────────────────────────────────────────────────────────
 
 
+class RewriteResult(BaseModel):
+    """Result of a field rewrite (F07 criterion 3)."""
+
+    rewritten: str = Field(max_length=500)
+
+
 class LayoutResult(BaseModel):
     metaobject_fields: dict[str, str]
     template_suffix: Literal["mosaiq"] | None
