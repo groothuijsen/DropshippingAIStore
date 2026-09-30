@@ -1,0 +1,43 @@
+query ProductGet($id: ID!) {
+  product(id: $id) {
+    id
+    title
+    handle
+    vendor
+    tags
+    productType
+    descriptionHtml
+    status
+    options {
+      name
+      values
+    }
+    variants(first: 100) {
+      nodes {
+        id
+        title
+        price
+        compareAtPrice
+        sku
+      }
+    }
+    media(first: 20) {
+      nodes {
+        ... on MediaImage {
+          id
+          image {
+            url
+            altText
+          }
+        }
+      }
+    }
+    metafields(first: 50) {
+      nodes {
+        namespace
+        key
+        value
+      }
+    }
+  }
+}

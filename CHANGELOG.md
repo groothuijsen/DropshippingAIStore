@@ -4,14 +4,17 @@ Format: one line per ticket, newest at the top. `[T-###] short description`.
 
 ## Unreleased
 
+## v0.5.0 (2026-09-30)
+- [T-005] GraphQL client: throttling with exponential backoff, proactive throttle waits, top-level errors, userErrors, auth errors. `.graphql` loader + `scripts/gql.py` CLI. 63/63 tests.
+
 ## v0.4.0 (2026-09-30)
-- [T-004] Webhook endpoints: HMAC validation, deduplication via `WebhookReceipt`, Celery dispatch task with handlers for all Shopify topics (app/uninstalled, products/update/delete, shop/update, customers/data_request/redact, shop/redact). 45/45 tests passing.
+- [T-004] Webhook endpoints: HMAC validation, deduplication via `WebhookReceipt`, Celery dispatch task with handlers for all Shopify topics (app/uninstalled, products/update/delete, shop/update, customers/data_request/redact, shop/redact). 45/45 tests.
 
 ## v0.3.0 (2026-09-30)
-- [T-003] Embedded layout: App Bridge, Polaris web components, HTMX + auth.js (token injection), CSP frame-ancestors middleware, i18n nl/en/de, dashboard page with navigation cards. 31/31 tests passing.
+- [T-003] Embedded layout: App Bridge, Polaris web components, HTMX + auth.js (token injection), CSP frame-ancestors middleware, i18n nl/en/de, dashboard page with navigation cards. 31/31 tests.
 
 ## v0.2.0 (2026-09-30)
-- [T-002] Session token validation (middleware, bounce page) + token exchange with `expiring=1` + refresh with Redis lock + `keep_tokens_fresh` beat task + `Shop`/`AuditLog` models + Fernet encryption. 20/20 tests passing.
+- [T-002] Session token validation (middleware, bounce page) + token exchange with `expiring=1` + refresh with Redis lock + `keep_tokens_fresh` beat task + `Shop`/`AuditLog` models + Fernet encryption. 20/20 tests.
 
 ## v0.1.0 (2026-09-30)
 - [T-001] Repo scaffold: Django 5.2, uv, 12 apps, Docker Compose dev/prod, Makefile, ruff/mypy/pytest, CI workflow, healthcheck `/healthz`.

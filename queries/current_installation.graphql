@@ -1,0 +1,13 @@
+query CurrentInstallation {
+  currentAppInstallation {
+    id
+    activeSubscriptions {
+      id
+      name
+      status
+      trialDays
+      currentPeriodEnd
+      test
+    }
+  }
+}

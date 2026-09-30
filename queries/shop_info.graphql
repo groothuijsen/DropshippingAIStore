@@ -1,0 +1,20 @@
+query ShopInfo {
+  shop {
+    id
+    name
+    email
+    currencyCode
+    ianaTimezone
+    primaryDomain {
+      url
+    }
+    billingAddress {
+      countryCodeV2
+    }
+  }
+  shopLocales {
+    locale
+    primary
+    published
+  }
+}
