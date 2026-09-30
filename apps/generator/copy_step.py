@@ -33,13 +33,20 @@ SECTION_ORDER: dict[str, list[str]] = {
 }
 
 
-def get_section_order(page_type: str, import_result: dict[str, Any], guarantee_policy: str) -> list[str]:
+def get_section_order(
+    page_type: str,
+    import_result: dict[str, Any],
+    guarantee_policy: str,
+    template_order: list[str] | None = None,
+) -> list[str]:
     """Get the section order for a page type.
 
+    - If template_order is provided, use it instead of the default order
+      (F08 criterion 2)
     - specs only if ImportResult.specs has >= 2 keys
     - guarantee only if Shop.guarantee_policy is filled in
     """
-    base_order = SECTION_ORDER.get(page_type, SECTION_ORDER["pdp"])
+    base_order = template_order or SECTION_ORDER.get(page_type, SECTION_ORDER["pdp"])
     result = []
 
     for section_type in base_order:
