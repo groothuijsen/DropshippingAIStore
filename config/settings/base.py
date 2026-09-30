@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.humanize",
     # Third-party
     "django_celery_beat",
     # Local apps
@@ -57,7 +58,12 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    # Shopify embedded app — order matters:
+    # SessionTokenMiddleware runs BEFORE XFrameOptionsMiddleware
+    "apps.core.middleware.SessionTokenMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # CSP frame-ancestors runs AFTER XFrameOptionsMiddleware to override X-Frame-Options
+    "apps.core.csp_middleware.CspFrameAncestorsMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"

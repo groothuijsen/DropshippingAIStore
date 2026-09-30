@@ -1,9 +1,9 @@
-"""Dashboard URLs — placeholder for T-003."""
+"""Dashboard URLs."""
 
 from django.urls import path
 
-from .views import health_check
+from .views import dashboard
 
 urlpatterns = [
-    path("dashboard/", health_check, name="dashboard"),
+    path("", dashboard, name="dashboard"),
 ]
