@@ -230,12 +230,74 @@ def execute_job(job_id: str) -> dict[str, Any]:
 
 
 def _execute_step(job: GenerationJob, step: JobStep) -> dict[str, Any] | None:
-    """Execute a single step.
+    """Execute a single step by dispatching to its implementation.
 
-    In production, each step type dispatches to its own Celery task.
-    For now, this is a placeholder that returns None.
+    Each step type calls its own run_* function from the step modules.
     """
-    # Step implementations will be added in later tickets:
-    # T-020 (import), T-011 (research/copy via AI), T-030 (images), etc.
-    logger.info("Executing step %s for job %s (placeholder)", step.name, job.id)
-    return None
+    from .copy_step import run_copy
+    from .images_step import run_images
+    from .import_step import run_import_step
+    from .layout_step import run_layout
+    from .publish_step import run_publish
+    from .research_step import run_research
+
+    dispatch = {
+        "import": lambda: run_import_step(job),
+        "research": lambda: run_research(job, step),
+        "copy": lambda: run_copy(job, step),
+        "images": lambda: run_images(job, step),
+        "compliance_check": lambda: _run_compliance_check(job, step),
+        "layout": lambda: run_layout(job, step),
+        "publish": lambda: run_publish(job, step),
+    }
+
+    handler = dispatch.get(step.name)
+    if handler is None:
+        logger.warning("Unknown step type: %s", step.name)
+        return None
+
+    logger.info("Executing step %s for job %s", step.name, job.id)
+    return handler()
+
+
+def _run_compliance_check(job: GenerationJob, step: JobStep) -> dict[str, Any] | None:
+    """Run compliance check on copy output."""
+    from apps.compliance.claims import check_sections
+
+    copy_step = job.steps.filter(name="copy").first()
+    if not copy_step or not copy_step.output:
+        logger.warning("No copy output for compliance check, job %s", job.id)
+        return None
+
+    sections_data = copy_step.output.get("sections", {})
+    sections = sections_data.get("sections", [])
+    locale = sections_data.get("locale", "nl")
+
+    findings = check_sections(sections, locale)
+
+    block_count = sum(1 for f in findings if f.severity == "block")
+    warn_count = sum(1 for f in findings if f.severity == "warn")
+
+    output = {
+        "findings": [
+            {
+                "rule_id": f.rule_id,
+                "severity": f.severity,
+                "field_path": f.field_path,
+                "text": f.text,
+            }
+            for f in findings
+        ],
+        "block_count": block_count,
+        "warn_count": warn_count,
+        "score": max(0, 100 - block_count * 25 - warn_count * 5),
+    }
+
+    # Store findings on the Page if it exists
+    page = job.pages.first()
+    if page:
+        page.compliance_findings = output["findings"]
+        page.compliance_score = output["score"]
+        page.save(update_fields=["compliance_findings", "compliance_score"])
+
+    return output
