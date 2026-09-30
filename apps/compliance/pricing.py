@@ -8,12 +8,13 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import timedelta
-from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from django.utils import timezone
 
 if TYPE_CHECKING:
+    from decimal import Decimal
+
     from apps.compliance.models import PriceHistory
     from apps.core.models import Shop
 

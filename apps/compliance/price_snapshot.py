@@ -5,11 +5,8 @@ See docs/03-shopify-integration.md §6 step 4, docs/07-compliance.md §1.
 
 from __future__ import annotations
 
-import csv
-import io
 import json
 import logging
-from datetime import timedelta
 from decimal import Decimal, InvalidOperation
 from typing import TYPE_CHECKING, Any
 
@@ -185,7 +182,6 @@ def snapshot_prices_bulk(shop: Shop, access_token: str) -> int:
                 continue
 
             product = row.get("data", row)
-            product_id = product.get("id", "")
             variants = product.get("variants", {}).get("edges", [])
 
             for variant_edge in variants:
@@ -231,21 +227,11 @@ def snapshot_prices_bulk(shop: Shop, access_token: str) -> int:
 
 
 def snapshot_prices(shop: Shop, access_token: str) -> int:
-    """Snapshot prices for all active products. Chooses method based on product count.
+    """Snapshot prices for all active products. Uses small shop approach.
+
+    For shops with >250 products, bulk operations would be more efficient,
+    but the small shop paginated approach works for all sizes in the MVP.
 
     Returns the number of PriceHistory rows created.
     """
-    # Quick product count via the products query
-    client = _get_client(shop.domain, access_token)
-    try:
-        query = load_query("products_variants")
-        data = client.execute(query, {"first": 1})
-        product_count_estimate = data.get("products", {}).get("pageInfo", {}).get("hasNextPage", False)
-    finally:
-        client.close()
-
-    # If there are likely more than threshold products, use bulk
-    # (we can't get exact count without fetching all, so estimate)
-    # For the initial snapshot, we use small shop approach if no page info
-    # suggests many products. The threshold check is approximate.
     return snapshot_prices_small_shop(shop, access_token)
