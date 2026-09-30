@@ -52,3 +52,45 @@ class PriceAttestation(models.Model):
 
     def __str__(self) -> str:
         return f"{self.variant_gid} attested {self.lowest_price_30d}"
+
+
+class WithdrawalRequestStatus(models.TextChoices):
+    SUBMITTED = "submitted", "Submitted"
+    HANDLED = "handled", "Handled"
+
+
+class WithdrawalRequest(models.Model):
+    """A withdrawal request submitted via the app proxy (07 §8).
+
+    The only table containing personal data of shoppers (AGENTS.md §2).
+    Retention: 2 years (beat task deletes afterwards).
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    shop = models.ForeignKey("core.Shop", on_delete=models.CASCADE, related_name="withdrawal_requests")
+    reference = models.CharField(
+        max_length=20,
+        unique=True,
+        help_text="e.g. MQW-7F3K9Q — shown to the customer",
+    )
+    customer_name = models.CharField(max_length=200)
+    order_identifier = models.CharField(
+        max_length=100,
+        help_text="Order number as entered (not validated against Shopify)",
+    )
+    email = models.EmailField()
+    locale = models.CharField(max_length=5, default="en")
+    submitted_at = models.DateTimeField()
+    confirmation_sent_at = models.DateTimeField(null=True, blank=True)
+    merchant_notified_at = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=WithdrawalRequestStatus.choices,
+        default=WithdrawalRequestStatus.SUBMITTED,
+    )
+
+    class Meta:
+        ordering = ["-submitted_at"]
+
+    def __str__(self) -> str:
+        return f"{self.reference} — {self.customer_name} ({self.status})"

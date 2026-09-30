@@ -200,16 +200,59 @@ def handle_shop_update(receipt: WebhookReceipt) -> None:
     logger.info("Shop update webhook for %s — TODO", receipt.shop_domain)
 
 
-def handle_customer_data_request(receipt: WebhookReceipt) -> None:
-    """Export WithdrawalRequest rows with the email address from the payload."""
-    # TODO: Implement in T-088 (withdrawal form)
-    logger.info("Customer data request for %s — TODO", receipt.shop_domain)
-
-
 def handle_customer_redact(receipt: WebhookReceipt) -> None:
-    """Delete WithdrawalRequest rows with the email address from the payload."""
-    # TODO: Implement in T-088 (withdrawal form)
-    logger.info("Customer redact for %s — TODO", receipt.shop_domain)
+    """Delete WithdrawalRequest rows with the email address from the payload.
+
+    See docs/specs/F11-compliance.md criterion 20.
+    """
+    from apps.compliance.models import WithdrawalRequest
+
+    body = receipt.body_json or {}
+    email = body.get("email", "")
+    if not email:
+        logger.warning("customers/redact without email for %s", receipt.shop_domain)
+        return
+
+    deleted = WithdrawalRequest.objects.filter(email=email).delete()
+    logger.info(
+        "Customer redact for %s: %d withdrawal requests deleted",
+        receipt.shop_domain,
+        deleted[0],
+    )
+
+
+def handle_customer_data_request(receipt: WebhookReceipt) -> None:
+    """Export WithdrawalRequest rows with the email address from the payload.
+
+    See docs/specs/F11-compliance.md criterion 20.
+    """
+    from apps.compliance.models import WithdrawalRequest
+
+    body = receipt.body_json or {}
+    email = body.get("email", "")
+    if not email:
+        logger.warning("customers/data_request without email for %s", receipt.shop_domain)
+        return
+
+    requests = WithdrawalRequest.objects.filter(email=email)
+    export_data = [
+        {
+            "reference": r.reference,
+            "customer_name": r.customer_name,
+            "order_identifier": r.order_identifier,
+            "email": r.email,
+            "locale": r.locale,
+            "submitted_at": r.submitted_at.isoformat(),
+            "status": r.status,
+        }
+        for r in requests
+    ]
+    logger.info(
+        "Customer data request for %s: %d withdrawal requests exported",
+        receipt.shop_domain,
+        len(export_data),
+    )
+    # TODO: Send export to merchant via email/API
 
 
 def handle_shop_redact(receipt: WebhookReceipt) -> None:
