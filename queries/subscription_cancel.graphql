@@ -1,0 +1,12 @@
+mutation SubscriptionCancel($id: ID!, $prorate: Boolean) {
+  appSubscriptionCancel(id: $id, prorate: $prorate) {
+    appSubscription {
+      id
+      status
+    }
+    userErrors {
+      field
+      message
+    }
+  }
+}
