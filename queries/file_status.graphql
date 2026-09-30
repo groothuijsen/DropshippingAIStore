@@ -1,0 +1,6 @@
+query fileStatus($id: ID!) {
+  file(id: $id) {
+    id
+    status
+  }
+}
