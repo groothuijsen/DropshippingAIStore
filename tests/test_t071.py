@@ -1,6 +1,7 @@
 """Tests for T-071: Offer model + editor + activate/deactivate."""
 
 from datetime import timedelta
+from unittest.mock import MagicMock, patch
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -246,23 +247,93 @@ class TestOfferEditor:
         assert allowed is False
         assert "20" in msg
 
-    def test_activate_offer_success(self, shop, valid_volume_config):
+    @patch("apps.core.shopify_client.load_query")
+    @patch("apps.core.shopify_client.ShopifyGraphQLClient")
+    @patch("apps.core.crypto.decrypt_token", return_value="test-token")
+    def test_activate_offer_success(self, mock_decrypt, mock_client_class, mock_load_query, shop, valid_volume_config):
         _, _, offer = create_offer(shop, "gid://shopify/Product/1", "Test", "volume", valid_volume_config)
+
+        # Mock the GraphQL client
+        mock_client = MagicMock()
+        mock_client_class.return_value = mock_client
+        mock_client.execute.side_effect = [
+            {
+                "discountAutomaticAppCreate": {
+                    "automaticAppDiscount": {"id": "gid://shopify/Discount/1"},
+                    "userErrors": [],
+                }
+            },
+            {"metaobjectUpsert": {"metaobject": {"id": "gid://shopify/Metaobject/1"}, "userErrors": []}},
+            {"metafieldsSet": {"metafields": [], "userErrors": []}},
+        ]
+
         ok, msg = activate_offer(offer)
         assert ok is True
         offer.refresh_from_db()
         assert offer.status == OfferStatus.ACTIVE
+        assert offer.discount_gid == "gid://shopify/Discount/1"
 
-    def test_activate_offer_already_active(self, shop, valid_volume_config):
+    @patch("apps.core.shopify_client.load_query")
+    @patch("apps.core.shopify_client.ShopifyGraphQLClient")
+    @patch("apps.core.crypto.decrypt_token", return_value="test-token")
+    def test_activate_offer_already_active(
+        self, mock_decrypt, mock_client_class, mock_load_query, shop, valid_volume_config
+    ):
         _, _, offer = create_offer(shop, "gid://shopify/Product/1", "Test", "volume", valid_volume_config)
+
+        mock_client = MagicMock()
+        mock_client_class.return_value = mock_client
+        mock_client.execute.side_effect = [
+            {
+                "discountAutomaticAppCreate": {
+                    "automaticAppDiscount": {"id": "gid://shopify/Discount/1"},
+                    "userErrors": [],
+                }
+            },
+            {"metaobjectUpsert": {"metaobject": {"id": "gid://shopify/Metaobject/1"}, "userErrors": []}},
+            {"metafieldsSet": {"metafields": [], "userErrors": []}},
+        ]
+
         activate_offer(offer)
         ok, msg = activate_offer(offer)  # Second activation
         assert ok is True
         assert "Already" in msg
 
-    def test_deactivate_offer_success(self, shop, valid_volume_config):
+    @patch("apps.core.shopify_client.load_query")
+    @patch("apps.core.shopify_client.ShopifyGraphQLClient")
+    @patch("apps.core.crypto.decrypt_token", return_value="test-token")
+    def test_deactivate_offer_success(
+        self, mock_decrypt, mock_client_class, mock_load_query, shop, valid_volume_config
+    ):
         _, _, offer = create_offer(shop, "gid://shopify/Product/1", "Test", "volume", valid_volume_config)
+
+        # Mock activation
+        mock_client = MagicMock()
+        mock_client_class.return_value = mock_client
+        mock_client.execute.side_effect = [
+            {
+                "discountAutomaticAppCreate": {
+                    "automaticAppDiscount": {"id": "gid://shopify/Discount/1"},
+                    "userErrors": [],
+                }
+            },
+            {"metaobjectUpsert": {"metaobject": {"id": "gid://shopify/Metaobject/1"}, "userErrors": []}},
+            {"metafieldsSet": {"metafields": [], "userErrors": []}},
+        ]
         activate_offer(offer)
+
+        # Mock deactivation
+        mock_client.execute.side_effect = [
+            {
+                "discountAutomaticAppDelete": {
+                    "deletedAutomaticAppDiscountId": "gid://shopify/Discount/1",
+                    "userErrors": [],
+                }
+            },
+            {"metaobjectDelete": {"deletedId": "gid://shopify/Metaobject/1", "userErrors": []}},
+            {"metafieldsDelete": {"deletedMetafields": [], "userErrors": []}},
+        ]
+
         ok, msg = deactivate_offer(offer)
         assert ok is True
         offer.refresh_from_db()
@@ -275,8 +346,25 @@ class TestOfferEditor:
         assert ok is True
         assert "Already" in msg
 
-    def test_expire_offer(self, shop, valid_volume_config):
+    @patch("apps.core.shopify_client.load_query")
+    @patch("apps.core.shopify_client.ShopifyGraphQLClient")
+    @patch("apps.core.crypto.decrypt_token", return_value="test-token")
+    def test_expire_offer(self, mock_decrypt, mock_client_class, mock_load_query, shop, valid_volume_config):
         _, _, offer = create_offer(shop, "gid://shopify/Product/1", "Test", "volume", valid_volume_config)
+
+        mock_client = MagicMock()
+        mock_client_class.return_value = mock_client
+        mock_client.execute.side_effect = [
+            {
+                "discountAutomaticAppCreate": {
+                    "automaticAppDiscount": {"id": "gid://shopify/Discount/1"},
+                    "userErrors": [],
+                }
+            },
+            {"metaobjectUpsert": {"metaobject": {"id": "gid://shopify/Metaobject/1"}, "userErrors": []}},
+            {"metafieldsSet": {"metafields": [], "userErrors": []}},
+        ]
+
         activate_offer(offer)
         # Set ends_at in the past
         offer.ends_at = timezone.now() - timedelta(hours=1)
