@@ -130,25 +130,31 @@ class Tier(BaseModel):
     min_qty: int = Field(ge=2, le=20)
     percentage: Decimal = Field(gt=0, le=70, decimal_places=1)
 
+
 class VolumeRules(BaseModel):
-    tiers: list[Tier] = Field(min_length=1, max_length=4)   # min_qty and percentage strictly ascending (validator)
+    tiers: list[Tier] = Field(min_length=1, max_length=4)  # min_qty and percentage strictly ascending (validator)
+
 
 class BogoRules(BaseModel):
     buy_qty: int = Field(ge=1, le=5)
     get_qty: int = Field(ge=1, le=5)
     get_percentage: Decimal = Field(gt=0, le=100, decimal_places=1)
 
+
 class FreeGiftRules(BaseModel):
     gift_variant_gid: str
     min_qty: int | None = Field(default=None, ge=1)
-    min_subtotal: Decimal | None = Field(default=None, gt=0)   # exactly one of min_qty/min_subtotal
+    min_subtotal: Decimal | None = Field(default=None, gt=0)  # exactly one of min_qty/min_subtotal
+
 
 class CartUpsellRules(BaseModel):
     upsell_product_gids: list[str] = Field(min_length=1, max_length=3)
 
+
 class RewardBarRules(BaseModel):
-    thresholds: list[dict] = Field(min_length=1, max_length=3)   # {"amount": Decimal, "label": {language: str}}
-    shipping_rule_confirmed: bool                               # merchant confirms that the shipping rule exists in Shopify
+    thresholds: list[dict] = Field(min_length=1, max_length=3)  # {"amount": Decimal, "label": {language: str}}
+    shipping_rule_confirmed: bool  # merchant confirms that the shipping rule exists in Shopify
+
 
 OfferRules = VolumeRules | BogoRules | FreeGiftRules | CartUpsellRules | RewardBarRules  # selected by Offer.kind
 ```

@@ -14,8 +14,11 @@ The legal rationale is in the plan document (section "Juridische toets EU-featur
 ```python
 def prior_price(shop, variant_gid, current: Decimal, market="primary", now=None) -> PriorPrice | None:
     now = now or timezone.now()
-    rows = list(PriceHistory.objects.filter(shop=shop, variant_gid=variant_gid,
-               market_handle=market, observed_at__lte=now).order_by("observed_at"))
+    rows = list(
+        PriceHistory.objects.filter(
+            shop=shop, variant_gid=variant_gid, market_handle=market, observed_at__lte=now
+        ).order_by("observed_at")
+    )
     if not rows:
         return None
     # 1. start time of the current price
@@ -31,18 +34,18 @@ def prior_price(shop, variant_gid, current: Decimal, market="primary", now=None)
     candidates = in_window + ([anchor.price] if anchor else [])
     if anchor is None:
         # history does not fully cover the window
-        att = PriceAttestation.objects.filter(shop=shop, variant_gid=variant_gid,
-                                              valid_until__gt=now).first()
+        att = PriceAttestation.objects.filter(shop=shop, variant_gid=variant_gid, valid_until__gt=now).first()
         if att is None:
-            return None            # insufficient history -> do NOT show a reduction
+            return None  # insufficient history -> do NOT show a reduction
         candidates.append(att.lowest_price_30d)
     if not candidates:
         return None
     return PriorPrice(amount=min(candidates), currency=rows[-1].currency)
 
+
 def reduction(current: Decimal, prior: Decimal) -> Reduction | None:
     if current >= prior:
-        return None                # not a real reduction -> show nothing
+        return None  # not a real reduction -> show nothing
     pct = ((prior - current) / prior * 100).to_integral_value(rounding=ROUND_FLOOR)
     return Reduction(prior=prior, current=current, percent=int(pct))
 ```
@@ -80,7 +83,7 @@ No "per 100 g" or "per 100 ml" (no longer permitted in DE). Use the same referen
 
 ```python
 def unit_price(total: Decimal, qty: int, net_quantity: Decimal, unit: str) -> Decimal:
-    ref_qty = net_quantity * qty * FACTOR[unit]      # in reference units
+    ref_qty = net_quantity * qty * FACTOR[unit]  # in reference units
     return (total / ref_qty).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 ```
 

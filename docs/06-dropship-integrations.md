@@ -52,15 +52,15 @@ Virtually all sync apps create their own fulfillment location or fulfillment ser
 ```python
 # (source, signal, pattern, verified?)  — sources: the apps' help centers, Sept. 2026
 SOURCE_RULES = [
-    ("dsers",    "fulfillment_handle",  r"^dsers-fulfillment-service$",          True),   # help.dsers.com
-    ("printify", "fulfillment_handle",  r"^printify$",                           False),  # location name "Printify" is confirmed, handle inferred
-    ("printify", "location_name",       r"(?i)^printify$",                       True),
-    ("printful", "location_name",       r"(?i)^printful$",                       True),   # help.printful.com
-    ("autods",   "location_name",       r"(?i)^autods",                          True),   # help.autods.com
-    ("zendrop",  "location_name",       r"(?i)^zendrop",                         True),   # support.zendrop.com
-    ("cj",       "location_name",       r"(?i)cj ?dropshipping|^cj\b",          False),  # "own CJ location" confirmed, exact name not
-    ("printify", "vendor",              r"(?i)^printify$",                       True),   # default vendor, merchant can change it
-    ("cj",       "sku",                 r"^CJ[A-Z0-9]{4,}",                      False),  # weak, not confirmed
+    ("dsers", "fulfillment_handle", r"^dsers-fulfillment-service$", True),  # help.dsers.com
+    ("printify", "fulfillment_handle", r"^printify$", False),  # location name "Printify" is confirmed, handle inferred
+    ("printify", "location_name", r"(?i)^printify$", True),
+    ("printful", "location_name", r"(?i)^printful$", True),  # help.printful.com
+    ("autods", "location_name", r"(?i)^autods", True),  # help.autods.com
+    ("zendrop", "location_name", r"(?i)^zendrop", True),  # support.zendrop.com
+    ("cj", "location_name", r"(?i)cj ?dropshipping|^cj\b", False),  # "own CJ location" confirmed, exact name not
+    ("printify", "vendor", r"(?i)^printify$", True),  # default vendor, merchant can change it
+    ("cj", "sku", r"^CJ[A-Z0-9]{4,}", False),  # weak, not confirmed
 ]
 ```
 

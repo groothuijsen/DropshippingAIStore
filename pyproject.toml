@@ -1,0 +1,84 @@
+[project]
+name = "mosaiq"
+version = "0.1.0"
+description = "Mosaiq — AI-powered Shopify store builder"
+requires-python = ">=3.12"
+dependencies = [
+    "django>=5.2,<5.3",
+    "gunicorn",
+    "uvicorn[standard]",
+    "celery[redis]>=5.4,<6",
+    "django-celery-beat",
+    "httpx",
+    "pydantic>=2.9,<3",
+    "PyJWT",
+    "cryptography",
+    "django-environ",
+    "langdetect",
+    "sentry-sdk",
+    "c2pa-python>=0.37",
+    "redis",
+    "psycopg2-binary",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-django",
+    "pytest-socket",
+    "factory-boy",
+    "respx",
+    "freezegun",
+    "ruff",
+    "mypy",
+    "django-stubs",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest",
+    "pytest-django",
+    "pytest-socket",
+    "factory-boy",
+    "respx",
+    "freezegun",
+    "ruff",
+    "mypy",
+    "django-stubs",
+    "pytest-cov>=7.1.0",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "A", "C4", "SIM", "TCH"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["mypy_django_plugin.main"]
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+
+[tool.django-stubs]
+django_settings_module = "config.settings.test"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+pythonpath = ["."]
+addopts = "-q --tb=short --strict-markers"
+markers = [
+    "slow: marks tests as slow",
+    "integration: marks tests requiring network",
+]

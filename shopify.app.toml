@@ -1,0 +1,38 @@
+# Mosaiq — Shopify app configuration
+# Source of truth for scopes, webhooks, app proxy and extensions.
+
+client_id = "SHOPIFY_API_KEY"
+name = "Mosaiq"
+handle = "mosaiq"
+application_url = "https://APP_DOMAIN"
+embedded = true
+
+[access_scopes]
+# Minimal. No write_themes.
+# - No metaobject scopes: since 2026-04 an app needs no scope for its own $app: metaobject types.
+# - pageCreate: write_online_store_pages (or write_content). fileCreate: write_files. shopLocales: read_locales.
+# - read_inventory: needed to read the fulfillment location per variant for source detection (06 §4).
+scopes = "write_products,write_discounts,write_online_store_pages,write_files,read_inventory,read_locales,read_markets"
+use_legacy_install_flow = false
+
+[auth]
+redirect_urls = ["https://APP_DOMAIN/auth/callback"]
+
+[webhooks]
+api_version = "2026-07"
+
+  [[webhooks.subscriptions]]
+  topics = ["app/uninstalled", "app_subscriptions/update", "products/update", "products/delete", "shop/update"]
+  uri = "https://APP_DOMAIN/webhooks/shopify/"
+
+  [[webhooks.subscriptions]]
+  compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
+  uri = "https://APP_DOMAIN/webhooks/shopify/compliance/"
+
+[app_proxy]
+url = "https://APP_DOMAIN/proxy/"
+subpath = "mosaiq"
+prefix = "apps"
+
+[build]
+include_config_on_deploy = true

@@ -46,6 +46,7 @@ from pydantic import BaseModel, Field, HttpUrl, model_validator
 Locale = Literal["nl", "en", "de"]
 Niche = Literal["wellness_sleep", "auto_accessories", "pod_merch", "other"]
 
+
 # ---------- input ----------
 class ManualProduct(BaseModel):
     title: str = Field(min_length=3, max_length=120)
@@ -54,16 +55,19 @@ class ManualProduct(BaseModel):
     price: Decimal | None = None
     currency: str | None = Field(default=None, min_length=3, max_length=3)
 
+
 class JobInput(BaseModel):
     kind: Literal["store", "page"]
-    saved_template_id: str | None = None    # F08; only when kind="page"
-    product_gid: str | None = None          # existing Shopify product (preferred)
-    manual: ManualProduct | None = None     # new manual product
-    source_url: HttpUrl | None = None       # extract facts only, never copy images/text
-    page_type: Literal["pdp", "landing", "advertorial", "listicle", "home", "about"] | None = None  # required when kind="page"
+    saved_template_id: str | None = None  # F08; only when kind="page"
+    product_gid: str | None = None  # existing Shopify product (preferred)
+    manual: ManualProduct | None = None  # new manual product
+    source_url: HttpUrl | None = None  # extract facts only, never copy images/text
+    page_type: Literal["pdp", "landing", "advertorial", "listicle", "home", "about"] | None = (
+        None  # required when kind="page"
+    )
     content_locale: Locale
     niche_hint: Niche | None = None
-    angle_id: str | None = None             # chosen angle from an earlier research
+    angle_id: str | None = None  # chosen angle from an earlier research
     style_preset: Literal["clean", "bold", "organic", "luxe", "tech", "soft"]
 
     @model_validator(mode="after")
@@ -73,17 +77,19 @@ class JobInput(BaseModel):
             raise ValueError("exactly one of product_gid, manual or source_url is required")
         return self
 
+
 # ---------- step 1 ----------
 class ImportResult(BaseModel):
     product_gid: str | None
     source_app: Literal["manual", "dsers", "cj", "zendrop", "autods", "printify", "unknown_app"]
     title: str
-    facts: list[str] = Field(max_length=40)           # factual characteristics, in own words
+    facts: list[str] = Field(max_length=40)  # factual characteristics, in own words
     specs: dict[str, str]
     reference_image_urls: list[str] = Field(max_length=8)  # only the merchant's own Shopify media
     price: Decimal | None
     currency: str | None
     locked_fields: list[str]
+
 
 # ---------- step 2 ----------
 class Persona(BaseModel):
@@ -93,15 +99,18 @@ class Persona(BaseModel):
     pains: list[str] = Field(min_length=2, max_length=5)
     desires: list[str] = Field(min_length=2, max_length=5)
 
+
 class Angle(BaseModel):
     id: Annotated[str, Field(pattern=r"^a[1-3]$")]
     title: str = Field(max_length=80)
     hook: str = Field(max_length=160)
     persona_id: str
 
+
 class FaqItem(BaseModel):
     q: str = Field(max_length=140)
     a: str = Field(max_length=600)
+
 
 class ResearchResult(BaseModel):
     niche: Niche
@@ -111,7 +120,8 @@ class ResearchResult(BaseModel):
     usps: list[str] = Field(min_length=3, max_length=6)
     objections: list[str] = Field(min_length=2, max_length=6)
     faq: list[FaqItem] = Field(min_length=4, max_length=8)
-    claim_risks: list[str] = Field(max_length=10)   # which claims we may NOT make
+    claim_risks: list[str] = Field(max_length=10)  # which claims we may NOT make
+
 
 # ---------- step 3: sections ----------
 class Hero(BaseModel):
@@ -121,15 +131,18 @@ class Hero(BaseModel):
     cta_label: str = Field(max_length=30)
     image_slot: Literal["hero"] = "hero"
 
+
 class BenefitItem(BaseModel):
     title: str = Field(max_length=50)
     text: str = Field(max_length=200)
     icon: Literal["check", "moon", "leaf", "shield", "clock", "heart", "star", "truck", "sparkle", "car", "shirt"]
 
+
 class Benefits(BaseModel):
     type: Literal["benefits"] = "benefits"
     title: str = Field(max_length=70)
     items: list[BenefitItem] = Field(min_length=3, max_length=6)
+
 
 class ProblemSolution(BaseModel):
     type: Literal["problem_solution"] = "problem_solution"
@@ -137,46 +150,56 @@ class ProblemSolution(BaseModel):
     solution: str = Field(max_length=400)
     image_slot: Literal["lifestyle_1"] = "lifestyle_1"
 
+
 class Step(BaseModel):
     title: str = Field(max_length=50)
     text: str = Field(max_length=200)
+
 
 class HowItWorks(BaseModel):
     type: Literal["how_it_works"] = "how_it_works"
     steps: list[Step] = Field(min_length=2, max_length=5)
 
+
 class SpecRow(BaseModel):
-    label: str = Field(max_length=60)                # key from ImportResult.specs
+    label: str = Field(max_length=60)  # key from ImportResult.specs
     value: str = Field(max_length=120)
+
 
 class Specs(BaseModel):
     type: Literal["specs"] = "specs"
     rows: list[SpecRow] = Field(min_length=2, max_length=20)  # only from ImportResult.specs
+
 
 class ComparisonRow(BaseModel):
     feature: str = Field(max_length=80)
     ours: bool
     other: bool
 
+
 class Comparison(BaseModel):
     type: Literal["comparison"] = "comparison"
     ours_label: str = Field(max_length=30)
-    other_label: str = Field(max_length=30)          # generic ("ordinary solution"), never a brand name
+    other_label: str = Field(max_length=30)  # generic ("ordinary solution"), never a brand name
     rows: list[ComparisonRow] = Field(min_length=3, max_length=8)
+
 
 class Faq(BaseModel):
     type: Literal["faq"] = "faq"
     items: list[FaqItem] = Field(min_length=4, max_length=8)
 
+
 class Guarantee(BaseModel):
     type: Literal["guarantee"] = "guarantee"
-    text: str = Field(max_length=300)                # only the merchant's actual policy
+    text: str = Field(max_length=300)  # only the merchant's actual policy
+
 
 class RichText(BaseModel):
-    type: Literal["rich_text"] = "rich_text"          # advertorial body
+    type: Literal["rich_text"] = "rich_text"  # advertorial body
     title: str | None = Field(default=None, max_length=90)
     paragraphs: list[str] = Field(min_length=1, max_length=12)
     image_slot: Literal["lifestyle_1", "lifestyle_2", "detail_1", None] = None
+
 
 class ListicleItem(BaseModel):
     type: Literal["listicle_item"] = "listicle_item"
@@ -185,15 +208,18 @@ class ListicleItem(BaseModel):
     text: str = Field(max_length=600)
     image_slot: Literal["lifestyle_1", "lifestyle_2", "detail_1", "detail_2", None] = None
 
+
 class Cta(BaseModel):
     type: Literal["cta"] = "cta"
     headline: str = Field(max_length=70)
     button_label: str = Field(max_length=30)
 
+
 Section = Annotated[
     Union[Hero, Benefits, ProblemSolution, HowItWorks, Specs, Comparison, Faq, Guarantee, RichText, ListicleItem, Cta],
     Field(discriminator="type"),
 ]
+
 
 class SectionsPayload(BaseModel):
     locale: Locale
@@ -202,8 +228,10 @@ class SectionsPayload(BaseModel):
     seo_description: str = Field(max_length=155)
     sections: list[Section] = Field(min_length=2, max_length=14)
 
+
 # ---------- step 4 ----------
 ImageSlot = Literal["hero", "lifestyle_1", "lifestyle_2", "detail_1", "detail_2"]
+
 
 class ImageShot(BaseModel):
     slot: ImageSlot
@@ -211,49 +239,58 @@ class ImageShot(BaseModel):
     prompt: str = Field(max_length=1200)
     aspect_ratio: Literal["1:1", "4:5", "16:9"]
     reference_image_urls: list[str] = Field(min_length=1, max_length=4)
-    people_allowed: bool = False                     # never recognizable real people
+    people_allowed: bool = False  # never recognizable real people
 
-class ImagePlan(BaseModel):                         # tool submit_image_plan
+
+class ImagePlan(BaseModel):  # tool submit_image_plan
     shots: list[ImageShot] = Field(min_length=0, max_length=5)
 
-class FidelityResult(BaseModel):                    # tool submit_fidelity
+
+class FidelityResult(BaseModel):  # tool submit_fidelity
     same_product: bool
     issues: list[str] = Field(max_length=10)
 
-class ImageOut(BaseModel):                          # only uploaded, approved images
+
+class ImageOut(BaseModel):  # only uploaded, approved images
     slot: ImageSlot
     file_gid: str
     provider: Literal["vertex", "openai"]
     c2pa_signed: Literal[True]
     alt: str = Field(max_length=125)
 
+
 class ImageResult(BaseModel):
     images: list[ImageOut] = Field(max_length=5)
-    rejected_slots: list[ImageSlot] = Field(default_factory=list)   # rejected or failed
+    rejected_slots: list[ImageSlot] = Field(default_factory=list)  # rejected or failed
+
 
 # ---------- step 5 ----------
 class Finding(BaseModel):
-    rule_id: str                                     # from 07 §4.1
+    rule_id: str  # from 07 §4.1
     severity: Literal["block", "warn"]
     section_index: int
-    field_path: str = Field(max_length=80)          # e.g. "headline", "items.2.text"
+    field_path: str = Field(max_length=80)  # e.g. "headline", "items.2.text"
     excerpt: str = Field(max_length=300)
     suggestion: str = Field(max_length=600)
 
-class AiFindings(BaseModel):                        # tool submit_findings (AI does not give a score)
+
+class AiFindings(BaseModel):  # tool submit_findings (AI does not give a score)
     findings: list[Finding]
 
-class ComplianceReport(BaseModel):                  # output of the step: regex + AI merged
+
+class ComplianceReport(BaseModel):  # output of the step: regex + AI merged
     findings: list[Finding]
-    claims_score: int = Field(ge=0, le=100)         # claims only; the page score is in 07 §9
+    claims_score: int = Field(ge=0, le=100)  # claims only; the page score is in 07 §9
+
 
 # ---------- standalone AI calls outside the main steps ----------
-class UrlFacts(BaseModel):                          # tool submit_url_facts (05 §4.1)
+class UrlFacts(BaseModel):  # tool submit_url_facts (05 §4.1)
     title: str = Field(max_length=120)
     facts: list[str] = Field(max_length=40)
     specs: dict[str, str] = Field(max_length=30)
 
-class PaletteSuggestion(BaseModel):                 # tool submit_palette (F05-2)
+
+class PaletteSuggestion(BaseModel):  # tool submit_palette (F05-2)
     primary: str = Field(pattern=r"^#[0-9A-Fa-f]{6}$")
     secondary: str = Field(pattern=r"^#[0-9A-Fa-f]{6}$")
     accent: str = Field(pattern=r"^#[0-9A-Fa-f]{6}$")
@@ -261,14 +298,17 @@ class PaletteSuggestion(BaseModel):                 # tool submit_palette (F05-2
     text: str = Field(pattern=r"^#[0-9A-Fa-f]{6}$")
     rationale: str = Field(max_length=200)
 
-class FieldRewrite(BaseModel):                      # tool submit_rewrite (editor, one field)
+
+class FieldRewrite(BaseModel):  # tool submit_rewrite (editor, one field)
     field_path: str
-    new_value: str = Field(max_length=600)          # then re-validated against that field's limit
+    new_value: str = Field(max_length=600)  # then re-validated against that field's limit
+
 
 # ---------- step 6 and 7 ----------
 class LayoutResult(BaseModel):
-    metaobject_fields: dict[str, str]   # exactly the field keys of $app:page_content (03 §5.1), values as strings
-    template_suffix: Literal["mosaiq"] | None   # only if Shop.mosaiq_templates_ready
+    metaobject_fields: dict[str, str]  # exactly the field keys of $app:page_content (03 §5.1), values as strings
+    template_suffix: Literal["mosaiq"] | None  # only if Shop.mosaiq_templates_ready
+
 
 class PublishResult(BaseModel):
     metaobject_gid: str

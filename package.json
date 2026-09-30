@@ -1,0 +1,11 @@
+{
+  "name": "mosaiq-extensions",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test": "cd extensions/bundle-discount && npm test"
+  },
+  "devDependencies": {
+    "@shopify/cli": "^3.0"
+  }
+}
