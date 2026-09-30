@@ -1,0 +1,11 @@
+query CurrentBulkOperation($id: ID!) {
+  currentBulkOperation(id: $id) {
+    id
+    status
+    errorCode
+    createdAt
+    completedAt
+    url
+    partialDataUrl
+  }
+}

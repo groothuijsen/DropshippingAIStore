@@ -1,0 +1,13 @@
+query MetafieldDefinitionsByOwner($ownerType: MetafieldOwnerType!) {
+  metafieldDefinitions(first: 50, ownerType: $ownerType, namespace: "$app:mosaiq") {
+    nodes {
+      id
+      namespace
+      key
+      type {
+        name
+      }
+      ownerType
+    }
+  }
+}

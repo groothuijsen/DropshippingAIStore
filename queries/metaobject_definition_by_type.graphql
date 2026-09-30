@@ -1,0 +1,13 @@
+query MetaobjectDefinitionByType($type: String!) {
+  metaobjectDefinitionByType(type: $type) {
+    id
+    type
+    fieldDefinitions {
+      key
+      name
+      type {
+        name
+      }
+    }
+  }
+}
