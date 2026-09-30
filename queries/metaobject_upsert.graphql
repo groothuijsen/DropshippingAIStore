@@ -1,0 +1,14 @@
+mutation metaobjectUpsert($handle: String!, $type: String!, $fields: [MetaobjectFieldInput!]!, $status: MetaobjectStatus) {
+  metaobjectUpsert(handle: $handle, type: $type, fields: $fields, status: $status) {
+    metaobject {
+      id
+      handle
+      status
+    }
+    userErrors {
+      field
+      message
+      code
+    }
+  }
+}
