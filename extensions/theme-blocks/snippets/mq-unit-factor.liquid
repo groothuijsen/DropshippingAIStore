@@ -1,0 +1,32 @@
+{%- comment -%}
+  mq-unit-factor: Unit price calculation per tier (07 §2).
+  factor_key: e.g. "g_to_kg", "ml_to_l", "cm_to_m"
+  ref_qty: net content converted to reference unit x tier quantity
+  tier_total_cents: tier total in cents
+  Same conversion table as 07 §2.2 and apps/compliance/unit_price.py.
+{%- endcomment -%}
+
+{%- liquid
+  case factor_key
+    when 'g_to_kg'
+      assign divisor = 1000.0
+    when 'ml_to_l'
+      assign divisor = 1000.0
+    when 'cm_to_m'
+      assign divisor = 100.0
+    when 'cm2_to_m2'
+      assign divisor = 10000.0
+    when 'cm3_to_m3'
+      assign divisor = 1000000.0
+    else
+      assign divisor = nil
+  endcase
+
+  if divisor and ref_qty > 0
+    assign unit_price_cents_f = tier_total_cents | times: 1.0 | divided_by: ref_qty
+    assign unit_price_cents = unit_price_cents_f | round
+-%}
+  <span class="mq-bundle-picker__unit-price">
+    {{ 'price.unit_price' | t }}: {{ unit_price_cents | money }}
+  </span>
+{%- endif -%}

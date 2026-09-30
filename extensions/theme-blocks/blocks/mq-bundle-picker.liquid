@@ -1,27 +1,104 @@
 {%- comment -%}
-  mq-bundle-picker: Bundle/volume discount picker.
-  Reads from shop.metafields["$app:mosaiq"].cart.value or offer metaobject.
-  Renders nothing if no bundle configuration exists.
+  mq-bundle-picker: Bundle/volume discount picker (T-072).
+  Everything calculated in Liquid using the current variant.price (cents);
+  the metaobject contains only quantities and percentages (04 §2).
+  - Tier total = variant.price x quantity x (1 - discount)
+  - Regular price = variant.price x quantity (current unit price, NEVER compare_at_price)
+  - Savings = regular - tier total; percentage only if whole number
+  - Unit price per tier via mq-unit-factor snippet (07 §2)
+  - Timer only if offer_display.ends_at set and in the future (07 §3)
+  Renders nothing if no offer configuration exists.
 {%- endcomment -%}
 
 {%- liquid
-  assign cart_config = shop.metafields["$app:mosaiq"].cart.value
   assign offer = product.metafields["$app:mosaiq"].offer.value
+  assign offer_display = offer.offer_display
+  assign unit_price_data = product.metafields["$app:mosaiq"].unit_price.value
+  assign tiers = offer_display.tiers
+  assign highlight = settings.highlight_tier
+  assign now_s = 'now' | date: '%s'
 -%}
 
-{%- if offer and offer.bundle_tiers -%}
-  <div class="mq-bundle-picker" data-mq-bundle-picker>
-    <h3>{{ 'bundle_picker.choose_bundle' | t }}</h3>
+{%- if offer and tiers and tiers.size > 0 -%}
+  <div class="mq-bundle-picker mq-bundle-picker--{{ settings.layout | default: 'stacked' }}"
+       data-mq-bundle-picker>
+
+    {%- comment -%} Timer: only if ends_at set and in the future (07 §3) {%- endcomment -%}
+    {%- if offer_display.ends_at -%}
+      {%- assign ends_at_s = offer_display.ends_at | date: '%s' -%}
+      {%- if ends_at_s > now_s -%}
+        {% render 'mq-offer-timer', ends_at: offer_display.ends_at, ends_at_s: ends_at_s, now_s: now_s %}
+      {%- endif -%}
+    {%- endif -%}
+
+    <h3 class="mq-bundle-picker__title">{{ 'bundle_picker.choose_bundle' | t }}</h3>
+
     <div class="mq-bundle-picker__tiers">
-      {%- for tier in offer.bundle_tiers -%}
-        <label class="mq-bundle-picker__tier">
-          <input type="radio" name="mq-bundle-tier" value="{{ tier.quantity }}"
-                 data-price="{{ tier.price }}" data-savings="{{ tier.savings }}">
-          <span class="mq-bundle-picker__qty">{{ tier.quantity }}x</span>
-          <span class="mq-bundle-picker__price">{{ tier.price | money }}</span>
-          {%- if tier.savings > 0 -%}
-            <span class="mq-bundle-picker__savings">{{ tier.savings | money }} {{ 'bundle_picker.save' | t }}</span>
+      {%- for tier in tiers -%}
+        {%- assign qty = tier.min_qty -%}
+        {%- assign pct = tier.value | plus: 0 -%}
+        {%- assign discount = pct | divided_by: 100.0 -%}
+
+        {%- comment -%} Regular price = current price x quantity (04 §2) {%- endcomment -%}
+        {%- assign regular_cents = product.price | times: qty -%}
+
+        {%- comment -%} Tier total = price x qty x (1 - discount) {%- endcomment -%}
+        {%- assign factor = 1.0 | minus: discount -%}
+        {%- assign total_cents_float = product.price | times: qty | times: factor -%}
+        {%- assign total_cents = total_cents_float | round -%}
+
+        {%- comment -%} Savings = regular - total {%- endcomment -%}
+        {%- assign savings_cents = regular_cents | minus: total_cents -%}
+
+        {%- comment -%} Savings percentage only if whole number (04 §2) {%- endcomment -%}
+        {%- if regular_cents > 0 -%}
+          {%- assign savings_pct_raw = savings_cents | times: 100.0 | divided_by: regular_cents -%}
+          {%- assign savings_pct_floor = savings_pct_raw | floor -%}
+          {%- assign savings_pct_round = savings_pct_raw | round -%}
+          {%- if savings_pct_floor == savings_pct_round -%}
+            {%- assign savings_pct = savings_pct_floor -%}
+          {%- else -%}
+            {%- assign savings_pct = nil -%}
           {%- endif -%}
+        {%- endif -%}
+
+        {%- assign is_highlight = false -%}
+        {%- if highlight and highlight == qty -%}
+          {%- assign is_highlight = true -%}
+        {%- endif -%}
+
+        <label class="mq-bundle-picker__tier{% if is_highlight %} mq-bundle-picker__tier--highlight{% endif %}">
+          <input type="radio" name="mq-bundle-tier"
+                 value="{{ qty }}"
+                 data-quantity="{{ qty }}"
+                 data-discount="{{ pct }}"
+                 data-regular-cents="{{ regular_cents }}"
+                 data-total-cents="{{ total_cents }}"
+                 {% if is_highlight %}checked{% endif %}>
+
+          <span class="mq-bundle-picker__qty">{{ qty }}x</span>
+          <span class="mq-bundle-picker__price">{{ total_cents | money }}</span>
+
+          {%- if savings_cents > 0 -%}
+            <span class="mq-bundle-picker__savings">
+              {{ 'bundle_picker.save' | t }}
+              {{ savings_cents | money }}
+              {%- if savings_pct -%}
+                ({{ savings_pct }}%)
+              {%- endif -%}
+            </span>
+          {%- endif -%}
+
+          {%- comment -%} Unit price per tier (07 §2, mandatory for some categories) {%- endcomment -%}
+          {%- if unit_price_data and unit_price_data.net_content_value -%}
+            {%- assign net_value = unit_price_data.net_content_value | plus: 0 -%}
+            {%- assign ref_qty = net_value | times: qty -%}
+            {%- if ref_qty > 0 -%}
+              {%- assign factor_key = unit_price_data.net_content_unit | append: '_to_' | append: unit_price_data.reference_unit -%}
+              {% render 'mq-unit-factor', factor_key: factor_key, ref_qty: ref_qty, tier_total_cents: total_cents %}
+            {%- endif -%}
+          {%- endif -%}
+
         </label>
       {%- endfor -%}
     </div>
@@ -33,6 +110,23 @@
   "name": "mq-bundle-picker",
   "target": "section",
   "templates": ["product"],
-  "settings": []
+  "settings": [
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "Layout",
+      "default": "stacked",
+      "options": [
+        {"value": "stacked", "label": "Stacked"},
+        {"value": "grid", "label": "Grid"}
+      ]
+    },
+    {
+      "type": "number",
+      "id": "highlight_tier",
+      "label": "Highlight tier (quantity)",
+      "default": 0
+    }
+  ]
 }
 {% endschema %}

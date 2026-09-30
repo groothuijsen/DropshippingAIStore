@@ -1,0 +1,42 @@
+{%- comment -%}
+  mq-offer-timer: Countdown timer for an offer (07 §3).
+  Render ONLY if ends_at is set and in the future (checked by caller).
+  Counts down in JS to exactly ends_at (data-ends-at).
+  At 0: hide the timer, restart nothing, do not reload the page.
+  NO localStorage/cookies for per-visitor start time.
+{%- endcomment -%}
+
+<div class="mq-offer-timer" data-mq-offer-timer data-ends-at="{{ ends_at }}">
+  <span class="mq-offer-timer__label">{{ 'bundle_picker.limited_time' | t }}</span>
+  <span class="mq-offer-timer__countdown" data-mq-offer-timer-countdown></span>
+</div>
+
+<script>
+  (function () {
+    var timerEl = document.currentScript.previousElementSibling;
+    if (!timerEl || !timerEl.hasAttribute('data-mq-offer-timer')) return;
+
+    var endsAtStr = timerEl.getAttribute('data-ends-at');
+    var endsAtMs = new Date(endsAtStr).getTime();
+    var countdownEl = timerEl.querySelector('[data-mq-offer-timer-countdown]');
+    if (isNaN(endsAtMs) || !countdownEl) return;
+
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+    function tick() {
+      var nowMs = Date.now();
+      var diff = endsAtMs - nowMs;
+      if (diff <= 0) {
+        // At 0: hide the timer, do NOT reload (07 §3)
+        timerEl.style.display = 'none';
+        return;
+      }
+      var h = Math.floor(diff / 3600000);
+      var m = Math.floor((diff % 3600000) / 60000);
+      var s = Math.floor((diff % 60000) / 1000);
+      countdownEl.textContent = pad(h) + ':' + pad(m) + ':' + pad(s);
+      setTimeout(tick, 1000);
+    }
+    tick();
+  })();
+</script>
