@@ -50,6 +50,7 @@ class Shop(models.Model):
     )
     installed_at = models.DateTimeField(auto_now_add=True)
     uninstalled_at = models.DateTimeField(null=True, blank=True)
+    installation_id = models.CharField(max_length=255, blank=True, default="")
 
     # Onboarding
     mosaiq_templates_ready = models.BooleanField(default=False)
