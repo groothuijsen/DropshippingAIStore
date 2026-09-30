@@ -123,11 +123,13 @@ def check_trial_expiring(self) -> dict[str, Any]:
 
     count = 0
     for sub in expiring:
-        # TODO: Send email via email service (T-061)
-        logger.info(
-            "Trial expiring: %s ends %s",
+        from .emails import send_trial_reminder
+
+        cancel_url = f"https://admin.shopify.com/store/{sub.shop.domain.replace('.myshopify.com', '')}/apps/mosaiq/billing/cancel"
+        send_trial_reminder(
             sub.shop.domain,
-            sub.trial_ends_at,
+            sub.trial_ends_at.strftime("%Y-%m-%d") if sub.trial_ends_at else "",
+            cancel_url,
         )
         count += 1
 
