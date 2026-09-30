@@ -1,0 +1,15 @@
+mutation ProductCreateManual($input: ProductSetInput!) {
+  productSet(input: $input) {
+    product {
+      id
+      title
+      handle
+      status
+    }
+    userErrors {
+      field
+      message
+      code
+    }
+  }
+}
