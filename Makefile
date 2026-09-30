@@ -25,7 +25,7 @@ ext-deploy:
 	npx shopify app deploy
 
 eval:
-	uv run python scripts/eval_ai.py
+	uv run python tests/evalset/run_eval.py
 
 shell:
 	uv run python manage.py shell
