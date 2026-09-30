@@ -1,7 +1,8 @@
 {%- comment -%}
-  mq-gpsr: GPSR compliance information block.
+  mq-gpsr: GPSR compliance information block (art. 19).
   Reads from product.metafields["$app:mosaiq"].gpsr.value.
-  Renders nothing if metafield is missing.
+  Displays: manufacturer, EU responsible person, product identifier, warnings.
+  Renders nothing if metafield is missing (F06 criterion 2).
 {%- endcomment -%}
 
 {%- liquid
@@ -10,25 +11,43 @@
 
 {%- if gpsr -%}
   <div class="mq-gpsr">
-    <h2>{{ 'gpsr.heading' | t }}</h2>
-    <dl class="mq-gpsr__list">
-      {%- if gpsr.manufacturer -%}
-        <dt>{{ 'gpsr.manufacturer' | t }}</dt>
-        <dd>{{ gpsr.manufacturer }}</dd>
-      {%- endif -%}
-      {%- if gpsr.responsible_person -%}
-        <dt>{{ 'gpsr.responsible_person' | t }}</dt>
-        <dd>{{ gpsr.responsible_person }}</dd>
-      {%- endif -%}
-      {%- if gpsr.origin -%}
-        <dt>{{ 'gpsr.origin' | t }}</dt>
-        <dd>{{ gpsr.origin }}</dd>
-      {%- endif -%}
-      {%- if gpsr.safety_warnings -%}
-        <dt>{{ 'gpsr.safety_warnings' | t }}</dt>
-        <dd>{{ gpsr.safety_warnings }}</dd>
-      {%- endif -%}
-    </dl>
+    <h2 class="mq-gpsr__title">{{ 'gpsr.heading' | t | default: 'Product information' }}</h2>
+
+    {%- if gpsr.manufacturer_name -%}
+      <div class="mq-gpsr__section">
+        <h3 class="mq-gpsr__subtitle">{{ 'gpsr.manufacturer' | t | default: 'Manufacturer' }}</h3>
+        <p class="mq-gpsr__text">
+          {{ gpsr.manufacturer_name }}<br>
+          {{ gpsr.manufacturer_address }}<br>
+          {{ gpsr.manufacturer_email }}
+        </p>
+      </div>
+    {%- endif -%}
+
+    {%- if gpsr.eu_rp_name -%}
+      <div class="mq-gpsr__section">
+        <h3 class="mq-gpsr__subtitle">{{ 'gpsr.responsible_person' | t | default: 'Responsible person' }}</h3>
+        <p class="mq-gpsr__text">
+          {{ gpsr.eu_rp_name }}<br>
+          {{ gpsr.eu_rp_address }}<br>
+          {{ gpsr.eu_rp_email }}
+        </p>
+      </div>
+    {%- endif -%}
+
+    {%- if gpsr.product_identifier -%}
+      <div class="mq-gpsr__section">
+        <h3 class="mq-gpsr__subtitle">{{ 'gpsr.product_identifier' | t | default: 'Product identifier' }}</h3>
+        <p class="mq-gpsr__text">{{ gpsr.product_identifier }}</p>
+      </div>
+    {%- endif -%}
+
+    {%- if gpsr.warnings -%}
+      <div class="mq-gpsr__section mq-gpsr__warnings">
+        <h3 class="mq-gpsr__subtitle">{{ 'gpsr.safety_warnings' | t | default: 'Safety warnings' }}</h3>
+        <p class="mq-gpsr__text">{{ gpsr.warnings }}</p>
+      </div>
+    {%- endif -%}
   </div>
 {%- endif -%}
 
