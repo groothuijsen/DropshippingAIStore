@@ -1,0 +1,208 @@
+{%- comment -%}
+  mq-cart-drawer: App embed — own cart drawer (04 §4).
+  Intercepts add-to-cart forms, uses the Ajax Cart API
+  (/cart.js, /cart/add.js, /cart/change.js).
+  Shows upsells (max 3 from all_products[handle]), reward bar, free gift.
+  Has an `enabled` setting so the merchant can revert to the theme drawer.
+  Renders nothing if enabled=false or cart config is empty.
+{%- endcomment -%}
+
+{%- liquid
+  assign cart_config = shop.metafields["$app:mosaiq"].cart.value
+  assign is_enabled = settings.enabled
+-%}
+
+{%- if is_enabled and cart_config -%}
+  <div class="mq-cart-drawer" data-mq-cart-drawer hidden>
+    <div class="mq-cart-drawer__overlay" data-mq-cart-drawer-overlay></div>
+    <div class="mq-cart-drawer__panel" role="dialog" aria-label="{{ 'cart_drawer.title' | t }}">
+      <div class="mq-cart-drawer__header">
+        <h2>{{ 'cart_drawer.title' | t }}</h2>
+        <button type="button" class="mq-cart-drawer__close" data-mq-cart-drawer-close aria-label="Close">&times;</button>
+      </div>
+
+      <div class="mq-cart-drawer__body" data-mq-cart-drawer-body>
+        {%- comment -%} Cart contents loaded via /cart.js {%- endcomment -%}
+        <div class="mq-cart-drawer__empty" data-mq-cart-drawer-empty>
+          {{ 'cart_drawer.empty' | t }}
+        </div>
+        <ul class="mq-cart-drawer__items" data-mq-cart-drawer-items></ul>
+      </div>
+
+      {%- comment -%} Reward bar (04 §4) {%- endcomment -%}
+      {%- if cart_config.reward_thresholds and cart_config.reward_thresholds.size > 0 -%}
+        <div class="mq-cart-drawer__reward" data-mq-cart-drawer-reward>
+          <div class="mq-cart-drawer__reward-bar">
+            <div class="mq-cart-drawer__reward-fill" data-mq-cart-drawer-reward-fill></div>
+          </div>
+          <p class="mq-cart-drawer__reward-label" data-mq-cart-drawer-reward-label></p>
+        </div>
+      {%- endif -%}
+
+      {%- comment -%} Upsells (max 3, from all_products[handle]) {%- endcomment -%}
+      {%- if cart_config.upsell_handles and cart_config.upsell_handles.size > 0 -%}
+        <div class="mq-cart-drawer__upsells" data-mq-cart-drawer-upsells>
+          {%- for handle in cart_config.upsell_handles limit: 3 -%}
+            {%- assign upsell_product = all_products[handle] -%}
+            {%- if upsell_product and upsell_product.available -%}
+              <div class="mq-cart-drawer__upsell" data-mq-cart-drawer-upsell data-variant-id="{{ upsell_product.selected_or_first_available_variant.id }}">
+                {%- if upsell_product.featured_image -%}
+                  <img src="{{ upsell_product.featured_image | image_url: width: 100 }}" alt="{{ upsell_product.title | escape }}" loading="lazy" width="50" height="50">
+                {%- endif -%}
+                <div class="mq-cart-drawer__upsell-info">
+                  <span class="mq-cart-drawer__upsell-title">{{ upsell_product.title }}</span>
+                  <span class="mq-cart-drawer__upsell-price">{{ upsell_product.price | money }}</span>
+                </div>
+                <button type="button" class="mq-cart-drawer__upsell-add" data-mq-cart-drawer-add-upsell data-variant-id="{{ upsell_product.selected_or_first_available_variant.id }}">+</button>
+              </div>
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+
+      <div class="mq-cart-drawer__footer">
+        <div class="mq-cart-drawer__subtotal">
+          <span>{{ 'cart_drawer.subtotal' | t }}</span>
+          <span data-mq-cart-drawer-subtotal></span>
+        </div>
+        <a href="/checkout" class="mq-cart-drawer__checkout">{{ 'cart_drawer.checkout' | t }}</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var drawer = document.querySelector('[data-mq-cart-drawer]');
+      if (!drawer) return;
+
+      var overlay = drawer.querySelector('[data-mq-cart-drawer-overlay]');
+      var closeBtn = drawer.querySelector('[data-mq-cart-drawer-close]');
+      var itemsEl = drawer.querySelector('[data-mq-cart-drawer-items]');
+      var emptyEl = drawer.querySelector('[data-mq-cart-drawer-empty]');
+      var subtotalEl = drawer.querySelector('[data-mq-cart-drawer-subtotal]');
+      var rewardFill = drawer.querySelector('[data-mq-cart-drawer-reward-fill]');
+      var rewardLabel = drawer.querySelector('[data-mq-cart-drawer-reward-label]');
+      var rewardThresholds = {{ cart_config.reward_thresholds | json }};
+
+      function openDrawer() {
+        drawer.hidden = false;
+        document.body.style.overflow = 'hidden';
+        loadCart();
+      }
+
+      function closeDrawer() {
+        drawer.hidden = true;
+        document.body.style.overflow = '';
+      }
+
+      function formatMoney(cents) {
+        return (cents / 100).toFixed(2);
+      }
+
+      function loadCart() {
+        fetch('/cart.js')
+          .then(function (r) { return r.json(); })
+          .then(function (cart) {
+            renderItems(cart);
+            updateRewardBar(cart);
+          });
+      }
+
+      function renderItems(cart) {
+        itemsEl.innerHTML = '';
+        if (!cart.items || cart.items.length === 0) {
+          emptyEl.style.display = '';
+          return;
+        }
+        emptyEl.style.display = 'none';
+        cart.items.forEach(function (item) {
+          var li = document.createElement('li');
+          li.className = 'mq-cart-drawer__item';
+          li.innerHTML =
+            '<span class="mq-cart-drawer__item-title">' + item.product_title + '</span>' +
+            '<span class="mq-cart-drawer__item-qty">x' + item.quantity + '</span>' +
+            '<span class="mq-cart-drawer__item-price">' + formatMoney(item.final_line_price) + '</span>' +
+            '<button type="button" class="mq-cart-drawer__item-remove" data-line="' + item.key + '">&times;</button>';
+          itemsEl.appendChild(li);
+        });
+        subtotalEl.textContent = formatMoney(cart.total_price);
+      }
+
+      function updateRewardBar(cart) {
+        if (!rewardThresholds || rewardThresholds.length === 0) return;
+        var total = cart.total_price / 100;
+        var next = null;
+        for (var i = 0; i < rewardThresholds.length; i++) {
+          if (total < parseFloat(rewardThresholds[i].amount)) {
+            next = rewardThresholds[i];
+            break;
+          }
+        }
+        if (next) {
+          var pct = Math.min(100, (total / parseFloat(next.amount)) * 100);
+          rewardFill.style.width = pct + '%';
+          rewardLabel.textContent = next.label && (next.label.nl || next.label.en || next.label.de) || '';
+        } else {
+          rewardFill.style.width = '100%';
+          rewardLabel.textContent = '';
+        }
+      }
+
+      function interceptForms() {
+        document.addEventListener('submit', function (e) {
+          var form = e.target;
+          if (form.action && form.action.indexOf('/cart/add') !== -1) {
+            e.preventDefault();
+            var formData = new FormData(form);
+            fetch('/cart/add.js', { method: 'POST', body: formData })
+              .then(function () { openDrawer(); });
+          }
+        });
+      }
+
+      // Intercept add-to-cart forms
+      interceptForms();
+
+      // Open/close handlers
+      closeBtn.addEventListener('click', closeDrawer);
+      overlay.addEventListener('click', closeDrawer);
+      drawer.addEventListener('click', function (e) {
+        if (e.target.classList.contains('mq-cart-drawer__item-remove')) {
+          var key = e.target.getAttribute('data-line');
+          fetch('/cart/change.js', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: key, quantity: 0 }),
+          }).then(loadCart);
+        }
+        if (e.target.classList.contains('mq-cart-drawer__upsell-add') || e.target.closest('.mq-cart-drawer__upsell-add')) {
+          var btn = e.target.closest('[data-mq-cart-drawer-add-upsell]');
+          var variantId = btn.getAttribute('data-variant-id');
+          fetch('/cart/add.js', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items: [{ id: parseInt(variantId), quantity: 1 }] }),
+          }).then(loadCart);
+        }
+      });
+
+      // Expose open function for theme JS
+      window.mqCartDrawerOpen = openDrawer;
+    })();
+  </script>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "mq-cart-drawer",
+  "target": "body",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "enabled",
+      "label": "Enable custom cart drawer",
+      "default": true
+    }
+  ]
+}
+{% endschema %}

@@ -79,6 +79,20 @@ class GiftRules(BaseModel):
     min_subtotal: str | None = None  # decimal string or None
 
 
+class CartUpsellRules(BaseModel):
+    """Cart upsell rules (04 §4). No discount; merged into app-data metafield cart."""
+
+    upsell_product_gids: list[str] = Field(min_length=1, max_length=3)
+
+
+class RewardBarRules(BaseModel):
+    """Reward bar rules (04 §4). No discount; merged into app-data metafield cart."""
+
+    thresholds: list[dict] = Field(min_length=1, max_length=3)
+    # Each threshold: {"amount": Decimal-as-string, "label": {lang: str}}
+    shipping_rule_confirmed: bool  # merchant confirms shipping rule exists in Shopify
+
+
 class OfferLabels(BaseModel):
     """Labels per language (04 §2)."""
 
@@ -91,11 +105,13 @@ class OfferConfig(BaseModel):
     """Full offer config metafield (04 §2)."""
 
     offer_id: str
-    kind: Literal["volume", "bogo", "free_gift"]
+    kind: Literal["volume", "bogo", "free_gift", "cart_upsell", "reward_bar"]
     product_ids: list[str] = Field(min_length=1)
     tiers: list[Tier] | None = None
     bogo: BogoRules | None = None
     free_gift: GiftRules | None = None
+    cart_upsell: CartUpsellRules | None = None
+    reward_bar: RewardBarRules | None = None
     labels: OfferLabels
 
     @model_validator(mode="after")
@@ -116,4 +132,10 @@ class OfferConfig(BaseModel):
                 raise ValueError("free_gift kind requires free_gift block")
             if self.tiers is not None or self.bogo is not None:
                 raise ValueError("free_gift kind must not have tiers/bogo blocks")
+        elif self.kind == "cart_upsell":
+            if self.cart_upsell is None:
+                raise ValueError("cart_upsell kind requires cart_upsell block")
+        elif self.kind == "reward_bar":
+            if self.reward_bar is None:
+                raise ValueError("reward_bar kind requires reward_bar block")
         return self
