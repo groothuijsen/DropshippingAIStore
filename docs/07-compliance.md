@@ -139,7 +139,14 @@ Exception for `EMPCO_GENERIC` (generic environmental claim): the match becomes `
 
 - Only providers from 00-decisions. Both deliver an invisible SynthID watermark and a C2PA manifest ([Gemini docs](https://ai.google.dev/gemini-api/docs/image-generation), [Google Cloud blog](https://cloud.google.com/blog/products/ai-machine-learning/bringing-nano-banana-2-to-enterprise), [OpenAI](https://help.openai.com/en/articles/8912793)).
 - Own C2PA manifest on every published AI image, with the provider manifest preserved as a `parentOf` ingredient (05 §4.4). If signing fails → do not publish the image, log the error.
-- **CDN:** there is no source stating whether Shopify preserves C2PA metadata when converting to WebP/AVIF or resizing; other CDNs often strip it (Cloudflare only preserves it with a separate setting). Therefore assume: the original in Shopify Files possibly with manifest, transformed variants without. The marking then relies on (1) SynthID in the pixels, which survives resizing and conversion, and (2) the visible label. T-043 confirms this with `c2patool` and `exiftool` on the original and on `?width=800&format=webp`.
+- **CDN:** there is no source stating whether Shopify preserves C2PA metadata when converting to WebP/AVIF or resizing; other CDNs often strip it (Cloudflare only preserves it with a separate setting). Therefore assume: the original in Shopify Files possibly with manifest, transformed variants without. The marking then relies on (1) SynthID in the pixels, which survives resizing and conversion, and (2) the visible label. T-043 confirms this with `c2patool` and `exiftool` on the original and on `?width=800&format=webp` variants via `scripts/verify_c2pa.py`.
+- **T-043 verification procedure** (run against the dev store once uploads are live):
+  1. Install tools: `brew install c2pa exiftool` (or `pip install c2pa-cli`).
+  2. Upload a signed AI image via the pipeline (T-042 flow).
+  3. Run `python scripts/verify_c2pa.py <files_url>` for the original.
+  4. Run `python scripts/verify_c2pa.py <files_url> --variant "width=800&format=webp"` for the CDN variant.
+  5. Record results below; update this section with confirmed findings.
+- **Q3 findings (pending dev-store verification):** assumption stands — original may have manifest, CDN variants may not. SynthID + visible label are the reliable markers.
 - `ai_image_disclosure` in the metaobject defaults to `true`; the block shows a small label "Image created with AI" ("Afbeelding gemaakt met AI") (per language). The merchant can turn it off; this is logged.
 - No recognizable real people (prompt rule + `people_allowed = false`).
 - The visible label is therefore **on** by default; turning it off shows the merchant a warning.
