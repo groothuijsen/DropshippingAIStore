@@ -1,31 +1,41 @@
 {%- comment -%}
-  mq-price: Price display with Omnibus compliance.
+  mq-price: Price display with Omnibus compliance + unit price.
   Shows sale price, regular price, savings, unit price.
+  Unit price: "€ 83.17 / 1 l" in smaller font, never bolder than price (07 §2.3).
   Renders nothing if no price metafield is set.
 {%- endcomment -%}
 
 {%- liquid
-  assign price_metafield = product.metafields["$app:mosaiq"].price_display.value
+  assign price_metafield = product.metafields["$app:mosaiq"].price.value
+  assign unit_price_metafield = product.metafields["$app:mosaiq"].unit_price.value
+  assign prior_price = product.metafields["$app:mosaiq"].prior_price.value
 -%}
 
-{%- if price_metafield -%}
+{%- if price_metafield or unit_price_metafield -%}
   <div class="mq-price">
-    {%- if price_metafield.show_savings and price_metafield.prior_price -%}
-      <span class="mq-price__prior">{{ price_metafield.prior_price | money }}</span>
-      <span class="mq-price__sale">{{ price_metafield.current_price | money }}</span>
-      {%- if price_metafield.reduction_pct -%}
-        <span class="mq-price__savings">-{{ price_metafield.reduction_pct }}%</span>
+    {%- if price_metafield -%}
+      {%- if prior_price and prior_price > price_metafield.amount -%}
+        {%- comment -%} Show struck-through prior price + savings (07 §1.3) {%- endcomment -%}
+        <div class="mq-price__current">
+          <span class="mq-price__sale">{{ price_metafield.amount | money }}</span>
+          <span class="mq-price__prior">{{ prior_price | money }}</span>
+        </div>
+        {%- assign savings_pct = prior_price | minus: price_metafield.amount | times: 100 | divided_by: prior_price | floor -%}
+        <div class="mq-price__savings">-{{ savings_pct }}%</div>
+      {%- else -%}
+        <div class="mq-price__current">
+          <span class="mq-price__amount">{{ price_metafield.amount | money }}</span>
+        </div>
       {%- endif -%}
-    {%- else -%}
-      <span class="mq-price__current">{{ price_metafield.current_price | money }}</span>
     {%- endif -%}
-    {%- if price_metafield.unit_price -%}
-      <span class="mq-price__unit">{{ price_metafield.unit_price | money }} / {{ price_metafield.unit_label }}</span>
+
+    {%- if unit_price_metafield and unit_price_metafield.amount -%}
+      {%- comment -%} Unit price in smaller font, never bolder/larger than price (07 §2.3) {%- endcomment -%}
+      <div class="mq-price__unit">
+        <span class="mq-price__unit-amount">{{ unit_price_metafield.amount | money }}</span>
+        <span class="mq-price__unit-label">/ {{ unit_price_metafield.reference_unit }}</span>
+      </div>
     {%- endif -%}
-  </div>
-{%- elsif product.price -%}
-  <div class="mq-price">
-    <span class="mq-price__current">{{ product.price | money }}</span>
   </div>
 {%- endif -%}
 
