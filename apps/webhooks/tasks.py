@@ -63,8 +63,11 @@ def process_webhook(self, receipt_id: int) -> None:
 
 
 def handle_app_uninstalled(receipt: WebhookReceipt) -> None:
-    """Set Shop.status = uninstalled, wipe tokens."""
-    from apps.core.models import Shop, ShopStatus
+    """Set Shop.status = uninstalled, cancel running jobs, wipe tokens.
+
+    See docs/specs/F13-uninstall-gdpr.md criterion 1.
+    """
+    from apps.core.models import AuditLog, Shop, ShopStatus
 
     shop = Shop.objects.filter(domain=receipt.shop_domain).first()
     if not shop:
@@ -83,7 +86,29 @@ def handle_app_uninstalled(receipt: WebhookReceipt) -> None:
             "refresh_token_encrypted",
         ]
     )
-    logger.info("Shop %s uninstalled", receipt.shop_domain)
+
+    # Cancel running jobs (F13 criterion 1)
+    from apps.generator.models import GenerationJob, JobStatus
+
+    running = GenerationJob.objects.filter(
+        shop=shop,
+        status__in=[JobStatus.RUNNING, JobStatus.QUEUED],
+    )
+    cancelled = running.update(status=JobStatus.CANCELLED)
+
+    # Audit log event
+    AuditLog.objects.create(
+        shop=shop,
+        actor="system",
+        action="uninstalled",
+        payload={"cancelled_jobs": cancelled},
+    )
+
+    logger.info(
+        "Shop %s uninstalled, %d jobs cancelled",
+        receipt.shop_domain,
+        cancelled,
+    )
 
 
 def handle_subscription_update(receipt: WebhookReceipt) -> None:
@@ -94,11 +119,9 @@ def handle_subscription_update(receipt: WebhookReceipt) -> None:
 
 def handle_product_update(receipt: WebhookReceipt) -> None:
     """New prices per variant into PriceHistory if they differ from the last row."""
-    import json
     from decimal import Decimal, InvalidOperation
 
     from apps.compliance.models import PriceHistory
-    from apps.core.crypto import decrypt_token
     from apps.core.models import Shop
 
     shop = Shop.objects.filter(domain=receipt.shop_domain).first()
