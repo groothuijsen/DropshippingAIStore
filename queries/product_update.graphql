@@ -1,0 +1,14 @@
+mutation ProductUpdate($input: ProductSetInput!) {
+  productSet(input: $input) {
+    product {
+      id
+      title
+      handle
+    }
+    userErrors {
+      field
+      message
+      code
+    }
+  }
+}

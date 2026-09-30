@@ -1,0 +1,23 @@
+query VariantLocations($query: String!, $first: Int!) {
+  productVariants(first: $first, query: $query) {
+    nodes {
+      id
+      sku
+      inventoryItem {
+        tracked
+        inventoryLevels(first: 10) {
+          nodes {
+            location {
+              name
+              isFulfillmentService
+              fulfillmentService {
+                handle
+                serviceName
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
