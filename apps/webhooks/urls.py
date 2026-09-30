@@ -1,5 +1,9 @@
-"""Webhook URL configuration."""
+"""Webhook URLs."""
+
+from django.urls import path
+
+from .views import shopify_webhook
 
 urlpatterns = [
-    # T-004: HMAC validation, dedupe, dispatch
+    path("", shopify_webhook, name="shopify_webhook"),
 ]

@@ -10,7 +10,7 @@ Numbering per domain (not per sprint). Sprints of 2 weeks; 6 sprints = MVP (week
 | T-001 | Repo scaffold: Django 5.2, uv, apps from 01, Docker Compose dev, Makefile, ruff/mypy/pytest, CI workflow | 00, 01 | — | ✅ done |
 | T-002 | Session token validation (middleware, bounce page) + token exchange with `expiring=1` + refresh with Redis lock + `keep_tokens_fresh` + `Shop` model + Fernet | F00, 03 §2–2.3a | T-001 | ✅ done |
 | T-003 | Embedded layout: App Bridge, Polaris web components, HTMX + `auth.js`, CSP middleware, i18n nl/en/de | F00, 03 §2.4–2.5, 09 | T-002 | ✅ done |
-| T-004 | Webhook endpoints, HMAC, dedupe, `WebhookReceipt`, dispatch task | F00, 03 §3 | T-002 | |
+| T-004 | Webhook endpoints, HMAC, dedupe, `WebhookReceipt`, dispatch task | F00, 03 §3 | T-002 | ✅ done |
 | T-005 | GraphQL client (throttling, errors, `get_access_token()`), `scripts/gql.py`, `.graphql` loader | 01, 03 §4–5 | T-002 | |
 | T-006 | Installation tasks: shop data, metaobject/metafield definitions, log/check resolved namespace | F00, 03 §5–6 | T-005 | |
 | T-007 | Price snapshot on installation + `products/update` → `PriceHistory` | F11-A, 03 §6 | T-006 | |

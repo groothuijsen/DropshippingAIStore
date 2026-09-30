@@ -29,9 +29,9 @@ class Shop(models.Model):
 
     # Token storage (encrypted with Fernet)
     access_token_encrypted = models.BinaryField()
-    access_token_expires_at = models.DateTimeField()
+    access_token_expires_at = models.DateTimeField(null=True, blank=True)
     refresh_token_encrypted = models.BinaryField()
-    refresh_token_expires_at = models.DateTimeField()
+    refresh_token_expires_at = models.DateTimeField(null=True, blank=True)
     needs_reauth = models.BooleanField(default=False)
 
     scopes = models.CharField(max_length=1000, blank=True)

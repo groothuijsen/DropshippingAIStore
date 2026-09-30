@@ -4,6 +4,9 @@ Format: one line per ticket, newest at the top. `[T-###] short description`.
 
 ## Unreleased
 
+## v0.4.0 (2026-09-30)
+- [T-004] Webhook endpoints: HMAC validation, deduplication via `WebhookReceipt`, Celery dispatch task with handlers for all Shopify topics (app/uninstalled, products/update/delete, shop/update, customers/data_request/redact, shop/redact). 45/45 tests passing.
+
 ## v0.3.0 (2026-09-30)
 - [T-003] Embedded layout: App Bridge, Polaris web components, HTMX + auth.js (token injection), CSP frame-ancestors middleware, i18n nl/en/de, dashboard page with navigation cards. 31/31 tests passing.
 
