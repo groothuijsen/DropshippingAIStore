@@ -44,3 +44,32 @@ def keep_tokens_fresh() -> dict[str, int]:
                 failed += 1
 
     return {"refreshed": refreshed, "failed": failed}
+
+
+@shared_task(name="core.tasks.run_on_install")
+def run_on_install(shop_id: str) -> dict[str, str]:
+    """Celery task wrapper for on_install.
+
+    Fetches the shop, decrypts the access token, and runs the installation flow.
+    """
+    from .crypto import decrypt_token
+    from .installation import on_install
+
+    try:
+        shop = Shop.objects.get(id=shop_id)
+    except Shop.DoesNotExist:
+        logger.error("Shop %s not found for on_install", shop_id)
+        return {"error": "shop_not_found"}
+
+    try:
+        access_token = decrypt_token(shop.access_token_encrypted)
+    except Exception:
+        logger.error("Cannot decrypt access token for %s", shop.domain)
+        return {"error": "token_decrypt_failed"}
+
+    try:
+        on_install(shop.domain, access_token)
+        return {"status": "completed", "shop": shop.domain}
+    except Exception as exc:
+        logger.error("Installation failed for %s: %s", shop.domain, exc)
+        return {"error": str(exc)}
