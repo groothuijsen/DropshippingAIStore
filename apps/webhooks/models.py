@@ -11,6 +11,7 @@ class WebhookReceipt(models.Model):
     shop_domain = models.CharField(max_length=255)
     received_at = models.DateTimeField(auto_now_add=True)
     processed = models.BooleanField(default=False)
+    body_json = models.JSONField(null=True, blank=True, help_text="Parsed webhook body")
 
     class Meta:
         ordering = ["-received_at"]

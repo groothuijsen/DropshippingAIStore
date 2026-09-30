@@ -382,6 +382,16 @@ def on_install(shop_domain: str, access_token: str) -> Shop:
     metafield_result = ensure_metafield_definitions(shop_domain, access_token)
     logger.info("Metafield definitions: %s", metafield_result)
 
+    # Step 4: Price snapshot of all active variants
+    from apps.compliance.price_snapshot import snapshot_prices
+
+    try:
+        snapshot_count = snapshot_prices(shop, access_token)
+        logger.info("Price snapshot: %d variants recorded for %s", snapshot_count, shop_domain)
+    except Exception as exc:
+        logger.error("Price snapshot failed for %s: %s", shop_domain, exc)
+        # Non-fatal — continue with installation
+
     # Step 6: Write default shop metafields
     write_result = write_default_shop_metafields(shop, access_token)
     logger.info("Default shop metafields written: %s", write_result)

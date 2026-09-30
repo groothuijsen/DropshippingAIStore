@@ -93,9 +93,68 @@ def handle_subscription_update(receipt: WebhookReceipt) -> None:
 
 
 def handle_product_update(receipt: WebhookReceipt) -> None:
-    """New prices per variant into PriceHistory."""
-    # TODO: Implement in T-007 (price snapshot)
-    logger.info("Product update webhook for %s — TODO", receipt.shop_domain)
+    """New prices per variant into PriceHistory if they differ from the last row."""
+    import json
+    from decimal import Decimal, InvalidOperation
+
+    from apps.compliance.models import PriceHistory
+    from apps.core.crypto import decrypt_token
+    from apps.core.models import Shop
+
+    shop = Shop.objects.filter(domain=receipt.shop_domain).first()
+    if not shop:
+        logger.warning("Shop %s not found for products/update webhook", receipt.shop_domain)
+        return
+
+    # Parse the webhook body
+    body = receipt.body_json if hasattr(receipt, "body_json") else None
+    if body is None:
+        # Re-read from stored raw body if available
+        logger.warning("No body parsed for webhook %s — skipping price snapshot", receipt.webhook_id)
+        return
+
+    variants = body.get("variants", [])
+    now = timezone.now()
+    created = 0
+
+    for variant in variants:
+        variant_gid = variant.get("admin_graphql_api_id", "")
+        price_str = variant.get("price", "0")
+        currency = shop.currency_code
+
+        if not variant_gid:
+            continue
+
+        try:
+            price = Decimal(price_str)
+        except (InvalidOperation, TypeError):
+            continue
+
+        last = (
+            PriceHistory.objects.filter(
+                shop=shop,
+                variant_gid=variant_gid,
+                market_handle="primary",
+            )
+            .order_by("-observed_at")
+            .first()
+        )
+
+        if last and last.price == price:
+            continue  # Same price, no new row
+
+        PriceHistory.objects.create(
+            shop=shop,
+            variant_gid=variant_gid,
+            market_handle="primary",
+            price=price,
+            currency=currency,
+            observed_at=now,
+            source="webhook",
+        )
+        created += 1
+
+    logger.info("Product update for %s: %d price rows created", receipt.shop_domain, created)
 
 
 def handle_product_delete(receipt: WebhookReceipt) -> None:
