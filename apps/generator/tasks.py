@@ -2,6 +2,7 @@
 
 See docs/05-ai-pipeline.md §1.
 Orchestration: run_job(job_id) builds a Celery chain of steps not yet succeeded.
+Limits integration: reserve at job start, consume on success, release on failure (08 §1).
 """
 
 from __future__ import annotations
@@ -23,6 +24,31 @@ PAGE_STEP_ORDER: list[str] = ["import", "research", "copy", "images", "complianc
 
 # Step order for a store job (05 §1): only import and research
 STORE_STEP_ORDER: list[str] = ["import", "research"]
+
+
+def _reserve_usage(job: GenerationJob) -> bool:
+    """Reserve store_generations for this job. Returns False if limit reached."""
+    from apps.billing.limits import reserve
+
+    result = reserve(job.shop, "store_generations", 1)
+    if not result.allowed:
+        logger.info("Plan limit reached for shop %s: %s", job.shop_id, result.message)
+        return False
+    return True
+
+
+def _consume_usage(job: GenerationJob) -> None:
+    """Convert reservation to consumption on job success."""
+    from apps.billing.limits import consume
+
+    consume(job.shop, "store_generations", 1)
+
+
+def _release_usage(job: GenerationJob) -> None:
+    """Release reservation on job failure."""
+    from apps.billing.limits import release
+
+    release(job.shop, "store_generations", 1)
 
 
 def get_pending_steps(job: GenerationJob) -> list[JobStep]:
@@ -93,6 +119,7 @@ def execute_job(job_id: str) -> dict[str, Any]:
 
     Builds a chain of steps that are not yet succeeded.
     Each step stores output as a checkpoint in JobStep.output.
+    Limits: reserve at start, consume on success, release on failure (08 §1).
     """
     from django.core.exceptions import ObjectDoesNotExist
 
@@ -124,6 +151,15 @@ def execute_job(job_id: str) -> dict[str, Any]:
         update_job_from_steps(job)
         return {"status": job.status}
 
+    # Reserve usage for this job (first time only — not on resume)
+    if not job.started_at and not _reserve_usage(job):
+        job.status = JobStatus.FAILED
+        job.error_code = "PLAN_LIMIT_REACHED"
+        job.error_message = "Plan limit reached. Please upgrade your plan."
+        job.finished_at = timezone.now()
+        job.save(update_fields=["status", "error_code", "error_message", "finished_at"])
+        return {"error": "PLAN_LIMIT_REACHED"}
+
     # Mark job as running
     job.status = JobStatus.RUNNING
     if not job.started_at:
@@ -144,6 +180,7 @@ def execute_job(job_id: str) -> dict[str, Any]:
             job.error_message = exc.merchant_message
             job.finished_at = timezone.now()
             job.save(update_fields=["status", "error_code", "error_message", "finished_at"])
+            _release_usage(job)
             return {"error": exc.code}
 
         # Mark step as running
@@ -170,6 +207,7 @@ def execute_job(job_id: str) -> dict[str, Any]:
             job.error_message = str(exc)
             job.finished_at = timezone.now()
             job.save(update_fields=["status", "error_code", "error_message", "finished_at"])
+            _release_usage(job)
             logger.error("Step %s failed for job %s: %s", step.name, job_id, exc)
             return {"error": job.error_code}
 
@@ -183,6 +221,11 @@ def execute_job(job_id: str) -> dict[str, Any]:
     # All steps completed
     update_job_from_steps(job)
     accumulate_job_cost(job)
+
+    # Consume usage on success
+    if job.status == JobStatus.SUCCEEDED:
+        _consume_usage(job)
+
     return {"status": job.status, "ai_cost_usd": str(job.ai_cost_usd)}
 
 
