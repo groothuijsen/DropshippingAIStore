@@ -1,4 +1,4 @@
-mutation MetaobjectDefinitionCreate($definition: MetaobjectDefinitionInput!) {
+mutation MetaobjectDefinitionCreate($definition: MetaobjectDefinitionCreateInput!) {
   metaobjectDefinitionCreate(definition: $definition) {
     metaobjectDefinition {
       id
