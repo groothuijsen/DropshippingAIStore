@@ -26,8 +26,15 @@ def health_check(request: HttpRequest) -> JsonResponse:
 
 def dashboard(request: HttpRequest):
     """Admin dashboard — embedded in Shopify."""
+    from .auth_flow import ensure_shop
+
     shop_domain = getattr(request, "shop_domain", None)
     ui_locale = getattr(request, "ui_locale", "en")
+
+    # First load inside the admin iframe: bootstrap the shop via token
+    # exchange if needed (docs/03-shopify-integration.md §2.1).
+    shop = ensure_shop(request) if shop_domain else None
+
     return render(
         request,
         "app/dashboard.html",
@@ -35,6 +42,7 @@ def dashboard(request: HttpRequest):
             "shopify_api_key": settings.SHOPIFY_API_KEY,
             "shop_domain": shop_domain,
             "ui_locale": ui_locale,
+            "shop": shop,
         },
     )
 
