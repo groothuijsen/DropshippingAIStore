@@ -1,5 +1,5 @@
-mutation CollectionDelete($id: ID!) {
-  collectionDelete(id: $id) {
+mutation CollectionDelete($input: CollectionDeleteInput!) {
+  collectionDelete(input: $input) {
     deletedCollectionId
     userErrors { field message }
   }
