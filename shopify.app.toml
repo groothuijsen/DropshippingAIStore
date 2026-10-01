@@ -4,7 +4,7 @@
 client_id = "6fe97b35dda65c86198cb2c409a4db87"
 name = "Mosaiq"
 handle = "mosaiq"
-application_url = "https://shop.mosaiq.marketing"
+application_url = "https://shop.mosaiq.marketing/app/"
 embedded = true
 
 [access_scopes]

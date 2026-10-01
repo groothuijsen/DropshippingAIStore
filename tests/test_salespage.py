@@ -28,11 +28,21 @@ class TestSalespage:
         assert "application/ld+json" in content
 
     @override_settings(ALLOWED_HOSTS=["shop.mosaiq.marketing", "testserver"])
-    def test_root_404s_on_app_subdomain(self):
-        """The app backend subdomain must NOT serve the salespage."""
+    def test_root_redirects_to_app_on_app_subdomain(self):
+        """Root on the app backend redirects to /app/ with query intact."""
         client = Client()
-        response = client.get("/", HTTP_HOST="shop.mosaiq.marketing")
-        assert response.status_code == 404
+        response = client.get(
+            "/?shop=foo.myshopify.com&host=abc123",
+            HTTP_HOST="shop.mosaiq.marketing",
+        )
+        assert response.status_code == 302
+        location = response["Location"]
+        assert location.startswith("/app/?")
+        assert "shop=foo.myshopify.com" in location
+        assert "host=abc123" in location
+        # Redirect must be frameable by the Shopify admin
+        assert "frame-ancestors" in response["Content-Security-Policy"]
+        assert "admin.shopify.com" in response["Content-Security-Policy"]
 
     @override_settings(ALLOWED_HOSTS=["testserver"])
     def test_root_404s_on_unknown_host(self):
