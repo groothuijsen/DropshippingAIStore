@@ -12,7 +12,7 @@ embedded = true
 # - No metaobject scopes: since 2026-04 an app needs no scope for its own $app: metaobject types.
 # - pageCreate: write_online_store_pages (or write_content). fileCreate: write_files. shopLocales: read_locales.
 # - read_inventory: needed to read the fulfillment location per variant for source detection (06 §4).
-scopes = "write_products,write_discounts,write_online_store_pages,write_files,read_inventory,read_locales,read_markets,write_online_store_navigation,write_publications"
+scopes = "write_products,write_discounts,write_online_store_pages,write_files,read_inventory,read_locales,read_markets,write_online_store_navigation,read_publications,write_publications"
 use_legacy_install_flow = false
 
 [auth]
