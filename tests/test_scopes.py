@@ -42,13 +42,13 @@ class TestGetGrantedScopes:
         mock_client.execute.return_value = {
             "currentAppInstallation": {
                 "id": "gid://shopify/AppInstallation/1",
-                "accessScopes": {
-                    "nodes": [
-                        {"handle": "write_products"},
-                        {"handle": "write_online_store_navigation"},
-                        {"handle": "write_publications"},
-                    ]
-                },
+                # API 2026-07 real shape (live-verified on dev store):
+                # accessScopes is a plain list, NOT a connection with nodes.
+                "accessScopes": [
+                    {"handle": "write_products"},
+                    {"handle": "write_online_store_navigation"},
+                    {"handle": "write_publications"},
+                ],
             }
         }
         mock_get_client.return_value = mock_client

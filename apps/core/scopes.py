@@ -50,8 +50,12 @@ def get_granted_scopes(shop_domain: str, access_token: str) -> set[str]:
     finally:
         client.close()
 
-    nodes = result["currentAppInstallation"]["accessScopes"]["nodes"]
-    return {node["handle"] for node in nodes}
+    # API 2026-07: accessScopes is a plain LIST of {handle}, not a
+    # connection with nodes (live-verified on the dev store 2026-10-01).
+    access_scopes = result["currentAppInstallation"]["accessScopes"]
+    if isinstance(access_scopes, dict):
+        access_scopes = access_scopes.get("nodes", [])
+    return {node["handle"] for node in access_scopes}
 
 
 def missing_scopes(granted: set[str]) -> list[str]:
