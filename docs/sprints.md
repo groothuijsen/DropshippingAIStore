@@ -77,3 +77,60 @@ Numbering per domain (not per sprint). Sprints of 2 weeks; 6 sprints = MVP (week
 | Beta | 15–18 | bug fixes, T-090, T-093 |
 
 If a sprint overruns: first move T-052, T-053 and T-073 to v1.1 (not the compliance tickets).
+
+## v1.1 tickets — store builder additions (F15–F18, see 12)
+
+Pick these up only after the MVP release checklist (T-092) passes. Recommended order: F18 and F17 first (small, compliance value), then F15, then F16.
+
+| Ticket | Title | Spec / docs | Depends on | Deliverable |
+| --- | --- | --- | --- | --- |
+| **Foundation v1.1** | | | | |
+| T-110 | Scopes `write_online_store_navigation` + `write_publications`, webhook `products/create`, scope check + re-grant screen; fixtures for `collection_create`, `publications`, `publishable_publish`, `menu_create`, `menu_update`, `menu_delete`, `collection_delete`, `page_delete`, `product_variants_bulk_update`, `inventory_item_cost`; answer Q18/Q19 | 12 §4, F15-2 | T-092 | fixtures recorded, 03 updated, criteria F15-2 |
+| T-111 | `BusinessDetails` model + settings screen; legal templates (07 §7) and contact page filled from it; `is_complete()` | 12 §2.1, F15-9 | T-085 | legal pages without `[...]` placeholders when details are complete |
+| **Delivery times (F18)** | | | | |
+| T-140 | `DeliveryProfile` + `DeliveryOverride` models, settings and product screens, `estimate()` | F18-1..3, 12 §2.4 | T-111 | criteria F18-1..3 |
+| T-141 | Delivery metafield sync task + `mq-price` rendering + cut-off suppression + 30-day block | F18-4..7, 12 §8 | T-140, T-072 | criteria F18-4..7 |
+| T-142 | Claim rule `SHIPPING_CLAIM` + copy-step input/guardrail + 5 evalset cases | F18-8..9, 12 §5, §8 | T-140 | criteria F18-8..9 |
+| **Price advisor (F17)** | | | | |
+| T-130 | `PricingSettings`, VAT table, `advise()` with the exact test cases, advisor screen | F17-1..3, 6..7 | T-110 | criteria F17-1..3, 6..7 |
+| T-131 | Apply price for writable products + guard tests for sync-app products + audit log | F17-4..5 | T-130, T-021 | criteria F17-4..5 |
+| **Start from zero (F15)** | | | | |
+| T-112 | `StoreBlueprint` model + route choice in onboarding `brand` + brief screen + names step (prompt `niche_names`, blocklists, RDAP check, TMview link, regenerate) | F15-1, 3, 4; 12 §2.2 | T-110 | criteria F15-1, 3, 4; answer Q21 |
+| T-113 | Brand step (prompt `niche_brand`) → existing BrandKit form | F15-5 | T-112, T-030 | criteria F15-5 |
+| T-114 | Product ideas (prompt `product_ideas`) + import-waiting screen (webhook + poll) + selection | F15-6, 7 | T-113 | criteria F15-6, 7 |
+| T-115 | Structure proposal (prompt `store_structure`) + editable tree | F15-8 | T-114 | criteria F15-8 |
+| T-116 | Page types `faq`, `shipping`, `returns`: schemas, section rules, fact blocks from models, `mq-page-sections` rendering | 12 §3, F15-16, F18-10 | T-111, T-140, T-050 | criteria F15-16, F18-10 |
+| T-117 | `store_build` job: limit reservation, collections, page/PDP child jobs, menu, `ManagedResource`, status screen, retry, idempotency | F15-10, 11, 15; 12 §5, §7 | T-115, T-116 | criteria F15-10, 11, 15 |
+| T-118 | Menu placement step + "Publish store" (go-live + collection publish) + Undo | F15-12..14 | T-117 | criteria F15-12..14; answer Q20 |
+| **Plain-language edits (F16)** | | | | |
+| T-120 | `PageEdit` model, prompt `edit_page`, operation validation and apply engine, `page_edits` limit | F16-2, 4, 5, 8; 12 §3 | T-051 | criteria F16-2, 4, 5, 8 |
+| T-121 | Editor UI: instruction field, per-section button, diff view, apply/reject, other languages | F16-1, 3, 6, 7, 9 | T-120 | criteria F16-1, 3, 6, 7, 9 |
+
+| Sprint | Tickets |
+| --- | --- |
+| S7 | T-110, T-111, T-140, T-141, T-142 |
+| S8 | T-130, T-131, T-112, T-113 |
+| S9 | T-114, T-115, T-116, T-117 |
+| S10 | T-118, T-120, T-121 |
+
+## v1.2 tickets — marketing site and sales copy (F19, see 13)
+
+Start after the v1.1 tickets (S10) are done, so the site describes what actually ships. T-093 (App Store listing) now uses `docs/marketing/app-store-listing.md` and depends on T-156 (privacy policy URL).
+
+| Ticket | Title | Spec / docs | Depends on | Deliverable |
+| --- | --- | --- | --- | --- |
+| T-150 | `apps/marketing`: host guard (`shopify.mosaiq.marketing`), language-prefixed routes, content loader + section schemas, `check_marketing_content` in CI; remove `apps/core/salespage.py` | F19-1, 2; 13 §2–4 | T-121 | criteria F19-1, 2 |
+| T-151 | Site design: self-hosted fonts (+ licences), tokens, templates per section type, OG image generation, no third-party requests test | F19-5; 13 §5 | T-150 | criterion F19-5; answer Q22 |
+| T-152 | Transfer EN and NL copy into content files, link claims, update `claims.md` statuses | F19-3; `docs/marketing/site-copy.*.md`, `claims.md` | T-151 | all EN/NL pages render; check passes |
+| T-153 | Pricing table from `plans.py`; comparison section with `last_checked`, sources, 90-day reminder, 120-day auto-hide | F19-4, 11 | T-152 | criteria F19-4, 11 |
+| T-154 | SEO: sitemap, robots, canonical, hreflang, JSON-LD; cookieless self-hosted analytics; Lighthouse ≥ 95 in CI | F19-6, 8, 9; 13 §5 | T-152 | criteria F19-6, 8, 9 |
+| T-155 | `Lead` model, early-access form, double opt-in, honeypot + rate limit, emails 1–2, unconfirmed-lead cleanup, `@install` switch via `MARKETING_APP_LISTED` | F19-7; 13 §6; `emails.md` §1–2 | T-150 | criterion F19-7; answer Q24 |
+| T-156 | Legal pages from `legal-outline.md` with draft banner; company-details settings + footer; extend T-090 lawyer review to these pages | F19-10; `legal-outline.md` | T-150, T-111 | criterion F19-10; answer Q23 |
+| T-157 | Help centre (installation, blocks/templates, start from zero, compliance, billing, uninstall) linked from F14 and the listing; blog list/post/RSS; 6 draft posts from `blog-briefs.md` | F19-12, 13 | T-152 | criteria F19-12, 13 |
+| T-158 | German copy from the English master (`LLM_MODEL_COPY`), native review gate; `/de/` stays 404 until approved | F19-3; Q25 | T-152 | DE content as drafts; switch on after review |
+| T-159 | In-app onboarding email sequence + uninstall reason link | F19-14; `emails.md` §3–4 | T-155 | criterion F19-14 |
+
+| Sprint | Tickets |
+| --- | --- |
+| S11 | T-150, T-151, T-152, T-153, T-154 |
+| S12 | T-155, T-156, T-157, T-158, T-159, then T-093 |

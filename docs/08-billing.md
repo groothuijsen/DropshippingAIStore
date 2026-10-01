@@ -71,3 +71,7 @@ mutation SubscriptionCreate($name: String!, $returnUrl: URL!, $trialDays: Int, $
 - Upgrade and downgrade with the correct `replacementBehavior`.
 - Second installation on the same domain → `trialDays = 0`.
 - Limit reached → `PLAN_LIMIT_REACHED`, counter not exceeded with concurrent jobs (test with two parallel transactions, `select_for_update`).
+
+## v1.1 additions
+
+See `docs/12-v1.1-store-builder.md` §7 (limits for store builds and page edits). That document takes precedence for F15–F18.

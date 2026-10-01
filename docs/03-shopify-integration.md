@@ -278,3 +278,7 @@ Source: [shopify.dev – theme app extension configuration](https://shopify.dev/
   - `template` = `product`, `page`, `index`, or a custom template such as `product.mosaiq` / `page.mosaiq` (09).
 - Enable app embed: `https://{shop}/admin/themes/current/editor?context=apps&template={template}&activateAppId={SHOPIFY_API_KEY}/{embed_handle}`
 - Open via App Bridge (`open(url, "_top")`), not inside the iframe.
+
+## v1.1 additions
+
+See `docs/12-v1.1-store-builder.md` §4 (new scopes write_online_store_navigation and write_publications, webhook products/create, collection/menu/publication/price operations, delivery metafield). That document takes precedence for F15–F18.

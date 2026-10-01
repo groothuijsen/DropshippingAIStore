@@ -84,3 +84,7 @@ Mosaiq cannot see whether a block has actually been placed (no `read_themes`). T
 - Tiers: quantity + percentage; live table with tier total, savings relative to the current unit price, unit price.
 - Timer: toggle disabled with the explanation "Alleen mogelijk als het aanbod echt eindigt; vul een einddatum in" ("Only possible if the offer genuinely ends; enter an end date") until `ends_at` is filled in.
 - No field for an "original price": it always comes from the variant.
+
+## v1.1 additions
+
+See `docs/12-v1.1-store-builder.md` §6 (wizard, settings and editor routes). That document takes precedence for F15–F18.

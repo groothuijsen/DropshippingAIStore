@@ -82,3 +82,7 @@ Do not change anything in this file without Paul's explicit permission. If somet
 | `agency` | Agency | USD 149.00 | USD 1490.00 |
 
 Trial: 7 days. Limits are defined in `docs/08-billing.md`.
+
+## v1.1 additions
+
+See `docs/12-v1.1-store-builder.md` §1 (decisions D-15.1 to D-18.1). That document takes precedence for F15–F18.

@@ -33,3 +33,23 @@ Researched on 30 September 2026. Answered questions remain listed so that it is 
 | Q13 | Discount limit and field names | 25 active automatic discounts per shop, including other apps. `discountClasses` and `functionHandle` exist; `functionId` deprecated in 2026-07. Target `cart.lines.discounts.generate.run`. | 04 §2, 02 `Offer`, F09-2 | [discountAutomaticAppCreate](https://shopify.dev/docs/api/admin-graphql/latest/mutations/discountAutomaticAppCreate), [Help Center](https://help.shopify.com/en/manual/discounts/discount-methods/automatic-discounts) |
 | Q14 | What remains after uninstall? | Blocks disappear automatically from the theme; metafield definitions are deleted, values temporarily retained and reattached on reinstall (new IDs). | 03 §3, F00-8, F13-3 | [Metafield definitions](https://shopify.dev/docs/apps/build/metafields/definitions) |
 | — | Font picker in app extensions | Does not work reliably (fonts do not load in the editor). | Bundled OFL fonts in `mq-tokens` (04) | [community.shopify.dev #12948](https://community.shopify.dev/t/font-picker-and-app-metadata-inside-theme-extesion-settings/12948) |
+
+## v1.1 (from 12 §9)
+
+| # | Question | Blocks | Owner | Status |
+| --- | --- | --- | --- | --- |
+| Q18 | Exact shape of `CollectionCreateSourceTargetInput` (manual products in `sources`) in API 2026-07 | T-117 | Hermes (fixture) | open |
+| Q19 | Does `menuCreate` fail when a menu with the same handle exists, or auto-suffix the handle? | T-117 | Hermes (fixture) | open |
+| Q20 | Can the theme editor be deep-linked to the header section of the active theme for menu selection (Dawn, Horizon)? | T-118 | Hermes | open |
+| Q21 | Is a domain check via RDAP from the production server acceptable without rate-limit issues? | T-112 | Hermes | open |
+
+## v1.2 (from 13 §8)
+
+Q8 (app domain) is answered: app on `shop.mosaiq.marketing`, marketing site on `shopify.mosaiq.marketing`.
+
+| # | Question | Blocks | Owner | Status |
+| --- | --- | --- | --- | --- |
+| Q22 | Logo and visual identity (keep the current lime-on-dark wordmark or align with Mosaiq Marketing?) | T-151 | Paul | open |
+| Q23 | Company details for footer and `/legal/company/`: legal entity, KvK number, VAT ID, address | T-156 | Paul | open |
+| Q24 | Email provider for marketing and onboarding mail (EU-hosted preferred) | T-155 | Paul | open |
+| Q25 | Native German review before `/de/` goes live | T-158 | Paul | open |

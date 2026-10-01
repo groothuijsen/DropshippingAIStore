@@ -192,3 +192,7 @@ Self-service returns and cancellations on, cancellation "Until item is fulfilled
 ## 9. Compliance score per page
 
 `Page.compliance_score = 100 − 25 × open_block_count − 5 × open_warn_count (without override) − 20 if GPSR incomplete − 10 if unit price missing where required`, minimum 0. Recalculated on every change to sections, findings, GPSR or unit price. (`ComplianceReport.claims_score` in 05 counts only the claims.) Shown in the editor and the page list. Publishing requires: no open `block`, GPSR complete, unit price complete where required.
+
+## v1.1 additions
+
+See `docs/12-v1.1-store-builder.md` §8 (delivery information, 30-day rule, SHIPPING_CLAIM, brand-name rules, price advisor and Omnibus). That document takes precedence for F15–F18.

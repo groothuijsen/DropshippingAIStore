@@ -391,3 +391,7 @@ class PublishResult(BaseModel):
 | `SHOPIFY_THROTTLED` | Rate limit after retries | Shopify is druk. We proberen het over een paar minuten opnieuw. | Shopify is busy. We'll try again in a few minutes. |
 
 Limits are **reserved** at job start (`reserved_*` in `UsageCounter`, in the same transaction as the limit check, with `select_for_update`): 1 store generation for `kind=store`, 5 images per page. On completion: convert the consumed amounts from reserved to consumed, release the rest. A failed job releases everything, except images that have already been uploaded. This way two parallel jobs cannot exceed the limit.
+
+## v1.1 additions
+
+See `docs/12-v1.1-store-builder.md` §3 (new schemas and page types faq, shipping, returns) and §5 (store_build job, prompts, error codes). That document takes precedence for F15–F18.

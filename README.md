@@ -23,6 +23,8 @@ Mosaiq is an embedded Shopify app that turns a product into a complete, own-bran
 | 15 | `docs/specs/` | One spec per feature with acceptance criteria |
 | 16 | `docs/sprints.md` | Tickets, order, dependencies |
 | 17 | `docs/open-questions.md` | What has not been decided yet and who decides |
+| 18 | `docs/12-v1.1-store-builder.md` | v1.1 additions: start from zero (F15), plain-language edits (F16), price advisor (F17), delivery times (F18) |
+| 19 | `docs/13-marketing-site.md` + `docs/marketing/` | v1.2: marketing site on shopify.mosaiq.marketing, sales copy, App Store listing, emails, legal outlines (F19) |
 
 ## MVP scope (v1.0)
 

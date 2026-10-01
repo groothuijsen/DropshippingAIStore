@@ -326,3 +326,7 @@ The only table containing personal data of shoppers (AGENTS.md §2). Retention p
 | `processed` | BooleanField default False | |
 
 Delete rows older than 30 days via a beat task.
+
+## v1.1 additions
+
+See `docs/12-v1.1-store-builder.md` §2 (BusinessDetails, StoreBlueprint, ManagedResource, DeliveryProfile/DeliveryOverride, PageEdit, PricingSettings/PriceAdvice, and changes to Shop, Page, GenerationJob, UsageCounter). That document takes precedence for F15–F18.
