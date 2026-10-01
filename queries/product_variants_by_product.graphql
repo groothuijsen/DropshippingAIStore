@@ -1,0 +1,11 @@
+query ProductVariantsByProduct($id: ID!) {
+  product(id: $id) {
+    id
+    variants(first: 10) {
+      nodes {
+        id
+        price
+      }
+    }
+  }
+}

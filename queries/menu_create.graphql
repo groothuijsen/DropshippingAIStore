@@ -1,6 +1,6 @@
-mutation MenuCreate($menu: MenuCreateInput!) {
-  menuCreate(menu: $menu) {
-    menu { id title handle items { id type resourceId title } }
-    userErrors { field message code }
+mutation MenuCreate($title: String!, $handle: String!, $items: [MenuItemInput!]!) {
+  menuCreate(title: $title, handle: $handle, items: $items) {
+    menu { id title handle items { id type resourceId title url } }
+    userErrors { field message }
   }
 }

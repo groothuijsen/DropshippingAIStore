@@ -1,6 +1,6 @@
 mutation CollectionCreate($collection: CollectionCreateInput!) {
   collectionCreate(collection: $collection) {
     collection { id title handle descriptionHtml templateSuffix }
-    userErrors { field message code }
+    userErrors { field message }
   }
 }
