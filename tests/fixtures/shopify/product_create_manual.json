@@ -1,0 +1,23 @@
+{
+  "_comment": "Real response captured against dev store mosaiq-pod.myshopify.com, API 2026-07, by scripts capture_t110.py (T-110). NOT hand-written (AGENTS.md \u00a75).",
+  "operation": "product_create_manual",
+  "variables": {
+    "input": {
+      "title": "T110 Test Product (fixture capture)",
+      "descriptionHtml": "<p>Temporary product for T-110 fixture capture.</p>",
+      "status": "DRAFT",
+      "vendor": "Mosaiq Dev"
+    }
+  },
+  "response": {
+    "productSet": {
+      "product": {
+        "id": "gid://shopify/Product/10781482090790",
+        "title": "T110 Test Product (fixture capture)",
+        "handle": "t110-test-product-fixture-capture",
+        "status": "DRAFT"
+      },
+      "userErrors": []
+    }
+  }
+}

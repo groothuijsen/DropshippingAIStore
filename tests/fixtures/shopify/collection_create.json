@@ -1,0 +1,40 @@
+{
+  "_comment": "Real response captured against dev store mosaiq-pod.myshopify.com, API 2026-07, by scripts capture_t110.py (T-110). NOT hand-written (AGENTS.md \u00a75).",
+  "operation": "collection_create",
+  "variables": {
+    "collection": {
+      "title": "T110 Test Collection",
+      "descriptionHtml": "<p>Fixture capture collection.</p>",
+      "handle": "t110-test-collection",
+      "templateSuffix": "mosaiq",
+      "sortOrder": "BEST_SELLING",
+      "sources": [
+        {
+          "source": {
+            "title": "Manual products",
+            "inclusion": {
+              "matchType": "ANY",
+              "selections": [
+                {
+                  "productId": "gid://shopify/Product/10781482090790"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  "response": {
+    "collectionCreate": {
+      "collection": {
+        "id": "gid://shopify/Collection/681635873062",
+        "title": "T110 Test Collection",
+        "handle": "t110-test-collection",
+        "descriptionHtml": "<p>Fixture capture collection.</p>",
+        "templateSuffix": "mosaiq"
+      },
+      "userErrors": []
+    }
+  }
+}

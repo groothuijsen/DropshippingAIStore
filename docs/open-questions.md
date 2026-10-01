@@ -38,8 +38,8 @@ Researched on 30 September 2026. Answered questions remain listed so that it is 
 
 | # | Question | Blocks | Owner | Status |
 | --- | --- | --- | --- | --- |
-| Q18 | Exact shape of `CollectionCreateSourceTargetInput` (manual products in `sources`) in API 2026-07 | T-117 | Hermes (fixture) | open |
-| Q19 | Does `menuCreate` fail when a menu with the same handle exists, or auto-suffix the handle? | T-117 | Hermes (fixture) | open |
+| Q18 | Exact shape of `CollectionCreateSourceTargetInput` (manual products in `sources`) in API 2026-07 | T-117 | Hermes (fixture) | answered 2026-10-01: `sources: [{source: {title (required), inclusion: {matchType, selections: [{productId, variantIds}]}}}]` — selections under inclusion, live-verified, fixture `collection_create.json` |
+| Q19 | Does `menuCreate` fail when a menu with the same handle exists, or auto-suffix the handle? | T-117 | Hermes (fixture) | blocked: needs `write_online_store_navigation` re-grant on dev store (T-110 scope deploy) |
 | Q20 | Can the theme editor be deep-linked to the header section of the active theme for menu selection (Dawn, Horizon)? | T-118 | Hermes | open |
 | Q21 | Is a domain check via RDAP from the production server acceptable without rate-limit issues? | T-112 | Hermes | open |
 

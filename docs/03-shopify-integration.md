@@ -17,7 +17,7 @@ embedded = true
 #   (shopify.dev/changelog/metaobject-scopes-not-required-for-app-metaobjects).
 # - pageCreate: write_online_store_pages (or write_content). fileCreate: write_files. shopLocales: read_locales.
 # - read_inventory: needed to read the fulfillment location per variant for source detection (06 §4).
-scopes = "write_products,write_discounts,write_online_store_pages,write_files,read_inventory,read_locales,read_markets"
+scopes = "write_products,write_discounts,write_online_store_pages,write_files,read_inventory,read_locales,read_markets,write_online_store_navigation,write_publications"
 use_legacy_install_flow = false
 
 [auth]
@@ -287,3 +287,43 @@ Source: [shopify.dev – theme app extension configuration](https://shopify.dev/
 ## v1.1 additions
 
 See `docs/12-v1.1-store-builder.md` §4 (new scopes write_online_store_navigation and write_publications, webhook products/create, collection/menu/publication/price operations, delivery metafield). That document takes precedence for F15–F18.
+
+### v1.1 verified shapes (T-110, live against dev store, API 2026-07)
+
+All shapes below were verified by running the operation against
+`mosaiq-pod.myshopify.com` and recording the response as a fixture in
+`tests/fixtures/shopify/` (AGENTS.md §5). Deviations from the docs are
+marked.
+
+- **Scopes**: `write_online_store_navigation` (menuCreate/menuUpdate/menuDelete),
+  `write_publications` (publishablePublish). The `publications` **query**
+  additionally requires `read_publications` — add it to the toml when the
+  re-grant is deployed. Existing installs must re-authorise
+  (`apps/core/scopes.py`: `check_start_scopes()`, `build_regrant_url()`;
+  error code `SCOPE_MISSING`). Granted scopes are read live via
+  `currentAppInstallation { accessScopes { handle } }` — never inferred
+  from the token.
+- **Webhook**: `products/create` added to `shopify.app.toml` topics.
+- **`collectionCreate(collection: CollectionCreateInput!)`** — one arg,
+  not the legacy `input`. Fields: `title` (required), `handle`,
+  `descriptionHtml`, `templateSuffix`, `sortOrder`, `sources`.
+  Manual product membership (Q18, verified by live create):
+  `sources: [{source: {title: "<label>" (required), inclusion: {matchType: ANY|ALL, selections: [{productId: ID!, variantIds: [ID]}]}}}]`
+  — `selections` lives under `inclusion`, NOT directly under `source`.
+- **`collectionDelete(input: CollectionDeleteInput!)`** — wrapped input
+  arg (deviation: `menuDelete`/`pageDelete` take a bare `id`).
+- **`menuCreate(title: String!, handle: String!, items: [MenuItemCreateInput!]!)`**
+  — loose top-level args, there is NO `MenuCreateInput` type in 2026-07
+  (Q19 duplicate-handle behaviour still blocked on the scope re-grant).
+  `menuUpdate(id: ID!, title: String!, items: [MenuItemUpdateInput!]!)`.
+  `MenuItemCreateInput`: `title`, `type` (MenuItemType: FRONTPAGE,
+  COLLECTION, CATALOG, PAGE, HTTP, …), `resourceId`, `url`, `tags`.
+- **`productVariantsBulkUpdate(productId: ID!, variants: [ProductVariantsBulkInput!]!)`**
+  — price-only update: pass `{id, price}` per variant; verified live.
+- **`node(id:) { ... on ProductVariant { inventoryItem { unitCost { amount currencyCode } } } }`**
+  — reads the default supplier cost (scope read_inventory).
+- **`publishablePublish(id: ID!, input: [PublicationInput!]!)`** —
+  `PublicationInput`: `publicationId`, `publishDate`. Blocked on
+  `read_publications`/`write_publications` until re-grant.
+- **UserError has NO `code` field** in 2026-07 — only `field` + `message`
+  (deviation; several hand-written queries selected `code` and failed).

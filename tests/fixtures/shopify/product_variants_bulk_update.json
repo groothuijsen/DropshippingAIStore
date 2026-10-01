@@ -1,0 +1,24 @@
+{
+  "_comment": "Real response captured against dev store mosaiq-pod.myshopify.com, API 2026-07, by scripts capture_t110.py (T-110). NOT hand-written (AGENTS.md \u00a75).",
+  "operation": "product_variants_bulk_update",
+  "variables": {
+    "productId": "gid://shopify/Product/10781482090790",
+    "variants": [
+      {
+        "id": "gid://shopify/ProductVariant/53990460031270",
+        "price": "12.34"
+      }
+    ]
+  },
+  "response": {
+    "productVariantsBulkUpdate": {
+      "productVariants": [
+        {
+          "id": "gid://shopify/ProductVariant/53990460031270",
+          "price": "12.34"
+        }
+      ],
+      "userErrors": []
+    }
+  }
+}

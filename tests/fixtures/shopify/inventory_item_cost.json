@@ -1,0 +1,16 @@
+{
+  "_comment": "Real response captured against dev store mosaiq-pod.myshopify.com, API 2026-07, by scripts capture_t110.py (T-110). NOT hand-written (AGENTS.md \u00a75).",
+  "operation": "inventory_item_cost",
+  "variables": {
+    "id": "gid://shopify/ProductVariant/53990460031270"
+  },
+  "response": {
+    "node": {
+      "id": "gid://shopify/ProductVariant/53990460031270",
+      "inventoryItem": {
+        "id": "gid://shopify/InventoryItem/56161321910566",
+        "unitCost": null
+      }
+    }
+  }
+}

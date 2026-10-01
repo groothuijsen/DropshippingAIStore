@@ -1,0 +1,41 @@
+{
+  "_comment": "Real response captured against dev store mosaiq-pod.myshopify.com, API 2026-07, by scripts capture_t110.py (T-110). NOT hand-written (AGENTS.md \u00a75).",
+  "operation": "menu_create",
+  "variables": {
+    "title": "Mosaiq",
+    "handle": "mosaiq-main",
+    "items": [
+      {
+        "title": "Home",
+        "type": "FRONTPAGE",
+        "url": "/"
+      },
+      {
+        "title": "Test Collection",
+        "type": "COLLECTION",
+        "resourceId": "gid://shopify/Collection/1"
+      }
+    ]
+  },
+  "response": {
+    "errors": [
+      {
+        "message": "Access denied for menuCreate field. Required access: `write_online_store_navigation` access scope.",
+        "locations": [
+          {
+            "line": 2,
+            "column": 3
+          }
+        ],
+        "extensions": {
+          "code": "ACCESS_DENIED",
+          "documentation": "https://shopify.dev/api/usage/access-scopes",
+          "requiredAccess": "`write_online_store_navigation` access scope."
+        },
+        "path": [
+          "menuCreate"
+        ]
+      }
+    ]
+  }
+}

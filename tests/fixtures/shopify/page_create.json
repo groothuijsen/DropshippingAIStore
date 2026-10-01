@@ -1,0 +1,20 @@
+{
+  "_comment": "Real response captured against dev store mosaiq-pod.myshopify.com, API 2026-07, by scripts capture_t110.py (T-110). NOT hand-written (AGENTS.md \u00a75).",
+  "operation": "page_create",
+  "variables": {
+    "page": {
+      "title": "T110 Test Page",
+      "handle": "t110-test-page",
+      "body": "<p>Fixture capture page.</p>"
+    }
+  },
+  "response": {
+    "pageCreate": {
+      "page": {
+        "id": "gid://shopify/Page/170096591142",
+        "handle": "t110-test-page"
+      },
+      "userErrors": []
+    }
+  }
+}

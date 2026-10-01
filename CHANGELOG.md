@@ -1,5 +1,13 @@
 ## Unreleased
 
+### T-110 — scopes, scope check, GraphQL fixtures (2026-10-01)
+
+- **`shopify.app.toml`**: `write_online_store_navigation` + `write_publications` scopes; `products/create` webhook topic. Note: `publications` query also needs `read_publications` — add at deploy time.
+- **`apps/core/scopes.py`** (9 tests): `get_granted_scopes()` via `currentAppInstallation { accessScopes }`, `missing_scopes()`, `build_regrant_url()`, `check_start_scopes()` — safe default blocks with `SCOPE_MISSING` when the check fails.
+- **Fixtures recorded live** against the dev store (AGENTS.md §5): `collection_create` (with manual sources — **Q18 answered**: selections under `inclusion`, `source.title` required), `collection_delete` (`input:` wrapped arg), `product_variants_bulk_update` (price-only verified), `inventory_item_cost`, `product_variants_by_product`, `product_create_manual`, `page_create`, `page_delete`, `publications` (access-denied state).
+- **Q19 blocked**: menu/publication fixtures need the scope re-grant on the dev store (installed pre-scope-change); access-denied responses recorded as fixtures.
+- **API 2026-07 deviations found**: no `MenuCreateInput` (loose args, `MenuItemCreateInput` items); `collectionDelete(input:)` vs bare-id deletes; `UserError` has no `code` field. Documented in docs/03 "v1.1 verified shapes".
+
 ### Dev store install flow — E2E verified (2026-10-01)
 
 - **`run_on_install` completed end-to-end on the dev store**: metaobject definitions exist, all 11 metafield definitions created (`$app:mosaiq` namespace, 5 SHOP + 3 PRODUCT verified live), default shop metafields written, AuditLog `installed` entry created.

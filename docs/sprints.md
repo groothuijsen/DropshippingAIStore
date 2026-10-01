@@ -85,7 +85,7 @@ Pick these up only after the MVP release checklist (T-092) passes. Recommended o
 | Ticket | Title | Spec / docs | Depends on | Deliverable |
 | --- | --- | --- | --- | --- |
 | **Foundation v1.1** | | | | |
-| T-110 | Scopes `write_online_store_navigation` + `write_publications`, webhook `products/create`, scope check + re-grant screen; fixtures for `collection_create`, `publications`, `publishable_publish`, `menu_create`, `menu_update`, `menu_delete`, `collection_delete`, `page_delete`, `product_variants_bulk_update`, `inventory_item_cost`; answer Q18/Q19 | 12 §4, F15-2 | T-092 | fixtures recorded, 03 updated, criteria F15-2 |
+| T-110 | Scopes `write_online_store_navigation` + `write_publications`, webhook `products/create`, scope check + re-grant screen; fixtures for `collection_create`, `publications`, `publishable_publish`, `menu_create`, `menu_update`, `menu_delete`, `collection_delete`, `page_delete`, `product_variants_bulk_update`, `inventory_item_cost`; answer Q18/Q19 | 12 §4, F15-2 | T-092 | **DONE** 2026-10-01 except: fixtures for publications/publishable_publish/menu_* blocked on scope re-grant (dev store installed pre-scope-change; access-denied responses recorded as fixtures). Q18 answered; Q19 blocked on re-grant. Also: `read_publications` needed for the publications query — add to toml at deploy. |
 | T-111 | `BusinessDetails` model + settings screen; legal templates (07 §7) and contact page filled from it; `is_complete()` | 12 §2.1, F15-9 | T-085 | legal pages without `[...]` placeholders when details are complete |
 | **Delivery times (F18)** | | | | |
 | T-140 | `DeliveryProfile` + `DeliveryOverride` models, settings and product screens, `estimate()` | F18-1..3, 12 §2.4 | T-111 | criteria F18-1..3 |

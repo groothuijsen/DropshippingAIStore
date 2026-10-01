@@ -1,0 +1,15 @@
+{
+  "_comment": "Real response captured against dev store mosaiq-pod.myshopify.com, API 2026-07, by scripts capture_t110.py (T-110). NOT hand-written (AGENTS.md \u00a75).",
+  "operation": "collection_delete",
+  "variables": {
+    "input": {
+      "id": "gid://shopify/Collection/681635873062"
+    }
+  },
+  "response": {
+    "collectionDelete": {
+      "deletedCollectionId": "gid://shopify/Collection/681635873062",
+      "userErrors": []
+    }
+  }
+}

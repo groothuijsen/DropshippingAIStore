@@ -1,0 +1,26 @@
+{
+  "_comment": "Real response captured against dev store mosaiq-pod.myshopify.com, API 2026-07, by scripts capture_t110.py (T-110). NOT hand-written (AGENTS.md \u00a75).",
+  "operation": "publications",
+  "variables": {},
+  "response": {
+    "errors": [
+      {
+        "message": "Access denied for publications field. Required access: `read_publications` access scope.",
+        "locations": [
+          {
+            "line": 2,
+            "column": 3
+          }
+        ],
+        "extensions": {
+          "code": "ACCESS_DENIED",
+          "documentation": "https://shopify.dev/api/usage/access-scopes",
+          "requiredAccess": "`read_publications` access scope."
+        },
+        "path": [
+          "publications"
+        ]
+      }
+    ]
+  }
+}
