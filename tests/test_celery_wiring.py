@@ -30,3 +30,35 @@ class TestCeleryWiring:
         from apps.core.tasks import run_on_install
 
         assert run_on_install.name in config.celery_app.tasks
+
+
+class TestQueueRouting:
+    """Every task must land on a queue the worker actually consumes.
+
+    The worker starts with -Q default,ai,shopify,low. Celery's built-in
+    default queue is named "celery" — if task_default_queue is left
+    unset, unrouted tasks (e.g. core.tasks.run_on_install, whose route
+    pattern apps.core.tasks.* does not match its explicit name) go to
+    the "celery" queue and are never executed (seen in the dev store:
+    run_on_install stuck PENDING, 3 messages orphaned in queue celery).
+    """
+
+    WORKER_QUEUES = {"default", "ai", "shopify", "low"}
+
+    def test_default_queue_is_consumed_by_worker(self, settings):
+        assert settings.CELERY_TASK_DEFAULT_QUEUE == "default"
+
+    def test_every_registered_task_routes_to_worker_queue(self):
+        from config.celery import app
+
+        app.loader.import_default_modules()
+        router = app.amqp.router
+        for name in app.tasks:
+            if name.startswith("celery."):
+                continue  # built-ins (ping, revoke, ...) are never routed
+            queue = router.route({}, name).get("queue", "default")
+            queue_name = getattr(queue, "name", queue)
+            assert queue_name in self.WORKER_QUEUES, (
+                f"Task {name} routes to queue {queue_name!r}, "
+                f"which the worker does not consume"
+            )

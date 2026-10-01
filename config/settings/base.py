@@ -110,9 +110,16 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TASK_TIME_LIMIT = 600
 CELERY_TASK_SOFT_TIME_LIMIT = 540
+# The worker starts with -Q default,ai,shopify,low. Celery's built-in
+# default queue is named "celery" — leaving it unset strands unrouted
+# tasks in a queue nobody consumes.
+CELERY_TASK_DEFAULT_QUEUE = "default"
 CELERY_TASK_ROUTES = {
     "apps.ai.tasks.*": {"queue": "ai"},
     "apps.generator.tasks.run_*": {"queue": "shopify"},
+    # Task names: explicit name="core.tasks...." on the core tasks, the
+    # rest autodiscover as apps.<app>.tasks.<fn> — cover both spellings.
+    "core.tasks.*": {"queue": "default"},
     "apps.core.tasks.*": {"queue": "default"},
     "apps.billing.tasks.*": {"queue": "default"},
     "apps.webhooks.tasks.*": {"queue": "default"},
