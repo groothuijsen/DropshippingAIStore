@@ -238,3 +238,61 @@ Paul confirmed: (a) run the verification pass, (b) prices are USD 29/59/149.
 - Q22–Q25 + founding-member discount: Paul decisions for v1.2 tickets.
 
 Next in order after confirmation: T-110 (v1.1 foundation; T-092 now verified done).
+
+## Dev store install verification (2026-10-01)
+
+Dev store `mosaiq-pod.myshopify.com` created; Mosaiq app installed via the Shopify
+admin. The install surfaced a chain of environment/API issues. All fixed, committed
+and deployed to CT 412 (VPS at `80a9575`).
+
+### Fixes in order (each verified against the live store)
+
+1. **IP conflict** — CT 412 (mosaiq-shop) and CT 405 (garageconnect) both held
+   `172.16.0.212`; Shopify traffic intermittently hit GarageConnect's gunicorn.
+   Fixed: CT 412 → `172.16.0.213`, Traefik routes (`apps.yml`) + `.env` updated.
+   Lesson: check `pct config` for duplicate IPs before assigning.
+2. **Root on app host 404 + X-Frame-Options: DENY** — `application_url` lacked
+   `/app/`; Shopify loads the app URL in the admin iframe and a 404 with DENY
+   blocks framing. Fixed: shop-host root → 302 `/app/` preserving all Shopify
+   query params (shop/host/session/id_token) + frame-ancestors CSP
+   (`d50dcc0`); `shopify.app.toml` `application_url` → `https://shop.mosaiq.marketing/app/`.
+3. **HTTP 500 on app load** — `config/__init__.py` was empty: the web process
+   never initialized the Celery app from Django settings, so `shared_task`
+   fell back to `amqp://localhost:5672` (RabbitMQ). Tests masked it via
+   `CELERY_TASK_ALWAYS_EAGER = True`. Fixed: `from .celery import app as celery_app`
+   + `tests/test_celery_wiring.py` (`47d77da`).
+4. **Task PENDING forever** — `task_default_queue` defaulted to Celery's built-in
+   `celery` queue, but the worker consumes `-Q default,ai,shopify,low`; route
+   pattern `apps.core.tasks.*` also never matched the explicit task names
+   `core.tasks.*`. Fixed: `CELERY_TASK_DEFAULT_QUEUE = "default"` + route key
+   `core.tasks.*`; test asserts every registered task routes to a consumed
+   queue (`d72f374`).
+5. **token_decrypt_failed** — PostgreSQL BinaryField returns `memoryview` on
+   read; Fernet rejects it ("token must be bytes or str"). Fixed:
+   `decrypt_token(encrypted: bytes | memoryview)` with `bytes(encrypted)`
+   coercion + memoryview roundtrip test (`a94e92e`).
+6. **API 2026-07 GraphQL shapes** (all verified via introspection against the
+   dev store, per AGENTS.md §5):
+   - `metaobjectDefinitionCreate` input type is `MetaobjectDefinitionCreateInput`
+     (not `MetaobjectDefinitionInput`) — `6f80474`.
+   - `fieldDefinitions[].type` is a plain String (`"single_line_text_field"`),
+     not `{name: ...}` — `bc81153`.
+   - `metafieldDefinitionCreate` payload field is `createdDefinition`
+     (not `metafieldDefinition`) — `03cbdcb`.
+   - metaobject_reference metafield definitions REQUIRE
+     `validations: [{name: "metaobject_definition", value: "$app:<type>"}]`
+     ("Validations require that you select a metaobject", code=INVALID_OPTION).
+     `METAFIELD_DEFINITIONS` entries now carry the metaobject type as 5th
+     element; json definitions carry no validations — `80a9575`
+     (test: `test_metaobject_reference_carries_validation`).
+
+### State at end of session
+
+- Shop row active (`mosaiq-pod.myshopify.com`), dashboard renders in the admin
+  iframe ("Your Shopify store is connected").
+- Metaobject definitions created on the dev store (idempotent ensure ran clean).
+- `run_on_install` reaches the metafield-definition step; the validations fix
+  (`80a9575`) is deployed but the final successful run + audit-log verification
+  is the immediate next action (worker restart + re-dispatch pending approval).
+- Next ticket after install verification: **T-110** (v1.1 foundation — GraphQL
+  fixtures via `scripts/gql.py` against this dev store).

@@ -43,13 +43,15 @@ mosaiq/
 │   ├── vendor/        # htmx.min.js, alpine.min.js (pinned versions)
 │   └── app/           # own CSS/JS for the admin
 ├── locale/                   # nl, en, de (.po files)
+├── queries/                  # GraphQL operation files (one per operation, loaded by load_query)
 ├── extensions/
 │   ├── theme-blocks/  # Theme App Extension (Liquid, assets, locales)
 │   └── bundle-discount/  # Shopify Discount Function (JS)
 ├── scripts/
-│   ├── gql.py         # run GraphQL against dev store + save fixture
-│   ├── seed_dev.py    # put demo products into dev store
-│   └── eval_ai.py     # run evalset (see 10-testing)
+│   ├── gql.py         # run GraphQL against dev store (load_query by name)
+│   ├── check_locales.py  # verify nl/en/de locale coverage
+│   ├── lighthouse_check.py  # Lighthouse audit with thresholds (T-092)
+│   └── verify_c2pa.py     # C2PA/exiftool verification (T-043)
 ├── tests/
 │   ├── fixtures/shopify/   # recorded GraphQL responses
 │   ├── fixtures/ai/        # recorded AI responses
@@ -102,15 +104,15 @@ All variables are in `.env.example` with empty or dummy values. `.env` is in `.g
 | `make messages` | `makemessages -l nl -l en -l de` and `compilemessages` |
 | `make ext-dev` | `npx shopify app dev` (tunnel + extensions live in dev store) |
 | `make ext-deploy` | `npx shopify app deploy` (new app version with extensions) |
-| `make eval` | `uv run python scripts/eval_ai.py` |
+| `make eval` | `uv run python tests/evalset/run_eval.py` |
 
 ## `scripts/gql.py` (mandatory for every new GraphQL operation)
 
-- Usage: `uv run python scripts/gql.py --shop <dev-store>.myshopify.com --file apps/core/graphql/<name>.graphql --vars vars.json --save tests/fixtures/shopify/<name>.json`
-- Fetches that shop's offline token from the database, runs the operation against `SHOPIFY_API_VERSION`, prints the response + `extensions.cost`, and saves it with `--save`.
-- Fails with exit code 1 if `errors` or `userErrors` are not empty.
+- Usage: `uv run python scripts/gql.py <query-name> --shop <dev-store>.myshopify.com --token <offline-token>` (optional JSON variables as second positional argument; `--version` defaults to `SHOPIFY_API_VERSION` / `2026-07`).
+- Loads `<query-name>.graphql` from the repo-root `queries/` directory (via `load_query`), runs it against the shop, prints the response.
+- Fails with exit code 1 on any exception. Record the real response as a fixture in `tests/fixtures/shopify/<operation>.json` (AGENTS.md §5).
 
 ## GraphQL files
 
-- Each operation lives in its own `.graphql` file in `apps/<app>/graphql/`. No inline query strings in Python.
+- Each operation lives in its own `.graphql` file in the repo-root `queries/` directory (loaded by `load_query` in `apps/core/shopify_client.py`). No inline query strings in Python.
 - The client (`apps/core/shopify_client.py`) loads files by name, matching the names in 03 §5: `client.execute("product_create_manual", variables)`.

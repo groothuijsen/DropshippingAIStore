@@ -14,7 +14,7 @@ Researched on 30 September 2026. Answered questions remain listed so that it is 
 | Q15 | OpenAI EU data residency (`eu.api.openai.com`) requires approval for enhanced ZDR/abuse monitoring and costs ±10% more. Apply for it? | fallback provider, not blocking | Paul | open |
 | Q16 | Belgium: transposition of the withdrawal button unclear (sources contradict each other). | T-090 | lawyer | open |
 | Q17 | Exact name/handle of the CJdropshipping fulfillment location and the handle of Printify, AutoDS and Zendrop | T-020 (not blocking: onboarding question covers it) | Hermes tests (06 §4.4) | open |
-| Q14b | Do app metaobject definitions (`$app:`) remain after uninstall? Docs say metafield definitions are deleted; forum report (2025) says metaobject definitions remained. | T-084 | Hermes tests | open |
+| Q14b | Do app metaobject definitions (`$app:`) remain after uninstall? Docs say metafield definitions are deleted; forum report (2025) says metaobject definitions remained. | T-084 | Hermes tests — dev store `mosaiq-pod.myshopify.com` now available (2026-10-01); uninstall/reinstall test still to run | open |
 
 ## Answered
 

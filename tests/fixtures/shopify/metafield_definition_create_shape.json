@@ -1,0 +1,24 @@
+{
+  "_comment": "Real introspection response from dev store mosaiq-pod.myshopify.com, API 2026-07, captured 2026-10-01. Documents the payload and input shapes for metafieldDefinitionCreate.",
+  "operation": "metafieldDefinitionCreate",
+  "payload_fields": ["createdDefinition", "userErrors"],
+  "input_fields": [
+    {"name": "namespace", "type": "String"},
+    {"name": "key", "type": "NON_NULL String"},
+    {"name": "name", "type": "NON_NULL String"},
+    {"name": "description", "type": "String"},
+    {"name": "ownerType", "type": "NON_NULL MetafieldOwnerType"},
+    {"name": "type", "type": "NON_NULL String"},
+    {"name": "validations", "type": "LIST"},
+    {"name": "pin", "type": "Boolean"},
+    {"name": "access", "type": "INPUT_OBJECT MetafieldAccessInput"},
+    {"name": "constraints", "type": "INPUT_OBJECT MetafieldDefinitionConstraintsInput"},
+    {"name": "capabilities", "type": "INPUT_OBJECT MetafieldCapabilityCreateInput"}
+  ],
+  "notes": [
+    "Payload field is createdDefinition, NOT metafieldDefinition.",
+    "Verified error when selecting metafieldDefinition: 'Field metafieldDefinition doesn't exist on type MetafieldDefinitionCreatePayload'.",
+    "metaobject_reference/list.metaobject_reference definitions REQUIRE validations: [{name: metaobject_definition, value: $app:<type>}].",
+    "Verified error without it: \"['definition', 'validations']: Validations require that you select a metaobject. (code=INVALID_OPTION)\"."
+  ]
+}

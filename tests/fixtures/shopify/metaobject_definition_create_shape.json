@@ -1,0 +1,21 @@
+{
+  "_comment": "Real introspection response from dev store mosaiq-pod.myshopify.com, API 2026-07, captured 2026-10-01. Documents the mutation argument shape for metaobjectDefinitionCreate.",
+  "operation": "metaobjectDefinitionCreate",
+  "argument": {
+    "name": "definition",
+    "type": {"name": null, "kind": "NON_NULL", "ofType": {"name": "MetaobjectDefinitionCreateInput", "kind": "INPUT_OBJECT"}}
+  },
+  "input_fields": [
+    {"name": "name", "type": "String"},
+    {"name": "description", "type": "String"},
+    {"name": "type", "type": "NON_NULL String"},
+    {"name": "fieldDefinitions", "type": "LIST"},
+    {"name": "access", "type": "INPUT_OBJECT MetaobjectAccessInput"},
+    {"name": "displayNameKey", "type": "String"},
+    {"name": "capabilities", "type": "INPUT_OBJECT MetaobjectCapabilityCreateInput"}
+  ],
+  "notes": [
+    "fieldDefinitions[].type is a plain String (e.g. single_line_text_field), NOT {name: ...}.",
+    "Verified error when using MetaobjectDefinitionInput: 'MetaobjectDefinitionInput isn't a defined input type (on $definition)'."
+  ]
+}

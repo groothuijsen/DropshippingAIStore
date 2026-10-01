@@ -1,5 +1,12 @@
 ## Unreleased
 
+### Dev store install flow (2026-10-01; dev store `mosaiq-pod.myshopify.com`)
+- Root on the app host redirects to `/app/` with all Shopify query params preserved + `frame-ancestors` CSP; `application_url` in `shopify.app.toml` now ends in `/app/` (`d50dcc0`).
+- Celery app wired in `config/__init__.py` — web process no longer falls back to the RabbitMQ default broker (`47d77da`).
+- Task queue routing: `CELERY_TASK_DEFAULT_QUEUE = "default"` and route key `core.tasks.*` match the worker's `-Q default,ai,shopify,low`; routing test asserts every registered task lands on a consumed queue (`d72f374`).
+- `decrypt_token` accepts `memoryview` (PostgreSQL BinaryField) in addition to `bytes`/`str` (`a94e92e`).
+- GraphQL shapes fixed for API 2026-07, all introspection-verified against the dev store: `MetaobjectDefinitionCreateInput` input type (`6f80474`), `fieldDefinitions[].type` as plain String (`bc81153`), `createdDefinition` payload field (`03cbdcb`), metaobject_reference metafield definitions now send `validations: [{name: metaobject_definition, value: $app:<type>}]` (`80a9575`).
+
 ### MVP complete (verified 2026-10-01; T-090 lawyer review and T-093 listing still pending)
 - [T-092] Manual release checklist (`docs/release-checklist.md`) + Lighthouse check script with score/metric thresholds.
 - [T-091] Evalset of 30 products (`tests/evalset/`), `make eval` target, report writer.

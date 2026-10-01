@@ -229,6 +229,11 @@ Access: `admin: MERCHANT_READ`, `storefront: PUBLIC_READ`. Capabilities: `publis
 
 All with `namespace: "$app:mosaiq"`, access `admin: MERCHANT_READ`, `storefront: PUBLIC_READ`.
 
+> **API 2026-07 (introspection-verified on the dev store 2026-10-01):**
+> - `metafieldDefinitionCreate` payload field is `createdDefinition` (not `metafieldDefinition`); input type `MetafieldDefinitionInput` with `key`/`name`/`ownerType`/`type` required, `type` a plain String.
+> - `metaobject_reference` and `list.metaobject_reference` definitions MUST send `validations: [{"name": "metaobject_definition", "value": "$app:<metaobject_type>"}]` — Shopify rejects them otherwise ("Validations require that you select a metaobject", `INVALID_OPTION`). `json` definitions carry no validations.
+> - The metaobject definitions themselves are created via `metaobjectDefinitionCreate(definition: MetaobjectDefinitionCreateInput!)`; `fieldDefinitions[].type` is a plain String (e.g. `single_line_text_field`), not `{name: ...}`.
+
 | Owner | Key | Type | Content |
 | --- | --- | --- | --- |
 | PRODUCT | `page` | `list.metaobject_reference` (to `$app:page_content`) | PDP content, one entry per language |
