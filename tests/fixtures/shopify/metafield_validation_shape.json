@@ -1,0 +1,34 @@
+{
+  "_hermes": {
+    "title": "Metafield delete shape",
+    "description": "deleteAllAssociatedMetafields arg"
+  },
+  "captured": "2026-10-01",
+  "api_version": "2026-07",
+  "source": "introspection + live calls against mosaiq-pod.myshopify.com",
+  "metafield_definition_delete": {
+    "args": ["id", "identifier", "deleteAllAssociatedMetafields"],
+    "payload_fields": ["deletedDefinition", "deletedDefinitionId", "userErrors"],
+    "notes": [
+      "No forceDelete arg in 2026-07; use deleteAllAssociatedMetafields: true",
+      "Deleting a reference type definition without it raises REFERENCE_TYPE_DELETION_ERROR"
+    ]
+  },
+  "metafield_definition_validation_input": {
+    "fields": {
+      "name": "String!",
+      "value": "String!"
+    },
+    "supported_validation_for_metaobject_reference": {
+      "name": "metaobject_definition_type",
+      "value_format": "app--<app_id>--<type> (e.g. app--430212644865--page_content)",
+      "rejected_values": [
+        "metaobject_definition (option not supported for metaobject_reference)",
+        "bare type like page_content"
+      ],
+      "alternatives": {
+        "metaobject_definition_id": "gid://shopify/MetaobjectDefinition/<id>"
+      }
+    }
+  }
+}

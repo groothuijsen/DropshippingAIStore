@@ -1,5 +1,12 @@
 ## Unreleased
 
+### Dev store install flow — E2E verified (2026-10-01)
+
+- **`run_on_install` completed end-to-end on the dev store**: metaobject definitions exist, all 11 metafield definitions created (`$app:mosaiq` namespace, 5 SHOP + 3 PRODUCT verified live), default shop metafields written, AuditLog `installed` entry created.
+- **metaobject_reference validation shape (API 2026-07)**: option name is `metaobject_definition_type`, value is the full type string `app--<app_id>--<type>` (`6365e05`). Fixture: `tests/fixtures/shopify/metafield_validation_shape.json`.
+- **Shop metafields `ownerId`**: must be `shop.shopify_gid` (Shopify GID), not the local UUID PK — httpx raised "Object of type UUID is not JSON serializable" (`b6fcf7c`).
+- **Token refresh (root cause of the 401 loop)**: `keep_tokens_fresh` only selected shops on refresh-token expiry; access tokens rotate hourly and nothing refreshed them. Filter now ORs `access_token_expires_at <= now+1h`; hourly beat PeriodicTask registered via django_celery_beat (the row did not exist — beat never ran the task at all) (`9a13e0d`).
+
 ### Dev store install flow (2026-10-01; dev store `mosaiq-pod.myshopify.com`)
 - Root on the app host redirects to `/app/` with all Shopify query params preserved + `frame-ancestors` CSP; `application_url` in `shopify.app.toml` now ends in `/app/` (`d50dcc0`).
 - Celery app wired in `config/__init__.py` — web process no longer falls back to the RabbitMQ default broker (`47d77da`).

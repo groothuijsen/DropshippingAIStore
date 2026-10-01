@@ -296,3 +296,25 @@ and deployed to CT 412 (VPS at `80a9575`).
   is the immediate next action (worker restart + re-dispatch pending approval).
 - Next ticket after install verification: **T-110** (v1.1 foundation — GraphQL
   fixtures via `scripts/gql.py` against this dev store).
+
+
+## Dev store install verification — completed (2026-10-01, evening)
+
+`run_on_install` now completes end-to-end on `mosaiq-pod.myshopify.com`:
+
+1. **metaobject_reference validation** (`6365e05`): API 2026-07 wants
+   `validations: [{name: "metaobject_definition_type", value: "app--<app_id>--<type>"}]`.
+   The code resolves `$app:<type>` -> `app--430212644865--<type>` by querying the
+   created/existing metaobject definitions (returns {result, type_mapping}).
+   Fixture: `tests/fixtures/shopify/metafield_validation_shape.json`.
+2. **Shop metafields ownerId** (`b6fcf7c`): `shop.shopify_gid`, not `shop.id` (UUID PK
+   broke httpx JSON encoding).
+3. **Token refresh root cause** (`9a13e0d`): the 401 loop was two bugs:
+   `keep_tokens_fresh` filtered only on refresh-token expiry (access tokens rotate
+   hourly and were never refreshed), and the django_celery_beat PeriodicTask row did
+   not exist at all, so beat never ran the task. Filter now ORs
+   `access_token_expires_at <= now + 1h`; PeriodicTask registered at 1h interval.
+4. **Verified live**: AuditLog `installed` written; 5 SHOP + 3 PRODUCT `$app:mosaiq`
+   metafield definitions exist in the dev store; 4 default shop metafields written.
+
+Next ticket: T-110.
