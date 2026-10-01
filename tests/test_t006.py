@@ -8,10 +8,6 @@ from django.utils import timezone
 
 from apps.core.crypto import encrypt_token
 from apps.core.installation import (
-    DEFAULT_CART,
-    DEFAULT_DESIGN_TOKENS,
-    DEFAULT_SETTINGS,
-    DEFAULT_WITHDRAWAL,
     ensure_metafield_definitions,
     ensure_metaobject_definitions,
     on_install,
@@ -247,9 +243,19 @@ class TestEnsureMetaobjectDefinitions:
 
         mock_client.execute.side_effect = [
             MOCK_NOT_FOUND,  # check page_content
-            {"metaobjectDefinitionCreate": {"metaobjectDefinition": {"id": "gid://shopify/MetaobjectDefinition/10"}, "userErrors": []}},
+            {
+                "metaobjectDefinitionCreate": {
+                    "metaobjectDefinition": {"id": "gid://shopify/MetaobjectDefinition/10"},
+                    "userErrors": [],
+                }
+            },
             MOCK_NOT_FOUND,  # check offer_display
-            {"metaobjectDefinitionCreate": {"metaobjectDefinition": {"id": "gid://shopify/MetaobjectDefinition/11"}, "userErrors": []}},
+            {
+                "metaobjectDefinitionCreate": {
+                    "metaobjectDefinition": {"id": "gid://shopify/MetaobjectDefinition/11"},
+                    "userErrors": [],
+                }
+            },
         ]
 
         result = ensure_metaobject_definitions("test.myshopify.com", "token123")
@@ -265,7 +271,12 @@ class TestEnsureMetaobjectDefinitions:
 
         mock_client.execute.side_effect = [
             MOCK_NOT_FOUND,
-            {"metaobjectDefinitionCreate": {"metaobjectDefinition": None, "userErrors": [{"message": "Type already exists"}]}},
+            {
+                "metaobjectDefinitionCreate": {
+                    "metaobjectDefinition": None,
+                    "userErrors": [{"message": "Type already exists"}],
+                }
+            },
             MOCK_OFFER_DISPLAY_DEF,
         ]
 
@@ -369,9 +380,7 @@ class TestOnInstall:
     @patch("apps.core.installation.ensure_metafield_definitions")
     @patch("apps.core.installation.ensure_metaobject_definitions")
     @patch("apps.core.installation._get_client")
-    def test_full_installation_flow(
-        self, mock_get_client, mock_metaobj, mock_metafield, mock_write_meta
-    ):
+    def test_full_installation_flow(self, mock_get_client, mock_metaobj, mock_metafield, mock_write_meta):
         """Full installation: shop_info → installation → definitions → metafields."""
         mock_client = MagicMock()
         mock_get_client.return_value = mock_client
@@ -397,9 +406,7 @@ class TestOnInstall:
     @patch("apps.core.installation.ensure_metafield_definitions")
     @patch("apps.core.installation.ensure_metaobject_definitions")
     @patch("apps.core.installation._get_client")
-    def test_idempotent(
-        self, mock_get_client, mock_metaobj, mock_metafield, mock_write_meta
-    ):
+    def test_idempotent(self, mock_get_client, mock_metaobj, mock_metafield, mock_write_meta):
         """Running on_install twice does not create duplicate shops."""
         mock_client = MagicMock()
         mock_get_client.return_value = mock_client
@@ -422,9 +429,7 @@ class TestOnInstall:
     @patch("apps.core.installation.ensure_metafield_definitions")
     @patch("apps.core.installation.ensure_metaobject_definitions")
     @patch("apps.core.installation._get_client")
-    def test_creates_audit_log(
-        self, mock_get_client, mock_metaobj, mock_metafield, mock_write_meta
-    ):
+    def test_creates_audit_log(self, mock_get_client, mock_metaobj, mock_metafield, mock_write_meta):
         """Installation creates an AuditLog entry."""
         mock_client = MagicMock()
         mock_get_client.return_value = mock_client

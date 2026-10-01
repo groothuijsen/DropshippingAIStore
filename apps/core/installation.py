@@ -118,9 +118,7 @@ METAOBJECT_TYPES = {
 }
 
 
-def ensure_metaobject_definitions(
-    shop_domain: str, access_token: str
-) -> dict[str, str]:
+def ensure_metaobject_definitions(shop_domain: str, access_token: str) -> dict[str, str]:
     """Ensure metaobject definitions exist. Idempotent.
 
     Returns a dict mapping type name to 'exists' or 'created'.
@@ -145,10 +143,7 @@ def ensure_metaobject_definitions(
             definition_input = {
                 "type": type_name,
                 "name": type_name.replace("$app:", "").replace("_", " ").title(),
-                "fieldDefinitions": [
-                    {"key": f["key"], "name": f["name"], "type": {"name": f["type"]}}
-                    for f in fields
-                ],
+                "fieldDefinitions": [{"key": f["key"], "name": f["name"], "type": {"name": f["type"]}} for f in fields],
                 "access": {
                     "admin": "MERCHANT_READ",
                     "storefront": "PUBLIC_READ",
@@ -195,9 +190,7 @@ METAFIELD_DEFINITIONS = [
 ]
 
 
-def ensure_metafield_definitions(
-    shop_domain: str, access_token: str
-) -> dict[str, str]:
+def ensure_metafield_definitions(shop_domain: str, access_token: str) -> dict[str, str]:
     """Ensure metafield definitions exist. Idempotent.
 
     Returns a dict mapping 'owner_type:key' to 'exists' or 'created'.
@@ -319,12 +312,14 @@ def write_default_shop_metafields(shop: Shop, access_token: str) -> bool:
     try:
         metafields_input = []
         for key, value in DEFAULT_SHOP_METAFIELDS.items():
-            metafields_input.append({
-                "ownerId": shop.id,
-                "namespace": "$app:mosaiq",
-                "key": key,
-                "value": json.dumps(value),
-            })
+            metafields_input.append(
+                {
+                    "ownerId": shop.id,
+                    "namespace": "$app:mosaiq",
+                    "key": key,
+                    "value": json.dumps(value),
+                }
+            )
 
         query = load_query("metafields_set")
         data = client.execute(query, {"metafields": metafields_input})

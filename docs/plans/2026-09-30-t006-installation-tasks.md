@@ -98,21 +98,26 @@ git commit -m "feat(core): add installation_id field to Shop model"
 # tests/test_t006.py
 from apps.core.shopify_client import load_query
 
+
 def test_load_metaobject_definition_by_type():
     q = load_query("metaobject_definition_by_type")
     assert "metaobjectDefinitionByType" in q
+
 
 def test_load_metaobject_definition_create():
     q = load_query("metaobject_definition_create")
     assert "metaobjectDefinitionCreate" in q
 
+
 def test_load_metafield_definitions_by_owner():
     q = load_query("metafield_definitions_by_owner")
     assert "metafieldDefinitions" in q
 
+
 def test_load_metafield_definition_create():
     q = load_query("metafield_definition_create")
     assert "metafieldDefinitionCreate" in q
+
 
 def test_load_metafields_set():
     q = load_query("metafields_set")
@@ -292,9 +297,19 @@ class TestEnsureMetaobjectDefinitions:
         # Fourth call: create offer_display → success
         mock_client.execute.side_effect = [
             MOCK_NOT_FOUND,  # check page_content
-            {"metaobjectDefinitionCreate": {"metaobjectDefinition": {"id": "gid://shopify/MetaobjectDefinition/10"}, "userErrors": []}},
+            {
+                "metaobjectDefinitionCreate": {
+                    "metaobjectDefinition": {"id": "gid://shopify/MetaobjectDefinition/10"},
+                    "userErrors": [],
+                }
+            },
             MOCK_NOT_FOUND,  # check offer_display
-            {"metaobjectDefinitionCreate": {"metaobjectDefinition": {"id": "gid://shopify/MetaobjectDefinition/11"}, "userErrors": []}},
+            {
+                "metaobjectDefinitionCreate": {
+                    "metaobjectDefinition": {"id": "gid://shopify/MetaobjectDefinition/11"},
+                    "userErrors": [],
+                }
+            },
         ]
 
         result = ensure_metaobject_definitions("test.myshopify.com", "token123")
@@ -365,9 +380,7 @@ METAOBJECT_TYPES = {
 }
 
 
-def ensure_metaobject_definitions(
-    shop_domain: str, access_token: str
-) -> dict[str, str]:
+def ensure_metaobject_definitions(shop_domain: str, access_token: str) -> dict[str, str]:
     """Ensure metaobject definitions exist. Idempotent.
 
     Returns a dict mapping type name to 'exists' or 'created'.
@@ -392,10 +405,7 @@ def ensure_metaobject_definitions(
             definition_input = {
                 "type": type_name,
                 "name": type_name.replace("$app:", "").replace("_", " ").title(),
-                "fieldDefinitions": [
-                    {"key": f["key"], "name": f["name"], "type": {"name": f["type"]}}
-                    for f in fields
-                ],
+                "fieldDefinitions": [{"key": f["key"], "name": f["name"], "type": {"name": f["type"]}} for f in fields],
                 "access": {
                     "admin": "MERCHANT_READ",
                     "storefront": "PUBLIC_READ",
@@ -442,9 +452,7 @@ METAFIELD_DEFINITIONS = [
 ]
 
 
-def ensure_metafield_definitions(
-    shop_domain: str, access_token: str
-) -> dict[str, str]:
+def ensure_metafield_definitions(shop_domain: str, access_token: str) -> dict[str, str]:
     """Ensure metafield definitions exist. Idempotent.
 
     Returns a dict mapping 'owner_type:key' to 'exists' or 'created'.
@@ -529,7 +537,13 @@ from apps.core.installation import ensure_metafield_definitions
 MOCK_EXISTING_DEFS = {
     "metafieldDefinitions": {
         "nodes": [
-            {"id": "gid://shopify/MetafieldDefinition/1", "namespace": "$app:mosaiq", "key": "page", "type": {"name": "list.metaobject_reference"}, "ownerType": "PRODUCT"},
+            {
+                "id": "gid://shopify/MetafieldDefinition/1",
+                "namespace": "$app:mosaiq",
+                "key": "page",
+                "type": {"name": "list.metaobject_reference"},
+                "ownerType": "PRODUCT",
+            },
         ]
     }
 }
@@ -673,6 +687,7 @@ Add to `apps/core/installation.py`:
 
 ```python
 # ── Shop population ───────────────────────────────────────────────────────
+
 
 def populate_shop_from_info(
     data: dict[str, Any],
@@ -888,12 +903,14 @@ def write_default_shop_metafields(shop: Any, access_token: str) -> bool:
     try:
         metafields_input = []
         for key, value in DEFAULT_SHOP_METAFIELDS.items():
-            metafields_input.append({
-                "ownerId": shop.id,
-                "namespace": "$app:mosaiq",
-                "key": key,
-                "value": json.dumps(value),
-            })
+            metafields_input.append(
+                {
+                    "ownerId": shop.id,
+                    "namespace": "$app:mosaiq",
+                    "key": key,
+                    "value": json.dumps(value),
+                }
+            )
 
         query = load_query("metafields_set")
         data = client.execute(query, {"metafields": metafields_input})
@@ -952,9 +969,7 @@ class TestOnInstall:
     @patch("apps.core.installation.ensure_metafield_definitions")
     @patch("apps.core.installation.ensure_metaobject_definitions")
     @patch("apps.core.installation._get_client")
-    def test_full_installation_flow(
-        self, mock_get_client, mock_metaobj, mock_metafield, mock_write_meta
-    ):
+    def test_full_installation_flow(self, mock_get_client, mock_metaobj, mock_metafield, mock_write_meta):
         """Full installation: shop_info → installation → definitions → metafields."""
         mock_client = MagicMock()
         mock_get_client.return_value = mock_client
@@ -984,9 +999,7 @@ class TestOnInstall:
     @patch("apps.core.installation.ensure_metafield_definitions")
     @patch("apps.core.installation.ensure_metaobject_definitions")
     @patch("apps.core.installation._get_client")
-    def test_idempotent(
-        self, mock_get_client, mock_metaobj, mock_metafield, mock_write_meta
-    ):
+    def test_idempotent(self, mock_get_client, mock_metaobj, mock_metafield, mock_write_meta):
         """Running on_install twice does not create duplicate shops."""
         mock_client = MagicMock()
         mock_get_client.return_value = mock_client
@@ -1017,6 +1030,7 @@ Add to `apps/core/installation.py`:
 
 ```python
 # ── Main installation task ────────────────────────────────────────────────
+
 
 def on_install(shop_domain: str, access_token: str) -> "Shop":
     """Run all installation tasks in order.
@@ -1106,6 +1120,7 @@ git commit -m "feat(core): add on_install orchestrator task"
 ```python
 # tests/test_t006.py
 from apps.core.tasks import run_on_install
+
 
 class TestRunOnInstallTask:
     @patch("apps.core.tasks.get_access_token")
@@ -1245,6 +1260,7 @@ class TestOnInstallIntegration:
 
         # Verify AuditLog
         from apps.core.models import AuditLog
+
         log = AuditLog.objects.filter(shop=shop, action="installed").first()
         assert log is not None
         assert log.actor == "system"

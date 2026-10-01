@@ -27,3 +27,7 @@ media/
 .DS_Store
 .idea/
 .vscode/
+
+# Local credentials and databases
+shopifycredentials.md
+*.db

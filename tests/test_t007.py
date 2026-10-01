@@ -9,10 +9,9 @@ from django.utils import timezone
 
 from apps.compliance.models import PriceAttestation, PriceHistory
 from apps.compliance.price_snapshot import snapshot_prices_small_shop
-from apps.compliance.pricing import PriorPrice, Reduction, prior_price, reduction
+from apps.compliance.pricing import prior_price, reduction
 from apps.core.crypto import encrypt_token
 from apps.core.models import Shop, ShopStatus
-
 
 # ── Fixtures ──────────────────────────────────────────────────────────────
 
@@ -368,8 +367,8 @@ class TestSnapshotPricesSmallShop:
 class TestHandleProductUpdate:
     def test_creates_price_history_from_webhook(self, shop):
         """Webhook handler creates PriceHistory rows."""
-        from apps.webhooks.tasks import handle_product_update
         from apps.webhooks.models import WebhookReceipt
+        from apps.webhooks.tasks import handle_product_update
 
         receipt = WebhookReceipt.objects.create(
             webhook_id="wh_product_update_1",
@@ -389,8 +388,8 @@ class TestHandleProductUpdate:
 
     def test_skips_same_price_in_webhook(self, shop):
         """Webhook handler skips if price matches last recorded."""
-        from apps.webhooks.tasks import handle_product_update
         from apps.webhooks.models import WebhookReceipt
+        from apps.webhooks.tasks import handle_product_update
 
         # Existing price
         PriceHistory.objects.create(
@@ -419,8 +418,8 @@ class TestHandleProductUpdate:
 
     def test_records_new_price_from_webhook(self, shop):
         """Webhook handler records new price when it changes."""
-        from apps.webhooks.tasks import handle_product_update
         from apps.webhooks.models import WebhookReceipt
+        from apps.webhooks.tasks import handle_product_update
 
         PriceHistory.objects.create(
             shop=shop,
