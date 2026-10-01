@@ -72,7 +72,7 @@ class TestMissingScopes:
 
     def test_partial(self):
         granted = {"write_online_store_navigation"}
-        assert missing_scopes(granted) == ["write_publications"]
+        assert missing_scopes(granted) == ["read_publications", "write_publications"]
 
 
 class TestBuildRegrantUrl:
