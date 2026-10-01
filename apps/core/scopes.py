@@ -25,8 +25,11 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 #: Scopes the "Start from zero" route needs on top of the base install set.
+#: `read_publications` is required by the publications QUERY (live-verified
+#: access denial on the dev store — write_publications does not cover it).
 REQUIRED_START_SCOPES: tuple[str, ...] = (
     "write_online_store_navigation",
+    "read_publications",
     "write_publications",
 )
 
