@@ -1,6 +1,6 @@
 mutation MetafieldDefinitionCreate($definition: MetafieldDefinitionInput!) {
   metafieldDefinitionCreate(definition: $definition) {
-    metafieldDefinition {
+    createdDefinition {
       id
       namespace
       key
