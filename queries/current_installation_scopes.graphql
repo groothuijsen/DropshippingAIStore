@@ -1,0 +1,6 @@
+query CurrentInstallationScopes {
+  currentAppInstallation {
+    id
+    accessScopes { handle }
+  }
+}

@@ -1,0 +1,11 @@
+query Publications {
+  publications(first: 10) {
+    nodes {
+      id
+      name
+      supportingResources(first: 3) {
+        nodes { resource { id ... on Product { id title } ... on Collection { id title } } }
+      }
+    }
+  }
+}

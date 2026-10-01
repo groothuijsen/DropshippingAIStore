@@ -1,0 +1,8 @@
+query InventoryItemCost($id: ID!) {
+  node(id: $id) {
+    ... on ProductVariant {
+      id
+      inventoryItem { id unitCost { amount currencyCode } }
+    }
+  }
+}
