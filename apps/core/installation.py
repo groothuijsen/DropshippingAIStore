@@ -143,7 +143,13 @@ def ensure_metaobject_definitions(shop_domain: str, access_token: str) -> dict[s
             definition_input = {
                 "type": type_name,
                 "name": type_name.replace("$app:", "").replace("_", " ").title(),
-                "fieldDefinitions": [{"key": f["key"], "name": f["name"], "type": {"name": f["type"]}} for f in fields],
+                # API 2026-07: fieldDefinitions[].type is a plain String
+                # (e.g. "single_line_text_field"), not {name: ...} — verified
+                # via introspection + real error on the dev store.
+                "fieldDefinitions": [
+                    {"key": f["key"], "name": f["name"], "type": f["type"]}
+                    for f in fields
+                ],
                 "access": {
                     "admin": "MERCHANT_READ",
                     "storefront": "PUBLIC_READ",
