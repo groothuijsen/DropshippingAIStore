@@ -87,12 +87,12 @@ class TestPlans:
 
     def test_plan_prices(self):
         assert get_plan_price("starter", "every_30_days") == Decimal("29.00")
-        assert get_plan_price("pro", "every_30_days") == Decimal("79.00")
-        assert get_plan_price("agency", "every_30_days") == Decimal("199.00")
+        assert get_plan_price("pro", "every_30_days") == Decimal("59.00")
+        assert get_plan_price("agency", "every_30_days") == Decimal("149.00")
 
     def test_annual_prices(self):
         assert get_plan_price("starter", "annual") == Decimal("290.00")
-        assert get_plan_price("pro", "annual") == Decimal("790.00")
+        assert get_plan_price("pro", "annual") == Decimal("590.00")
 
     def test_plan_names(self):
         assert get_plan_name("starter") == "Mosaiq Starter"

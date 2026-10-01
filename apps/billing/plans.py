@@ -46,12 +46,12 @@ PLAN_PRICES: dict[str, dict[str, Decimal]] = {
         "annual": Decimal("290.00"),
     },
     "pro": {
-        "every_30_days": Decimal("79.00"),
-        "annual": Decimal("790.00"),
+        "every_30_days": Decimal("59.00"),
+        "annual": Decimal("590.00"),
     },
     "agency": {
-        "every_30_days": Decimal("199.00"),
-        "annual": Decimal("1990.00"),
+        "every_30_days": Decimal("149.00"),
+        "annual": Decimal("1490.00"),
     },
 }
 
