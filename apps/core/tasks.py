@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 
 from celery import shared_task
-from django.db import transaction
+from django.db import models, transaction
 from django.utils import timezone
 
 from .models import Shop, ShopStatus
@@ -16,17 +16,23 @@ logger = logging.getLogger(__name__)
 
 @shared_task(name="core.tasks.keep_tokens_fresh")
 def keep_tokens_fresh() -> dict[str, int]:
-    """Refresh tokens of active shops whose refresh_token expires within 14 days.
+    """Refresh tokens of active shops whose ACCESS or REFRESH token expires soon.
 
-    Runs daily via Celery beat. Prevents quiet stores from losing their token.
+    Runs hourly via Celery beat. The access token window is the critical one:
+    Shopify offline access tokens rotate, and any task that runs after expiry
+    fails with 401 (dev store loop, 2026-10-01). The 14-day refresh-token
+    window is kept as a second safety net.
     """
     from datetime import timedelta
 
-    cutoff = timezone.now() + timedelta(days=14)
+    access_cutoff = timezone.now() + timedelta(hours=1)
+    refresh_cutoff = timezone.now() + timedelta(days=14)
     shops = Shop.objects.filter(
         status=ShopStatus.ACTIVE,
         needs_reauth=False,
-        refresh_token_expires_at__lte=cutoff,
+    ).filter(
+        models.Q(access_token_expires_at__lte=access_cutoff)
+        | models.Q(refresh_token_expires_at__lte=refresh_cutoff)
     ).select_for_update(skip_locked=True)
 
     refreshed = 0
