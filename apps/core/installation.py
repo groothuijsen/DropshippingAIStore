@@ -353,7 +353,10 @@ def write_default_shop_metafields(shop: Shop, access_token: str) -> bool:
         for key, value in DEFAULT_SHOP_METAFIELDS.items():
             metafields_input.append(
                 {
-                    "ownerId": shop.id,
+                    # ownerId must be the Shopify GID string, not the local
+                    # UUID primary key — API 2026-07 rejects a UUID as
+                    # "not JSON serializable" at the httpx encode step.
+                    "ownerId": shop.shopify_gid,
                     "namespace": "$app:mosaiq",
                     "key": key,
                     "value": json.dumps(value),
