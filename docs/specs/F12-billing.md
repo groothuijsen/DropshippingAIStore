@@ -15,4 +15,5 @@
 9. Webhook `app_subscriptions/update` updates the status and sends event `trial_started` on the first approval; daily reconcile task (08 §5) reports discrepancies.
 
 ## Assumptions made during build
-_(to be filled in by Hermes)_
+- **Beat-task queues (00-decisions):** beat tasks not assigned to a specific queue in 05 default to the `low` queue (BUILD_LOG item 10).
+- **Prices:** Pro USD 59.00 and Agency USD 149.00 per 30 days (annual 590/1490) — confirmed by Paul 2026-10-01; `plans.py` aligned in commit `e26bb0d` (BUILD_LOG A1).

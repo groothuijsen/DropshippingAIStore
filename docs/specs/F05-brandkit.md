@@ -12,4 +12,4 @@
 6. Presets are data (`themes/presets.py`): per preset radius, spacing scale, button style, heading style. Two stores with different presets and palettes look visibly different (manual check with screenshots in the PR).
 
 ## Assumptions made during build
-_(to be filled in by Hermes)_
+- **AI palette handling:** the code re-validates every AI proposal (hex format, WCAG contrast ≥ 4.5:1) and corrects or rejects failures; `font_heading`/`font_body` must be keys from the bundled list in `themes/fonts.py`.

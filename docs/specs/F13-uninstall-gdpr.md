@@ -13,4 +13,4 @@
 7. There is a data export for the merchant (JSON of pages, offers, BrandKit) via Settings, so they can take their content with them.
 
 ## Assumptions made during build
-_(to be filled in by Hermes)_
+- **Q14b (metaobject definitions after uninstall):** forum reports indicate `$app:` metaobject definitions may remain after uninstall while metafield definitions are deleted. Recorded in the privacy statement; final confirmation requires a manual uninstall test in the dev store (open, not blocking).

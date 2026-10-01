@@ -21,4 +21,4 @@ The merchant chooses the source of a generation: existing Shopify product (prefe
 Supplier integrations, pricing rules, product research.
 
 ## Assumptions made during build
-_(to be filled in by Hermes)_
+- **SOURCE_RULES handles (06 §4.3, Q17):** fulfillment-location handles for Printify, CJ, AutoDS and Zendrop were inferred from public help-center research, not confirmed against live shops. The onboarding question ("which app do you use?") is the fallback whenever detection returns `unknown` (BUILD_LOG item 5).

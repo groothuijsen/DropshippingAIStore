@@ -22,4 +22,6 @@ A merchant can install and open the app in the Shopify admin; Mosaiq has a valid
 Billing (F12), onboarding content (F05/F06).
 
 ## Assumptions made during build
-_(to be filled in by Hermes)_
+- **Q8 (domain):** built against the placeholder `APP_DOMAIN` from `.env` per the kickoff; later answered — the app runs on `shop.mosaiq.marketing` (salespage on `shopify.mosaiq.marketing`).
+- **auth.js loading order (03 §2.4):** App Bridge loads first via `data-api-key` attribute; `auth.js` is a `type="module"` that imports HTMX dynamically and injects the session token into every HTMX request. Verified in T-003 tests.
+- **Test database:** tests run on PostgreSQL (JSONField semantics), not SQLite; `CELERY_TASK_ALWAYS_EAGER = True`. CI provides a Postgres service container (BUILD_LOG item 6).

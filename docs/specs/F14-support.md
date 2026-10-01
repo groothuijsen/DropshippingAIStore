@@ -11,4 +11,4 @@
 5. AI chat in the app is **not** in MVP (v1.1); the FAQ and the form are sufficient.
 
 ## Assumptions made during build
-_(to be filled in by Hermes)_
+- Implemented as specified; no additional assumptions beyond those recorded in `docs/BUILD_LOG.md`.

@@ -15,4 +15,6 @@
 9. T-043 records whether C2PA is preserved after CDN rendering (Q3) and updates 07 §6.
 
 ## Assumptions made during build
-_(to be filled in by Hermes)_
+- **Slot→resolution mapping (05 §4.4):** 2K for `hero` and `lifestyle_*` slots, 1K for `detail_*` (BUILD_LOG item 3).
+- **Metaobject file references (03 §5.1):** the `File` GID returned by `fileCreate` is written directly as `file_reference` in `metaobjectUpsert`; shape verified with a recorded fixture (BUILD_LOG item 8).
+- **Q3 (C2PA on CDN variants):** assumption stands — the original in Files may carry the manifest, `?width=…&format=webp` variants may not. SynthID in the pixels plus the visible AI label are the reliable markers; procedure documented in 07 §6 with `scripts/verify_c2pa.py`.

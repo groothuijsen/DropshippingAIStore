@@ -10,4 +10,4 @@
 4. MVP: templates only within the same shop. `shared_with_account` is present but hidden in the UI.
 
 ## Assumptions made during build
-_(to be filled in by Hermes)_
+- Implemented as specified; no additional assumptions beyond those recorded in `docs/BUILD_LOG.md`.

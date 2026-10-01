@@ -15,4 +15,4 @@
 9. `mq-tokens` loads only bundled fonts from the extension assets (no external font services); font `null` → theme font.
 
 ## Assumptions made during build
-_(to be filled in by Hermes)_
+- **Fonts:** Shopify's font picker in app extensions is unreliable (community reports), so `mq-tokens` ships bundled OFL fonts and exposes them as CSS custom properties (open-questions "Font picker" row).

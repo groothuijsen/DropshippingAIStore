@@ -202,3 +202,39 @@ First actions after confirmation: per-ticket MVP verification/marking pass (B), 
 lowest v1.1 ticket with done dependencies (T-110, blocked only by T-092 verification;
 Q18–Q21 get answered inside T-110/T-112/T-117/T-118 as fixtures). A1 (prices) and
 Q22–Q25 need Paul before their tickets.
+
+---
+
+# 2026-10-01 — MVP verification pass (after Paul's confirmation)
+
+Paul confirmed: (a) run the verification pass, (b) prices are USD 29/59/149.
+
+## Actions taken
+
+1. **A1 resolved:** `apps/billing/plans.py` Pro 79→59, Agency 199→149 (annual 590/1490);
+   T-060 tests aligned. Commit `e26bb0d`. claims.md C-23 now matches the code.
+2. **Per-ticket verification:** every MVP ticket T-006…T-092 (except T-090/T-093, which
+   wait for the lawyer and the listing) checked against its spec criteria via the test
+   suite: test files exist for all 39 tickets, test classes map to the Given/When/Then
+   criteria areas, full suite 863 passed / 0 failed. Spot checks:
+   - T-031 withdrawal stub replaced by the real onboarding withdrawal step (085 done).
+   - T-043 Q3 assumption recorded in 07 §6 + `scripts/verify_c2pa.py`.
+   - T-084 Q14b documented as pending dev-store uninstall test (not blocking).
+   - T-092 checklist file `docs/release-checklist.md` exists with Lighthouse thresholds.
+   - T-091 evalset has 30 products; `make eval` target wired.
+3. **sprints.md:** all 39 verified tickets marked ✅ done.
+4. **CHANGELOG.md:** 39 ticket lines added under Unreleased.
+5. **Specs F00–F14:** "Assumptions made during build" filled from BUILD_LOG items 1–10
+   and the verification findings (auth.js order, image slots, EMPCO heuristic, beat
+   queues, compare_at_price warning, Q3/Q14b notes, price confirmation).
+   F15–F19 keep the placeholder (v1.1/v1.2 tickets not started).
+6. **open-questions.md:** stale Q8 row moved from "Still open" to "Answered".
+
+## Remaining before v1.1 starts
+
+- T-090: lawyer review (Q7, Q16) — external, waits.
+- T-093: App Store listing — waits for T-090 + T-156 (privacy URL).
+- mypy config fix (A5) — small chore, not blocking tests.
+- Q22–Q25 + founding-member discount: Paul decisions for v1.2 tickets.
+
+Next in order after confirmation: T-110 (v1.1 foundation; T-092 now verified done).

@@ -12,4 +12,4 @@
 6. Costs and tokens are in `AiCall` and add up in `JobStep.ai_cost_usd`.
 
 ## Assumptions made during build
-_(to be filled in by Hermes)_
+- Implemented as specified; no additional assumptions beyond those recorded in `docs/BUILD_LOG.md`.

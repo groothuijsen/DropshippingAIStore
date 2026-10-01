@@ -14,4 +14,5 @@
 8. Works on products from sync apps without changing a single locked field (test with DSers and Printify fixture).
 
 ## Assumptions made during build
-_(to be filled in by Hermes)_
+- **Discount limits (Q13):** Shopify allows 25 active automatic discounts per shop including those of other apps; the editor warns near the limit.
+- **Function API:** target `cart.lines.discounts.generate.run` with `functionHandle` (`functionId` is deprecated in API 2026-07).

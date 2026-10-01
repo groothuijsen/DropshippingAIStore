@@ -13,4 +13,4 @@
 7. SEO title ≤ 60 and SEO description ≤ 155 characters.
 
 ## Assumptions made during build
-_(to be filled in by Hermes)_
+- **Page.sections merge (02, F03-6):** `sections` is a dict keyed by locale; the translate step adds `sections[<lang>]` and never overwrites existing locales (BUILD_LOG item 7).

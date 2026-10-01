@@ -14,4 +14,4 @@
 8. Archiving: metaobject back to `DRAFT`, page unpublished, metafield deleted.
 
 ## Assumptions made during build
-_(to be filled in by Hermes)_
+- **compare_at_price (04 §1, 07 §1.3):** Mosaiq renders struck-through prices only via `mq-price` and only when `prior_price` exists, but cannot suppress a theme's own rendering of `compare_at_price`; the editor shows the merchant a warning instead (BUILD_LOG item 9).

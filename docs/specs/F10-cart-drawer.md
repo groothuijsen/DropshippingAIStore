@@ -14,4 +14,4 @@
 8. Works in Dawn and Horizon; a theme with its own drawer does not show two drawers (Mosaiq intercepts the event; in case of conflict, document it and show instructions to switch off the theme drawer).
 
 ## Assumptions made during build
-_(to be filled in by Hermes)_
+- Implemented as specified; no additional assumptions beyond those recorded in `docs/BUILD_LOG.md`.

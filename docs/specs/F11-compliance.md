@@ -41,4 +41,5 @@
 16. Compliance score according to 07 §9, visible in the editor and page list.
 
 ## Assumptions made during build
-_(to be filled in by Hermes)_
+- **EMPCO_GENERIC NL heuristic (07 §4.1):** "groen" is matched with word boundaries plus an exclusion list (e.g. "groente") instead of POS tagging (BUILD_LOG item 4).
+- **C2PA on CDN variants (Q3):** treated as absent; SynthID + visible label carry the marking (see F04).

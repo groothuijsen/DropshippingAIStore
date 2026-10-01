@@ -1,8 +1,45 @@
-# Changelog
-
-Format: one line per ticket, newest at the top. `[T-###] short description`.
-
 ## Unreleased
+
+### MVP complete (verified 2026-10-01; T-090 lawyer review and T-093 listing still pending)
+- [T-092] Manual release checklist (`docs/release-checklist.md`) + Lighthouse check script with score/metric thresholds.
+- [T-091] Evalset of 30 products (`tests/evalset/`), `make eval` target, report writer.
+- [T-088] Withdrawal form via app proxy: two steps with HMAC, `WithdrawalRequest`, confirmation email, rate limiting, merchant overview.
+- [T-087] Store settings screen: warranty policy, shipping cut-off, AI label default, stock threshold → `Shop` + app-data metafield.
+- [T-086] Support page and contact form (F14).
+- [T-085] Legal pages with draft banner, `mq-withdrawal-link` embed, onboarding withdrawal checklist step.
+- [T-084] Uninstall handling, `shop/redact`, data export; Q14b metaobject-after-uninstall documented as pending dev-store check.
+- [T-083] Unit price: model, merchant form, calculation, `mq-price` rendering.
+- [T-082] GPSR: model, merchant form, `mq-gpsr` block, publish gate, compliance score impact.
+- [T-081] Omnibus: `prior_price`, `reduction`, attestation, daily metafield sync task.
+- [T-080] Claims: deterministic blocklist (nl/en/de) + AI check, `ClaimFinding`, scoring, publish gate.
+- [T-073] `mq-cart-drawer` embed: upsells, rewards bar.
+- [T-072] Blocks `mq-bundle-picker` + `mq-price`: price, savings, unit price, timer, stock and cut-off rules.
+- [T-071] Offer model + editor with real discount create/delete via GraphQL.
+- [T-070] Shopify Discount Function: volume, BOGO, free gift; config metafield; Function tests.
+- [T-062] Trial ledger, reminders, upgrade/downgrade, cancellation, reconciliation.
+- [T-061] Limits + `UsageCounter` reservations with `select_for_update`.
+- [T-060] Billing: `Subscription`/`UsageCounter`/`TrialLedger`, `appSubscriptionCreate`, return URL, status webhook, access gate.
+- [T-053] Translate page into additional store languages via own metaobject entries.
+- [T-052] Save/reuse page templates.
+- [T-051] Page editor: field validation, rewriting, go-live, archive.
+- [T-050] Layout + publish (draft) steps, GPSR check before publish, store jobs with child jobs.
+- [T-043] C2PA verification scripts (`c2patool`/`exiftool`) for Files original + CDN variants; 07 §6 updated; Q3 assumption recorded.
+- [T-042] C2PA signing, staged upload, `fileCreate`, upload limit, AI label.
+- [T-041] Fidelity check after image generation with retry.
+- [T-040] Image providers: Vertex `gemini-3.1-flash-image` primary, escalation, OpenAI fallback; shot plan; cost table; budget guard.
+- [T-033] Block `mq-page-sections` (all section types) + admin preview templates.
+- [T-032] Theme App Extension scaffold, `mq-tokens` with bundled OFL fonts, deep links, locales check script.
+- [T-031] Onboarding flow: language, brand, sources, theme (deep links), withdrawal step.
+- [T-030] BrandKit: 6 presets, bundled fonts, contrast validation, design tokens to `$app:mosaiq` metafield.
+- [T-022] Import step (existing product, manual, URL facts with robots.txt respect) + product picker UI.
+- [T-021] Ownership guard `assert_writable` on all product mutations; locked-field matrix per source app.
+- [T-020] Source detection from fulfillment location (`variant_locations` + `SOURCE_RULES`), `Shop.import_apps` storage.
+- [T-013] Copy step: section order per page type, guardrails, language detection, SEO length validation, `Page` creation.
+- [T-012] Research step with angle selection UI.
+- [T-011] Anthropic client: tool use with Pydantic schema validation, one repair attempt, retry, cost logging.
+- [T-010] `GenerationJob`/`JobStep`/`AiCall` models, step orchestration with checkpoints, error codes, cost budget.
+- [T-007] Price snapshot on installation + `products/update` webhook → `PriceHistory`.
+- [T-006] Installation tasks: shop data, metaobject/metafield definition bootstrap, default shop metafields, audit log; idempotent.
 
 ## v0.5.0 (2026-09-30)
 - [T-005] GraphQL client: throttling with exponential backoff, proactive throttle waits, top-level errors, userErrors, auth errors. `.graphql` loader + `scripts/gql.py` CLI. 63/63 tests.
