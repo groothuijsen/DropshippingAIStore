@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 WEBHOOK_HANDLERS: dict[str, str] = {
     "app/uninstalled": "handle_app_uninstalled",
     "app_subscriptions/update": "handle_subscription_update",
+    "products/create": "handle_product_create",
     "products/update": "handle_product_update",
     "products/delete": "handle_product_delete",
     "shop/update": "handle_shop_update",
@@ -117,24 +118,20 @@ def handle_subscription_update(receipt: WebhookReceipt) -> None:
     logger.info("Subscription update webhook for %s — TODO", receipt.shop_domain)
 
 
-def handle_product_update(receipt: WebhookReceipt) -> None:
-    """New prices per variant into PriceHistory if they differ from the last row."""
+def _snapshot_variant_prices(shop, body: dict | None) -> int:
+    """Record variant prices into PriceHistory if they differ from the last row.
+
+    Shared by products/create and products/update handlers. Idempotent:
+    an unchanged price never creates a second row (AGENTS.md §3).
+    Returns the number of rows created.
+    """
     from decimal import Decimal, InvalidOperation
 
     from apps.compliance.models import PriceHistory
-    from apps.core.models import Shop
 
-    shop = Shop.objects.filter(domain=receipt.shop_domain).first()
-    if not shop:
-        logger.warning("Shop %s not found for products/update webhook", receipt.shop_domain)
-        return
-
-    # Parse the webhook body
-    body = receipt.body_json if hasattr(receipt, "body_json") else None
     if body is None:
-        # Re-read from stored raw body if available
-        logger.warning("No body parsed for webhook %s — skipping price snapshot", receipt.webhook_id)
-        return
+        logger.warning("No body parsed — skipping price snapshot for shop %s", shop.domain)
+        return 0
 
     variants = body.get("variants", [])
     now = timezone.now()
@@ -177,6 +174,41 @@ def handle_product_update(receipt: WebhookReceipt) -> None:
         )
         created += 1
 
+    return created
+
+
+def handle_product_create(receipt: WebhookReceipt) -> None:
+    """New product: snapshot its initial variant prices into PriceHistory."""
+    from apps.core.models import Shop
+
+    shop = Shop.objects.filter(domain=receipt.shop_domain).first()
+    if not shop:
+        logger.warning("Shop %s not found for products/create webhook", receipt.shop_domain)
+        return
+
+    created = _snapshot_variant_prices(shop, receipt.body_json)
+    logger.info(
+        "Product create for %s: %d initial price rows created",
+        receipt.shop_domain,
+        created,
+    )
+
+
+def handle_product_update(receipt: WebhookReceipt) -> None:
+    """New prices per variant into PriceHistory if they differ from the last row."""
+    from apps.core.models import Shop
+
+    shop = Shop.objects.filter(domain=receipt.shop_domain).first()
+    if not shop:
+        logger.warning("Shop %s not found for products/update webhook", receipt.shop_domain)
+        return
+
+    body = receipt.body_json if hasattr(receipt, "body_json") else None
+    if body is None:
+        logger.warning("No body parsed for webhook %s — skipping price snapshot", receipt.webhook_id)
+        return
+
+    created = _snapshot_variant_prices(shop, body)
     logger.info("Product update for %s: %d price rows created", receipt.shop_domain, created)
 
 

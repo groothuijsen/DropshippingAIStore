@@ -1,9 +1,11 @@
 """Core views — health check, dashboard, onboarding, store settings."""
 
 import contextlib
+import hashlib
+import hmac as hmac_lib
 
 from django.conf import settings
-from django.http import HttpRequest, JsonResponse
+from django.http import HttpRequest, HttpResponseNotFound, JsonResponse
 from django.shortcuts import redirect, render
 
 
@@ -22,6 +24,38 @@ def health_check(request: HttpRequest) -> JsonResponse:
         cache.set("healthcheck", "ok", 10)
 
     return JsonResponse({"status": "ok"})
+
+
+def oauth_callback(request: HttpRequest):
+    """Shopify OAuth callback (registered in shopify.app.toml [auth]).
+
+    The re-grant/authorize flow redirects here with `code`, `shop`,
+    `host`, `timestamp` and `hmac`. Token exchange happens elsewhere
+    (managed install + session-token flow), so this view only validates
+    the hmac and sends the merchant back to the app inside the admin.
+
+    Shopify's OAuth hmac differs from the webhook hmac: HEX sha256 of the
+    `key=value&...` query string (sorted, hmac param excluded), keyed with
+    the client secret. Invalid → 404 (no information leak).
+    """
+    hmac_value = request.GET.get("hmac", "")
+    shop = request.GET.get("shop", "")
+    if not hmac_value or not shop:
+        return HttpResponseNotFound()
+
+    params = [k for k in request.GET if k != "hmac"]
+    # Canonical form: sorted `key=value` params joined with `&`
+    # (all params in our flow are scalar).
+    message = "&".join(f"{k}={request.GET[k]}" for k in sorted(params))
+    expected = hmac_lib.new(
+        settings.SHOPIFY_API_SECRET.encode(), message.encode(), hashlib.sha256
+    ).hexdigest()
+    if not hmac_lib.compare_digest(expected, hmac_value):
+        return HttpResponseNotFound()
+
+    # Valid — the merchant approved (scopes already granted server-side);
+    # send them back into the app.
+    return redirect(f"https://{shop}/admin/apps/{settings.SHOPIFY_API_KEY}")
 
 
 def dashboard(request: HttpRequest):

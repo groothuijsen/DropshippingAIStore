@@ -39,19 +39,23 @@ def shopify_webhook(request: HttpRequest) -> JsonResponse:
     # Extract headers
     webhook_id = request.headers.get("X-Shopify-Webhook-Id", "")
     topic = request.headers.get("X-Shopify-Topic", "")
-    shop_domain = request.headers.get("X-Shopify-Hmac-Sha256", "")  # Will be set by middleware
+    # Shopify sends the shop domain in X-Shopify-Shop-Domain (T-110 fix:
+    # this used to read the HMAC header, corrupting every receipt).
+    shop_domain = request.headers.get("X-Shopify-Shop-Domain", "")
 
-    # Try to get shop_domain from the topic header or body
-    # The actual shop domain comes from the session token middleware
-    # For webhooks, we need to extract it differently
+    # Fallback: some payloads embed the shop domain in the body.
     if not shop_domain:
-        # Try to extract from the body
         try:
             body = json.loads(raw_body)
-            # Some webhooks include shop_domain in the body
             shop_domain = body.get("shop_domain", body.get("shop", {}).get("domain", ""))
         except (json.JSONDecodeError, AttributeError):
             pass
+
+    # Parse the body once so handlers can read it from the receipt.
+    try:
+        body_json = json.loads(raw_body)
+    except json.JSONDecodeError:
+        body_json = None
 
     # Deduplicate
     receipt, created = WebhookReceipt.objects.get_or_create(
@@ -59,6 +63,7 @@ def shopify_webhook(request: HttpRequest) -> JsonResponse:
         defaults={
             "topic": topic,
             "shop_domain": shop_domain,
+            "body_json": body_json,
         },
     )
 
