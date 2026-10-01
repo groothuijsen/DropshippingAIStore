@@ -1,10 +1,10 @@
 # Mosaiq — Shopify app configuration
 # Source of truth for scopes, webhooks, app proxy and extensions.
 
-client_id = "SHOPIFY_API_KEY"
+client_id = "6fe97b35dda65c86198cb2c409a4db87"
 name = "Mosaiq"
 handle = "mosaiq"
-application_url = "https://APP_DOMAIN"
+application_url = "https://shop.mosaiq.marketing"
 embedded = true
 
 [access_scopes]
@@ -16,21 +16,21 @@ scopes = "write_products,write_discounts,write_online_store_pages,write_files,re
 use_legacy_install_flow = false
 
 [auth]
-redirect_urls = ["https://APP_DOMAIN/auth/callback"]
+redirect_urls = ["https://shop.mosaiq.marketing/auth/callback"]
 
 [webhooks]
 api_version = "2026-07"
 
   [[webhooks.subscriptions]]
   topics = ["app/uninstalled", "app_subscriptions/update", "products/update", "products/delete", "shop/update"]
-  uri = "https://APP_DOMAIN/webhooks/shopify/"
+  uri = "https://shop.mosaiq.marketing/webhooks/shopify/"
 
   [[webhooks.subscriptions]]
   compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
-  uri = "https://APP_DOMAIN/webhooks/shopify/compliance/"
+  uri = "https://shop.mosaiq.marketing/webhooks/shopify/compliance/"
 
 [app_proxy]
-url = "https://APP_DOMAIN/proxy/"
+url = "https://shop.mosaiq.marketing/proxy/"
 subpath = "mosaiq"
 prefix = "apps"
 
