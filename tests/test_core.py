@@ -51,6 +51,15 @@ class TestCrypto:
         b = encrypt_token("token1")
         assert decrypt_token(a) == decrypt_token(b) == "token1"
 
+    def test_decrypt_accepts_memoryview(self):
+        """PostgreSQL BinaryField returns memoryview on read.
+
+        Fernet rejects memoryview ("token must be bytes or str") — this
+        broke run_on_install in the dev store: token_decrypt_failed.
+        """
+        encrypted = encrypt_token("shpat_memoryview_token")
+        assert decrypt_token(memoryview(encrypted)) == "shpat_memoryview_token"
+
 
 # ── Model tests ───────────────────────────────────────────────────────────
 

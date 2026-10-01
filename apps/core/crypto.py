@@ -20,7 +20,11 @@ def encrypt_token(plaintext: str) -> bytes:
     return f.encrypt(plaintext.encode())
 
 
-def decrypt_token(encrypted: bytes) -> str:
-    """Decrypt stored token bytes back to a plaintext string."""
+def decrypt_token(encrypted: bytes | memoryview) -> str:
+    """Decrypt stored token bytes back to a plaintext string.
+
+    Accepts memoryview too: PostgreSQL's BinaryField returns memoryview
+    on read, which Fernet rejects ("token must be bytes or str").
+    """
     f = _get_fernet()
-    return f.decrypt(encrypted).decode()
+    return f.decrypt(bytes(encrypted)).decode()
