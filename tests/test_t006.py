@@ -324,6 +324,39 @@ class TestEnsureMetafieldDefinitions:
 
         assert result.get("PRODUCT:page") == "exists"
 
+    @patch("apps.core.installation._get_client")
+    def test_metaobject_reference_carries_validation(self, mock_get_client):
+        """metaobject_reference definitions must select the metaobject
+        via a validation — API 2026-07 rejects them otherwise
+        ("Validations require that you select a metaobject")."""
+        mock_client = MagicMock()
+        mock_get_client.return_value = mock_client
+        mock_client.execute.return_value = MOCK_EMPTY_DEFS
+
+        ensure_metafield_definitions("test.myshopify.com", "token123")
+
+        # Find the create call for PRODUCT:page (first definition)
+        create_calls = [
+            c
+            for c in mock_client.execute.call_args_list
+            if c.args and "MetafieldDefinitionCreate" in c.args[0]
+        ]
+        assert create_calls, "expected metafieldDefinitionCreate calls"
+
+        payloads = {c.args[1]["definition"]["key"]: c.args[1]["definition"] for c in create_calls}
+        page_def = payloads["page"]
+        assert page_def["validations"] == [
+            {"name": "metaobject_definition", "value": "$app:page_content"}
+        ]
+
+        offer_def = payloads["offer"]
+        assert offer_def["validations"] == [
+            {"name": "metaobject_definition", "value": "$app:offer_display"}
+        ]
+
+        # json definitions carry no validations
+        assert "validations" not in payloads["gpsr"]
+
 
 # ── write_default_shop_metafields tests ───────────────────────────────────
 

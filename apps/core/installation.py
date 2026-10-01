@@ -176,23 +176,26 @@ def ensure_metaobject_definitions(shop_domain: str, access_token: str) -> dict[s
 # ── Metafield definitions ─────────────────────────────────────────────────
 
 # Metafield definitions from 03 §5.2
-# Each entry: (owner_type, key, type, name)
+# Each entry: (owner_type, key, type, name, metaobject_type_or_None)
+# metaobject_reference types MUST carry a validation selecting the
+# metaobject definition they point to — API 2026-07 rejects definitions
+# without it: "Validations require that you select a metaobject".
 METAFIELD_DEFINITIONS = [
     # Product metafields
-    ("PRODUCT", "page", "list.metaobject_reference", "Page Content"),
-    ("PRODUCT", "gpsr", "json", "GPSR"),
-    ("PRODUCT", "offer", "metaobject_reference", "Offer"),
+    ("PRODUCT", "page", "list.metaobject_reference", "Page Content", "$app:page_content"),
+    ("PRODUCT", "gpsr", "json", "GPSR", None),
+    ("PRODUCT", "offer", "metaobject_reference", "Offer", "$app:offer_display"),
     # Page metafields
-    ("PAGE", "page", "list.metaobject_reference", "Page Content"),
+    ("PAGE", "page", "list.metaobject_reference", "Page Content", "$app:page_content"),
     # Shop metafields
-    ("SHOP", "home_page", "list.metaobject_reference", "Home Page"),
-    ("SHOP", "design_tokens", "json", "Design Tokens"),
-    ("SHOP", "withdrawal", "json", "Withdrawal"),
-    ("SHOP", "settings", "json", "Settings"),
-    ("SHOP", "cart", "json", "Cart"),
+    ("SHOP", "home_page", "list.metaobject_reference", "Home Page", "$app:page_content"),
+    ("SHOP", "design_tokens", "json", "Design Tokens", None),
+    ("SHOP", "withdrawal", "json", "Withdrawal", None),
+    ("SHOP", "settings", "json", "Settings", None),
+    ("SHOP", "cart", "json", "Cart", None),
     # Variant metafields
-    ("PRODUCTVARIANT", "unit_price", "json", "Unit Price"),
-    ("PRODUCTVARIANT", "prior_price", "json", "Prior Price"),
+    ("PRODUCTVARIANT", "unit_price", "json", "Unit Price", None),
+    ("PRODUCTVARIANT", "prior_price", "json", "Prior Price", None),
 ]
 
 
@@ -216,7 +219,7 @@ def ensure_metafield_definitions(shop_domain: str, access_token: str) -> dict[st
             existing_by_owner[owner_type] = {n["key"] for n in nodes}
 
         # Create missing definitions
-        for owner_type, key, metafield_type, name in METAFIELD_DEFINITIONS:
+        for owner_type, key, metafield_type, name, metaobj_type in METAFIELD_DEFINITIONS:
             lookup_key = f"{owner_type}:{key}"
             if key in existing_by_owner.get(owner_type, set()):
                 result[lookup_key] = "exists"
@@ -234,6 +237,13 @@ def ensure_metafield_definitions(shop_domain: str, access_token: str) -> dict[st
                     "storefront": "PUBLIC_READ",
                 },
             }
+            # metaobject_reference metafields require a validation that
+            # selects the metaobject definition they point to (API 2026-07:
+            # "Validations require that you select a metaobject").
+            if metaobj_type:
+                definition_input["validations"] = [
+                    {"name": "metaobject_definition", "value": metaobj_type}
+                ]
             create_data = client.execute(create_query, {"definition": definition_input})
             user_errors = create_data.get("metafieldDefinitionCreate", {}).get("userErrors", [])
             if user_errors:
