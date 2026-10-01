@@ -327,3 +327,35 @@ marked.
   `read_publications`/`write_publications` until re-grant.
 - **UserError has NO `code` field** in 2026-07 — only `field` + `message`
   (deviation; several hand-written queries selected `code` and failed).
+
+### v1.1 webhook registration + receiver (T-110, live-verified)
+
+- **`webhookSubscriptionCreate(topic: WebhookSubscriptionTopic!, webhookSubscription: WebhookSubscriptionInput!)`** —
+  deviations found by live introspection + create on the dev store
+  (fixtures `webhook_subscription_create_shape.json`,
+  `webhook_subscription_create.json`):
+  - `WebhookSubscriptionInput` has **`uri`**, not `address`
+    (`format: JSON` alongside it).
+  - `WebhookSubscription.uri` reads the target directly; `endpoint` is a
+    UNION (`WebhookHttpEndpoint` / `WebhookEventBridgeEndpoint` /
+    `WebhookPubSubEndpoint`) — select `uri`, not `endpoint { url }`.
+  - Topic enum value for products/create: `PRODUCTS_CREATE`.
+- Registered on the dev store 2026-10-01:
+  `PRODUCTS_CREATE → https://shop.mosaiq.marketing/webhooks/shopify/`
+  (verified live after create).
+- **Receiver fixes (T-110)**: `shop_domain` must come from the
+  `X-Shopify-Shop-Domain` header (it previously read the HMAC header,
+  corrupting every receipt), and the parsed payload is stored on the
+  receipt (`WebhookReceipt.body_json`) so handlers can read it.
+- **`/auth/callback` route**: registered in `shopify.app.toml` `[auth]`
+  but had no Django route (re-grant redirects 404'd). The view
+  (`apps.core.views.oauth_callback`) validates Shopify's **OAuth hmac**
+  — HEX sha256 over sorted `key=value` query params (different algorithm
+  from the webhook's base64 hmac) — and redirects to
+  `https://{shop}/admin/apps/{API_KEY}`. Invalid → 404.
+- **Scope re-grant on existing installs**: approve via
+  `https://{shop}/admin/oauth/authorize?client_id=…&scope=…` (see
+  `apps.core.scopes.build_regrant_url`); Shopify records the grant even if
+  the callback fails — then `refresh_access_token()` mints a token with
+  the new scopes. `shop.scopes` may omit read-implied scopes (e.g.
+  `read_publications` not listed although the query works).

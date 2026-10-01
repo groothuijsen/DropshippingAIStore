@@ -1,5 +1,16 @@
 ## Unreleased
 
+### T-110 complete — scope re-grant, webhook, receiver + callback fixes (2026-10-01)
+
+- **Scope re-grant executed on dev store** (user-approved OAuth authorize): all 3 new scopes granted + verified live via accessScopes; access token refreshed → publications/publishable/menu operations now work with the stored token.
+- **All T-110 fixtures live-captured** (16 success responses incl. collection_create with manual sources, publishable_publish, menu CRUD + duplicate-handle probe).
+- **Q19 answered**: menuCreate auto-suffixes duplicate handles (`mosaiq-main` → `mosaiq-main-1`); no error.
+- **Webhook products/create registered** on dev store (verified live). API 2026-07 deviations: `WebhookSubscriptionInput.uri` (not `address`); `WebhookSubscription.uri` directly (endpoint is a union).
+- **Webhook receiver fixes**: shop_domain from `X-Shopify-Shop-Domain` header (was the HMAC header — corrupted receipts); `body_json` stored on receipt so handlers can read payloads.
+- **`handle_product_create`**: initial variant-price snapshot into PriceHistory via shared idempotent `_snapshot_variant_prices()` (also used by products/update).
+- **`/auth/callback` route added** (was 404): validates Shopify OAuth hmac (HEX sha256 over sorted params) → redirects to the admin app page.
+- 895/895 tests passing; docs/03 "v1.1 webhook registration + receiver" section added.
+
 ### T-110 — scopes, scope check, GraphQL fixtures (2026-10-01)
 
 - **`shopify.app.toml`**: `write_online_store_navigation` + `write_publications` scopes; `products/create` webhook topic. Note: `publications` query also needs `read_publications` — add at deploy time.
