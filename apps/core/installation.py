@@ -118,12 +118,17 @@ METAOBJECT_TYPES = {
 }
 
 
-def ensure_metaobject_definitions(shop_domain: str, access_token: str) -> dict[str, str]:
+def ensure_metaobject_definitions(shop_domain: str, access_token: str) -> dict[str, dict[str, str]]:
     """Ensure metaobject definitions exist. Idempotent.
 
-    Returns a dict mapping type name to 'exists' or 'created'.
+    Returns a dict with two keys:
+    - "result": dict mapping type name to 'exists' or 'created'
+    - "type_mapping": dict mapping metaobj_type to the actual API type string
+      (e.g. "$app:page_content" -> "app--430212644865--page_content") so that
+      metafield definitions can use the correct validation value.
     """
     result: dict[str, str] = {}
+    type_mapping: dict[str, str] = {}
     client = _get_client(shop_domain, access_token)
 
     try:
@@ -136,6 +141,7 @@ def ensure_metaobject_definitions(shop_domain: str, access_token: str) -> dict[s
             if existing:
                 logger.info("Metaobject definition %s already exists (%s)", type_name, existing["id"])
                 result[type_name] = "exists"
+                type_mapping[type_name] = existing["type"]  # Store the API type string
                 continue
 
             # Create the definition
@@ -164,13 +170,16 @@ def ensure_metaobject_definitions(shop_domain: str, access_token: str) -> dict[s
                 logger.error("Failed to create metaobject definition %s: %s", type_name, user_errors)
                 result[type_name] = "error"
             else:
-                new_id = create_data["metaobjectDefinitionCreate"]["metaobjectDefinition"]["id"]
-                logger.info("Created metaobject definition %s (%s)", type_name, new_id)
+                created = create_data["metaobjectDefinitionCreate"]["metaobjectDefinition"]
+                logger.info("Created metaobject definition %s (%s)", type_name, created["id"])
                 result[type_name] = "created"
+                # Fall back to the requested type name if the API omits "type".
+                type_mapping[type_name] = created.get("type", type_name)
     finally:
         client.close()
 
-    return result
+    # Return both the status dict and the type mapping
+    return {"result": result, "type_mapping": type_mapping}
 
 
 # ── Metafield definitions ─────────────────────────────────────────────────
@@ -199,10 +208,19 @@ METAFIELD_DEFINITIONS = [
 ]
 
 
-def ensure_metafield_definitions(shop_domain: str, access_token: str) -> dict[str, str]:
+def ensure_metafield_definitions(
+    shop_domain: str,
+    access_token: str,
+    type_mapping: dict[str, str] | None = None,
+) -> dict[str, str]:
     """Ensure metafield definitions exist. Idempotent.
 
     Returns a dict mapping 'owner_type:key' to 'exists' or 'created'.
+
+    Args:
+        type_mapping: Optional dict mapping metaobj_type (e.g. "$app:page_content")
+            to the actual API type string (e.g. "app--430212644865--page_content")
+            used for metaobject_reference validation values.
     """
     result: dict[str, str] = {}
     client = _get_client(shop_domain, access_token)
@@ -237,12 +255,17 @@ def ensure_metafield_definitions(shop_domain: str, access_token: str) -> dict[st
                     "storefront": "PUBLIC_READ",
                 },
             }
-            # metaobject_reference metafields require a validation that
-            # selects the metaobject definition they point to (API 2026-07:
-            # "Validations require that you select a metaobject").
+            # metaobject_reference metafields need a validation that selects the
+            # metaobject definition they point to. API 2026-07: the option name is
+            # metaobject_definition_type and the value is the full type string
+            # "app--<app_id>--<type>" (e.g. "app--430212644865--page_content"),
+            # NOT "metaobject_definition" and NOT the bare type name.
+            # Verified against the dev store: introspection + live create call.
             if metaobj_type:
+                # Use the type mapping if available, otherwise fall back to the metaobj_type
+                validation_value = type_mapping.get(metaobj_type, metaobj_type) if type_mapping else metaobj_type
                 definition_input["validations"] = [
-                    {"name": "metaobject_definition", "value": metaobj_type}
+                    {"name": "metaobject_definition_type", "value": validation_value}
                 ]
             create_data = client.execute(create_query, {"definition": definition_input})
             user_errors = create_data.get("metafieldDefinitionCreate", {}).get("userErrors", [])
@@ -386,11 +409,14 @@ def on_install(shop_domain: str, access_token: str) -> Shop:
         client.close()
 
     # Step 3: Ensure metaobject definitions (idempotent)
-    metaobj_result = ensure_metaobject_definitions(shop_domain, access_token)
+    metaobj_data = ensure_metaobject_definitions(shop_domain, access_token)
+    metaobj_result = metaobj_data["result"]
+    type_mapping = metaobj_data["type_mapping"]
     logger.info("Metaobject definitions: %s", metaobj_result)
+    logger.info("Type mapping: %s", type_mapping)
 
     # Step 3: Ensure metafield definitions (idempotent)
-    metafield_result = ensure_metafield_definitions(shop_domain, access_token)
+    metafield_result = ensure_metafield_definitions(shop_domain, access_token, type_mapping)
     logger.info("Metafield definitions: %s", metafield_result)
 
     # Step 4: Price snapshot of all active variants

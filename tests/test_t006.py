@@ -232,7 +232,11 @@ class TestEnsureMetaobjectDefinitions:
 
         result = ensure_metaobject_definitions("test.myshopify.com", "token123")
 
-        assert result == {"$app:page_content": "exists", "$app:offer_display": "exists"}
+        assert result["result"] == {"$app:page_content": "exists", "$app:offer_display": "exists"}
+        assert result["type_mapping"] == {
+            "$app:page_content": "$app:page_content",
+            "$app:offer_display": "$app:offer_display",
+        }
         assert mock_client.execute.call_count == 2
 
     @patch("apps.core.installation._get_client")
@@ -245,14 +249,14 @@ class TestEnsureMetaobjectDefinitions:
             MOCK_NOT_FOUND,  # check page_content
             {
                 "metaobjectDefinitionCreate": {
-                    "metaobjectDefinition": {"id": "gid://shopify/MetaobjectDefinition/10"},
+                    "metaobjectDefinition": {"id": "gid://shopify/MetaobjectDefinition/10", "type": "app--123--page_content"},
                     "userErrors": [],
                 }
             },
             MOCK_NOT_FOUND,  # check offer_display
             {
                 "metaobjectDefinitionCreate": {
-                    "metaobjectDefinition": {"id": "gid://shopify/MetaobjectDefinition/11"},
+                    "metaobjectDefinition": {"id": "gid://shopify/MetaobjectDefinition/11", "type": "app--123--offer_display"},
                     "userErrors": [],
                 }
             },
@@ -260,7 +264,11 @@ class TestEnsureMetaobjectDefinitions:
 
         result = ensure_metaobject_definitions("test.myshopify.com", "token123")
 
-        assert result == {"$app:page_content": "created", "$app:offer_display": "created"}
+        assert result["result"] == {"$app:page_content": "created", "$app:offer_display": "created"}
+        assert result["type_mapping"] == {
+            "$app:page_content": "app--123--page_content",
+            "$app:offer_display": "app--123--offer_display",
+        }
         assert mock_client.execute.call_count == 4
 
     @patch("apps.core.installation._get_client")
@@ -282,8 +290,8 @@ class TestEnsureMetaobjectDefinitions:
 
         result = ensure_metaobject_definitions("test.myshopify.com", "token123")
 
-        assert result["$app:page_content"] == "error"
-        assert result["$app:offer_display"] == "exists"
+        assert result["result"]["$app:page_content"] == "error"
+        assert result["result"]["$app:offer_display"] == "exists"
 
 
 # ── ensure_metafield_definitions tests ────────────────────────────────────
@@ -345,13 +353,16 @@ class TestEnsureMetafieldDefinitions:
 
         payloads = {c.args[1]["definition"]["key"]: c.args[1]["definition"] for c in create_calls}
         page_def = payloads["page"]
+        # Without a type_mapping the fallback value is the metaobj_type itself;
+        # on_install() passes the real mapping ("app--<id>--<type>") from the
+        # created/existing metaobject definitions.
         assert page_def["validations"] == [
-            {"name": "metaobject_definition", "value": "$app:page_content"}
+            {"name": "metaobject_definition_type", "value": "$app:page_content"}
         ]
 
         offer_def = payloads["offer"]
         assert offer_def["validations"] == [
-            {"name": "metaobject_definition", "value": "$app:offer_display"}
+            {"name": "metaobject_definition_type", "value": "$app:offer_display"}
         ]
 
         # json definitions carry no validations
@@ -422,7 +433,7 @@ class TestOnInstall:
             MOCK_INSTALLATION_RESPONSE,
         ]
 
-        mock_metaobj.return_value = {"$app:page_content": "created", "$app:offer_display": "created"}
+        mock_metaobj.return_value = {"result": {"$app:page_content": "created", "$app:offer_display": "created"}, "type_mapping": {"$app:page_content": "app--123--page_content", "$app:offer_display": "app--123--offer_display"}}
         mock_metafield.return_value = {"PRODUCT:page": "created"}
         mock_write_meta.return_value = True
 
@@ -449,7 +460,7 @@ class TestOnInstall:
             MOCK_SHOP_INFO_RESPONSE,
             MOCK_INSTALLATION_RESPONSE,
         ]
-        mock_metaobj.return_value = {"$app:page_content": "exists", "$app:offer_display": "exists"}
+        mock_metaobj.return_value = {"result": {"$app:page_content": "exists", "$app:offer_display": "exists"}, "type_mapping": {"$app:page_content": "$app:page_content", "$app:offer_display": "$app:offer_display"}}
         mock_metafield.return_value = {"PRODUCT:page": "exists"}
         mock_write_meta.return_value = True
 
@@ -470,7 +481,7 @@ class TestOnInstall:
             MOCK_SHOP_INFO_RESPONSE,
             MOCK_INSTALLATION_RESPONSE,
         ]
-        mock_metaobj.return_value = {"$app:page_content": "created"}
+        mock_metaobj.return_value = {"result": {"$app:page_content": "created"}, "type_mapping": {"$app:page_content": "app--123--page_content"}}
         mock_metafield.return_value = {"PRODUCT:page": "created"}
         mock_write_meta.return_value = True
 
