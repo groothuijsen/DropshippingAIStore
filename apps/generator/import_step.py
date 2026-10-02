@@ -219,7 +219,7 @@ def _extract_url_facts(shop: Shop, page_text: str, source_url: str) -> dict[str,
         result = call_ai(
             shop=shop,
             purpose="url_facts_extraction",
-            model_key="sonnet",
+            model_key="copy",
             system="Extract product facts from the page text. Return title, short description, and key-value specs. Write in your own words — do not copy verbatim text.",
             user=f"Page text:\n{page_text[:8000]}\n\nSource URL: {source_url}",
             schema=UrlFacts,

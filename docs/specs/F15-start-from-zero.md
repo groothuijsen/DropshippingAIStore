@@ -73,6 +73,16 @@ Second onboarding route: the merchant describes a niche and Mosaiq proposes a br
 5. **Product data for the prompt**: `products_by_ids.graphql` (nodes(ids:), priceRange.minVariantPrice) — fixture `tests/fixtures/shopify/products_by_ids.json` captured from the dev store.
 6. **Legacy webhook int IDs**: `imported_products` rows written before the T-114 str() guard hold numeric ids as ints; `_norm_gid` stringifies (live 500 found this; regression test added).
 
+### T-117 (2026-10-02)
+
+1. **ManagedResource gained a `title` field** (not in the 12 §2.3 table): menu items need their display title; handle alone cannot recover it after a rename.
+2. **Standard-page child jobs exist only for page types with generated content** — a type requested by the structure but missing from `standard_pages` is skipped and listed in the children step output, instead of creating a job that would fail at layout.
+3. **The home page is built from real data, not AI copy**: hero = brand name + BrandKit tagline (fallback: brief description). The T-060x copy step upgrades it later; no invented content.
+4. **Parent steps reuse the existing StepName enum** with F15 meanings: import=limits, research=collections, copy=children, publish=menu — avoids enum churn; meanings documented in store_build.py.
+5. **Reservation conversion is a single point**: the parent consumes/releases the composite reservation (store_generations + ai_images) on terminal success/failure; children carry `usage_reserved` and never reserve/consume individually. In-process reservation bookkeeping falls back to recomputation from the blueprint after a worker restart.
+6. **A failed child keeps the parent RUNNING** (per 12 §5: no rollback; per-item Retry on the status screen); the menu step runs only when ALL children succeed, via advance_store_build after each child and directly on a resume where children already finished.
+7. **Pages are created unpublished** (isPublished=false via the existing publish step); publishing collections/pages and menu placement are T-118 (go-live) concerns — nothing touches main-menu or themes (F15-10).
+
 ### T-116 (2026-10-02)
 
 1. **One AI call generates ALL standard page types** of the structure (schema `StandardPages`), not one job per type — per-type child jobs are a T-117 build concern; content generation is batched for cost.

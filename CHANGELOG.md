@@ -1,5 +1,14 @@
 ## Unreleased
 
+### T-117 — Store build job (12 §5/§7, F15-10, F15-15, 2026-10-02)
+
+- `generator.ManagedResource` (migration `generator/0008`): every wizard-created Shopify resource (collection/menu/page) with gid unique per shop + title — the undo bookkeeping for T-118. `StoreBlueprint.build_job` + `store_limit_reserved_at`.
+- `apps/generator/store_build.py`: the `store_build` parent job — (1) plan limits reserved in ONE transaction (`store_generations` = 1 + (n_pdps − 1), `ai_images` = n_pdps), (2) collections created **unpublished** via `collectionCreate` (real T-110 `sources` shape) + ManagedResource rows, (3) child jobs: standard pages with generated content → local `Page` + layout/publish, home from BrandKit + brief, one PDP child per selected product with the full import→research→copy→images→compliance→layout→publish pipeline (`usage_reserved` prevents double reservation), (4) menu `mosaiq-main` created LAST (FRONTPAGE + collections + pages; `menuUpdate` on re-run).
+- Tasks: `run_store_build` (4-step parent, resume on failed steps, `last_error` kept, `PLAN_LIMIT_REACHED`/`BLUEPRINT_NO_PRODUCTS` error codes), `run_store_build_child`, `retry_store_build_child`, `advance_store_build` (a failed child keeps the parent running; the menu runs only when ALL children succeed).
+- Build status screen: "Build my store" button with plan-usage note before start; afterwards steps (Done/Running/Error) + per-child status with Retry buttons; `build_store`/`retry_build`/`retry_child` POST actions.
+- Supporting: `PAGE_TYPES_NEEDING_SHOPIFY_PAGE` += faq/shipping/returns; `JobInput.page_type` literal extended; `_reserve_usage` honors `usage_reserved`.
+- Tests: `tests/test_t117.py` (22). 1124/1124 suite; ruff clean. Commit `ece5249`.
+
 ### T-116 — Standard pages faq/shipping/returns (12 §3, F15-16, F18-10, 2026-10-02)
 
 - `PageType` += faq/shipping/returns; `StoreBlueprint.standard_pages` (migration `generator/0007`); `StandardPages`/`StandardPageContent`/`StandardFaqItem` schemas (tool `submit_standard_pages`).

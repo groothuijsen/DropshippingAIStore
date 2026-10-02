@@ -140,7 +140,7 @@ def run_copy(job: GenerationJob, step: JobStep) -> dict[str, Any] | None:
     payload = call_ai(
         shop=job.shop,
         purpose="copy",
-        model_key="claude",
+        model_key="copy",
         system=system_prompt,
         user=user_prompt,
         schema=SectionsPayload,

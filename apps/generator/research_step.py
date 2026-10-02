@@ -56,7 +56,7 @@ def run_research(job: GenerationJob, step: JobStep) -> dict[str, Any] | None:
     niche_hint = job.input.get("niche_hint", "")
 
     # Render prompt
-    prompt = render_prompt(
+    prompt, _user_prompt = render_prompt(
         "research",
         {
             "import_result": import_result,
@@ -70,7 +70,7 @@ def run_research(job: GenerationJob, step: JobStep) -> dict[str, Any] | None:
     research = call_ai(
         shop=job.shop,
         purpose="research",
-        model_key="claude",
+        model_key="copy",
         system=prompt,
         user="Generate research for this product.",
         schema=ResearchResult,

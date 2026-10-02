@@ -247,6 +247,24 @@ def _get_or_create_child(bp, store_job, key: str, **defaults) -> GenerationJob:
     return job
 
 
+PRODUCT_PIPELINE_STEPS = ["import", "research", "copy", "images", "compliance_check"]
+
+
+def _skip_product_pipeline_steps(job: GenerationJob) -> None:
+    """Standard-page/home children run layout+publish only.
+
+    ``get_pending_steps`` auto-creates the full page chain, which would
+    otherwise run the product pipeline (import fails without a product).
+    Pre-create those steps as SKIPPED so the checkpoint logic ignores them.
+    """
+    for name in PRODUCT_PIPELINE_STEPS:
+        JobStep.objects.get_or_create(
+            job=job,
+            name=name,
+            defaults={"status": StepStatus.SKIPPED},
+        )
+
+
 def _local_page_for(bp, job: GenerationJob, page_type: str, title: str, sections: list[dict]) -> Page:
     locale = (bp.content_locales or ["en"])[0]
     page, _ = Page.objects.get_or_create(
@@ -286,6 +304,7 @@ def create_children(bp, store_job) -> tuple[list[GenerationJob], list[str]]:
             input={"blueprint_id": str(bp.id), "content_locale": locale, "usage_reserved": True},
         )
         ensure_child_steps(job, STANDARD_PAGE_STEPS)
+        _skip_product_pipeline_steps(job)
         _local_page_for(bp, job, page_type, entry.get("title") or page_type.title(), sections)
         children.append(job)
 
@@ -299,6 +318,7 @@ def create_children(bp, store_job) -> tuple[list[GenerationJob], list[str]]:
         input={"blueprint_id": str(bp.id), "content_locale": locale, "usage_reserved": True},
     )
     ensure_child_steps(home_job, STANDARD_PAGE_STEPS)
+    _skip_product_pipeline_steps(home_job)
     if not Page.objects.filter(job=home_job).exists():
 
         tagline = ""

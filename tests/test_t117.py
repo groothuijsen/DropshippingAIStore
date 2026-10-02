@@ -253,6 +253,16 @@ class TestStoreBuildTask:
         # children enqueued
         assert child_task.delay.call_count == 6
 
+    def test_standard_page_children_skip_product_pipeline(self, db, shop):
+        bp = _bp(shop, selected_product_gids=[G1])
+        bp, _, _ = _run_build(shop, bp)
+        shipping = GenerationJob.objects.filter(parent=bp.build_job, page_type="shipping").first()
+        statuses = dict(shipping.steps.values_list("name", "status"))
+        assert statuses["layout"] == "pending"
+        assert statuses["publish"] == "pending"
+        for name in ("import", "research", "copy", "images", "compliance_check"):
+            assert statuses[name] == "skipped", name
+
     def test_standard_pages_get_local_page_rows(self, db, shop):
         bp = _bp(shop, selected_product_gids=[G1])
         bp, _, _ = _run_build(shop, bp)
