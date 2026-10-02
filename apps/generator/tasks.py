@@ -400,7 +400,7 @@ def generate_name_suggestions(blueprint_id: str) -> None:
         return call_ai(
             shop=bp.shop,
             purpose="niche_names",
-            model_key="claude",
+            model_key="copy",  # prompt header: Model LLM_MODEL_COPY
             system=system,
             user=f"Generate {count} brand name suggestions.",
             schema=NameSuggestions,
