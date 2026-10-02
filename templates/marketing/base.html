@@ -22,7 +22,16 @@
 <div class="nav-links"><a href="{% url 'marketing:features' %}">Features</a><a href="{% url 'marketing:pricing' %}">Pricing</a><a href="{% url 'marketing:eu_compliance' %}">EU compliance</a></div>
 <a class="btn btn-p" href="{% url 'marketing:early_access' %}">{% trans "Get early access" %}</a></nav>
 {% block content %}{% endblock %}
-<footer class="footer"><div class="shell">Mosaiq · Amsterdam · hello@mosaiq.marketing</div></footer>
+<footer class="footer"><div class="shell">
+  {% if company_line %}<div class="footer-company">{{ company_line }}</div>{% endif %}
+  <div class="footer-links">
+    {% if lang == "nl" %}
+      <a href="/nl/juridisch/privacy/">Privacy</a> · <a href="/nl/juridisch/voorwaarden/">Voorwaarden</a> · <a href="/nl/juridisch/bedrijfsgegevens/">Bedrijfsgegevens</a> · <a href="/nl/juridisch/cookies/">Cookies</a>
+    {% else %}
+      <a href="/legal/privacy/">Privacy</a> · <a href="/legal/terms/">Terms</a> · <a href="/legal/company/">Company details</a> · <a href="/legal/cookies/">Cookies</a>
+    {% endif %}
+  </div>
+</div></footer>
 <script>(function(){try{var d=location;if(d.protocol!=="https:"&&d.protocol!=="http:")return;new Image().src="/t.gif?p="+encodeURIComponent(d.pathname)+"&r="+encodeURIComponent(document.referrer||"")+"&l="+encodeURIComponent("{{ lang }}");}catch(e){}})();</script>
 </body>
 </html>

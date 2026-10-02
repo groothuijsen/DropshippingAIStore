@@ -78,6 +78,7 @@ TEMPLATES = [
             "context_processors": [
                 "django.template.context_processors.debug",
                 "django.template.context_processors.request",
+                "apps.marketing.context_processors.marketing_company",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
             ],
@@ -201,3 +202,12 @@ RESEND_API_KEY = env.str("RESEND_API_KEY", "")
 MARKETING_FROM_EMAIL = env.str("MARKETING_FROM_EMAIL", "Mosaiq <hello@mosaiq.marketing>")
 MARKETING_APP_LISTED = env.bool("MARKETING_APP_LISTED", False)
 MARKETING_APP_HANDLE = env.str("MARKETING_APP_HANDLE", "")
+
+MARKETING_LEGAL_NAME = env.str("MARKETING_LEGAL_NAME", "")
+MARKETING_ADDRESS = env.str("MARKETING_ADDRESS", "")
+MARKETING_REG_NO = env.str("MARKETING_REG_NO", "")
+MARKETING_VAT_ID = env.str("MARKETING_VAT_ID", "")
+MARKETING_CONTACT_EMAIL = env.str("MARKETING_CONTACT_EMAIL", "hello@mosaiq.marketing")
+MARKETING_HOSTING_PROVIDER = env.str("MARKETING_HOSTING_PROVIDER", "")
+MARKETING_EMAIL_PROVIDER = env.str("MARKETING_EMAIL_PROVIDER", "")
+MARKETING_BREACH_HOURS = env.str("MARKETING_BREACH_HOURS", "72")

@@ -59,7 +59,7 @@ def page_view(request: HttpRequest, slug: str = "home") -> HttpResponse:
 
     annotate_comparisons(page["sections"])
     _attach_seo(page)
-    page["body_html"] = markdown.markdown(page["body"], extensions=["extra"]) if page["body"] else ""
+    page["body_html"] = _resolve_placeholders(markdown.markdown(page["body"], extensions=["extra"])) if page["body"] else ""
     return render(request, page["template"], {
         "page": page, "lang": lang, "languages": LANGUAGES, "plans": _plans_context(page),
         "install_href": _install_href(lang), "form": None, "form_message": ""})
@@ -191,6 +191,26 @@ def beacon_view(request: HttpRequest) -> HttpResponse:
     resp = HttpResponse(_PIXEL, content_type='image/gif')
     resp['Cache-Control'] = 'no-store'
     return resp
+
+
+def _resolve_placeholders(text: str) -> str:
+    from django.conf import settings as st
+    mapping = {
+        "{legal_name}": st.MARKETING_LEGAL_NAME or "[company legal name]",
+        "{address}": st.MARKETING_ADDRESS or "[address]",
+        "{company_reg_no}": st.MARKETING_REG_NO or "[KvK number]",
+        "{vat_id}": st.MARKETING_VAT_ID or "[VAT id]",
+        "{email}": st.MARKETING_CONTACT_EMAIL,
+        "{provider}": st.MARKETING_HOSTING_PROVIDER or st.MARKETING_EMAIL_PROVIDER or "[provider]",
+        "{country}": "[country]",
+        "{hours}": st.MARKETING_BREACH_HOURS,
+        "{period}": "[retention period]",
+        "{city}": "[city]",
+        "{amount}": "[cap amount]",
+    }
+    for k, val in mapping.items():
+        text = text.replace(k, val)
+    return text
 
 
 def _install_href(lang: str) -> str:

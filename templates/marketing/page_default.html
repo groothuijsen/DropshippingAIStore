@@ -2,6 +2,7 @@
 {% load i18n %}
 {% block content %}
 <main>
+  {% if page.draft %}<div class="draft-banner">{% if lang == "nl" %}CONCEPT — deze pagina is een werkdraft en wordt juridisch nagelopen vóór publicatie.{% else %}DRAFT — this page is a working draft and will be legally reviewed before publication.{% endif %}</div>{% endif %}
   {% for section in page.sections %}
     {% if section.type == "hero" %}
       <header class="hero shell">

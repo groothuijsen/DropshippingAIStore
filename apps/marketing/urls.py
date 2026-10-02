@@ -17,6 +17,12 @@ _NL = [
     ("bureaus/", "agencies", "nl_agencies"),
     ("affiliates/", "affiliates", "nl_affiliates"),
     ("changelog/", "changelog", "nl_changelog"),
+    ("juridisch/privacy/", "privacy", "nl_privacy"),
+    ("juridisch/voorwaarden/", "terms", "nl_terms"),
+    ("juridisch/dpa/", "dpa", "nl_dpa"),
+    ("juridisch/subverwerkers/", "subprocessors", "nl_subprocessors"),
+    ("juridisch/cookies/", "cookies", "nl_cookies"),
+    ("juridisch/bedrijfsgegevens/", "company", "nl_company"),
 ]
 
 urlpatterns = [
@@ -31,6 +37,12 @@ urlpatterns = [
     path("agencies/", views.page_view, {"slug": "agencies"}, name="agencies"),
     path("affiliates/", views.page_view, {"slug": "affiliates"}, name="affiliates"),
     path("changelog/", views.page_view, {"slug": "changelog"}, name="changelog"),
+    path("legal/privacy/", views.page_view, {"slug": "privacy"}, name="legal_privacy"),
+    path("legal/terms/", views.page_view, {"slug": "terms"}, name="legal_terms"),
+    path("legal/dpa/", views.page_view, {"slug": "dpa"}, name="legal_dpa"),
+    path("legal/subprocessors/", views.page_view, {"slug": "subprocessors"}, name="legal_subprocessors"),
+    path("legal/cookies/", views.page_view, {"slug": "cookies"}, name="legal_cookies"),
+    path("legal/company/", views.page_view, {"slug": "company"}, name="legal_company"),
     path("blog/", views.blog_index, name="blog_index"),
     path("sitemap.xml", views.sitemap_view, name="sitemap"),
     path("robots.txt", views.robots_view, name="robots"),
