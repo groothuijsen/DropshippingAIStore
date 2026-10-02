@@ -224,13 +224,21 @@ class AnthropicClient:
                 last_exception = RuntimeError(f"Provider error {response.status_code}: {response.text[:200]}")
                 continue
 
-            # Some models reject forced tool_choice ("type tool and any are
-            # not supported for this model"). Retry once without it — the
-            # tool stays in `tools`, and call() still validates the tool_use
-            # output against the schema.
-            if response.status_code == 400 and "tool_choice" in response.text:
-                payload.pop("tool_choice", None)
-                continue
+            # Newer models reject some request params outright (400):
+            # forced tool_choice ("type tool and any are not supported"),
+            # deprecated temperature. Drop the offending param and retry —
+            # the tool stays in `tools`, and call() still validates the
+            # tool_use output against the schema (no validation bypass).
+            if response.status_code == 400:
+                dropped = False
+                if "tool_choice" in response.text and "tool_choice" in payload:
+                    payload.pop("tool_choice")
+                    dropped = True
+                if "temperature" in response.text and "temperature" in payload:
+                    payload.pop("temperature")
+                    dropped = True
+                if dropped:
+                    continue
 
             # Non-retryable error
             raise AnthropicToolCallError(f"API error {response.status_code}: {response.text[:500]}")
