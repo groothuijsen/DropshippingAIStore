@@ -6,6 +6,8 @@ from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
 
+import markdown
+
 from .content import LANGUAGES, load_page
 from .schemas import validate_sections
 
@@ -44,6 +46,7 @@ def page_view(request: HttpRequest, slug: str = "home") -> HttpResponse:
     if errors:
         raise Http404  # broken content never ships (check_marketing_content catches it in CI)
 
+    page["body_html"] = markdown.markdown(page["body"], extensions=["extra"]) if page["body"] else ""
     return render(request, page["template"], {"page": page, "lang": lang, "languages": LANGUAGES})
 
 

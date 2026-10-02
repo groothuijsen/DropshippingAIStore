@@ -13,7 +13,7 @@ import re
 from django.core.management.base import BaseCommand, CommandError
 
 from apps.marketing.content import LANGUAGES, list_pages, load_page
-from apps.marketing.schemas import validate_sections
+from apps.marketing.schemas import collect_claim_ids, validate_sections
 
 CLAIMS_FILE = pathlib.Path(__file__).resolve().parents[4] / "docs" / "marketing" / "claims.md"
 
@@ -51,7 +51,7 @@ class Command(BaseCommand):
                     errors.append(f"{lang}/{slug}.md: missing title")
                 errors.extend(f"{lang}/{slug}.md: {e}" for e in validate_sections(page["sections"]))
                 for section in page["sections"]:
-                    for claim_id in (section or {}).get("claim_ids", []) or []:
+                    for claim_id in collect_claim_ids(section):
                         if claim_id not in claims:
                             errors.append(f"{lang}/{slug}.md: claim {claim_id} not in claims.md")
                         elif claims[claim_id] != "verified":

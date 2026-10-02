@@ -27,3 +27,4 @@ Every factual statement on the marketing site, in the App Store listing and in e
 | C-21 | Billing through your Shopify invoice | 08 | verified | Billing API |
 | C-22 | App data stored on servers in the EU | 11-ops | **unverified** | confirm server location; note that AI providers process prompts (sub-processor list) — never say "all data stays in the EU" |
 | C-23 | Prices $29 / $59 / $149 per month, annual = 10 months | 00, 08 | verified | rendered from code, never typed |
+| C-24 | Affiliate programme pays 30% recurring for 12 months | affiliate terms (draft, legal review pending) | **unverified** | signed affiliate terms; must reach `verified` before the affiliates page launches |

@@ -44,3 +44,10 @@ h2 { font-size: var(--t-h2); letter-spacing: -.02em; text-align: center; margin-
 .cmp td:not(:first-child), .cmp th:not(:first-child) { text-align: center; }
 .footer { border-top: 1px solid var(--line); padding: 34px 0; color: var(--muted); font-size: .88rem; text-align: center; }
 @media (max-width: 768px) { .grid3, .price-grid { grid-template-columns: 1fr; } .nav-links { display: none; } }
+
+/* markdown body */
+.prose { max-width: 75ch; margin: 0 auto; }
+.prose h2 { text-align: left; font-size: 1.6rem; margin: 30px 0 12px; }
+.prose p { color: var(--muted); margin-bottom: 14px; }
+.prose ul, .prose ol { color: var(--muted); padding-left: 1.3rem; margin-bottom: 14px; }
+.prose a { color: var(--acc); }

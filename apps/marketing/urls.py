@@ -4,6 +4,21 @@ from . import views
 
 app_name = "marketing"
 
+# NL routes use the Dutch slugs from site-copy.nl.md; the loader reads
+# content/marketing/nl/<english-stem>.md (language parity is file-based).
+_NL = [
+    ("", "home", "nl_home"),
+    ("functies/", "features", "nl_features"),
+    ("prijzen/", "pricing", "nl_pricing"),
+    ("eu-regels/", "eu-compliance", "nl_eu_compliance"),
+    ("begin-vanaf-nul/", "start-from-zero", "nl_start_from_zero"),
+    ("vroege-toegang/", "early-access", "nl_early_access"),
+    ("vergelijken/", "compare", "nl_compare"),
+    ("bureaus/", "agencies", "nl_agencies"),
+    ("affiliates/", "affiliates", "nl_affiliates"),
+    ("changelog/", "changelog", "nl_changelog"),
+]
+
 urlpatterns = [
     path("", views.page_view, {"slug": "home"}, name="home"),
     path("features/", views.page_view, {"slug": "features"}, name="features"),
@@ -16,10 +31,9 @@ urlpatterns = [
     path("affiliates/", views.page_view, {"slug": "affiliates"}, name="affiliates"),
     path("changelog/", views.page_view, {"slug": "changelog"}, name="changelog"),
     path("blog/", views.blog_index, name="blog_index"),
-    # Dutch prefixed routes
-    path("nl/", views.page_view, {"slug": "home"}, name="nl_home"),
-    path("nl/features/", views.page_view, {"slug": "features"}, name="nl_features"),
-    path("nl/pricing/", views.page_view, {"slug": "pricing"}, name="nl_pricing"),
-    path("nl/eu-compliance/", views.page_view, {"slug": "eu-compliance"}, name="nl_eu_compliance"),
     # /de/ intentionally absent until T-158 (native review gate)
+]
+urlpatterns += [
+    path(f"nl/{route}", views.page_view, {"slug": stem}, name=name)
+    for route, stem, name in _NL
 ]

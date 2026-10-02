@@ -16,7 +16,7 @@
       </header>
     {% elif section.type == "features" %}
       <section class="block shell">
-        <h2>{% trans "Everything the EU asks for — handled" %}</h2>
+        {% if section.title %}<h2>{{ section.title }}</h2>{% else %}<h2>{% trans "Everything the EU asks for — handled" %}</h2>{% endif %}
         <p class="sec-sub">&nbsp;</p>
         <div class="grid3">
           {% for item in section.items %}
@@ -26,8 +26,8 @@
         </div>
       </section>
     {% elif section.type == "steps" %}
-      <section class="block shell">
-        <h2>{% trans "How it works" %}</h2>
+      <section class="block shell"{% if section.anchor %} id="{{ section.anchor }}"{% endif %}>
+        {% if section.title %}<h2>{{ section.title }}</h2>{% else %}<h2>{% trans "How it works" %}</h2>{% endif %}
         <p class="sec-sub">&nbsp;</p>
         <ol class="steps">
           {% for item in section.items %}<li><strong>{{ item.title }}</strong> — {{ item.text }}</li>{% endfor %}
@@ -35,7 +35,7 @@
       </section>
     {% elif section.type == "faq" %}
       <section class="block shell">
-        <h2>{% trans "Questions" %}</h2>
+        {% if section.title %}<h2>{{ section.title }}</h2>{% else %}<h2>{% trans "Questions" %}</h2>{% endif %}
         <p class="sec-sub">&nbsp;</p>
         <dl class="faq">
           {% for item in section.items %}<dt>{{ item.q }}</dt><dd>{{ item.a }}</dd>{% endfor %}
@@ -57,7 +57,7 @@
       </section>
     {% elif section.type == "comparison" %}
       <section class="block shell">
-        <h2>{% trans "Mosaiq vs. the rest" %}</h2>
+        {% if section.title %}<h2>{{ section.title }}</h2>{% else %}<h2>{% trans "Mosaiq vs. the rest" %}</h2>{% endif %}
         <p class="sec-sub">&nbsp;</p>
         <table class="cmp">
           <thead><tr><th></th><th>Mosaiq</th><th>{% trans "Others" %}</th></tr></thead>
@@ -70,6 +70,6 @@
       </section>
     {% endif %}
   {% endfor %}
-  {% if page.body %}<section class="block shell"><div>{{ page.body }}</div></section>{% endif %}
+  {% if page.body_html %}<section class="block shell"><div class="prose">{{ page.body_html|safe }}</div></section>{% endif %}
 </main>
 {% endblock %}

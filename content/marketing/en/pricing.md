@@ -1,20 +1,30 @@
 ---
-title: "Pricing — simple plans for every stage"
+title: "Pricing — Mosaiq"
 slug: "/pricing/"
-description: "Mosaiq plans: Starter, Pro and Agency. Prices in USD, billed via Shopify."
+description: "Flat monthly plans. No usage charges, no revenue caps, no per-order fees. 7-day free trial."
 template: "marketing/page_default.html"
 sections:
   - type: hero
-    eyebrow: "Pricing"
-    headline: "Plans that grow with your store"
-    sub: "Prices are billed through Shopify. Excl. VAT where applicable."
-    cta_primary: { label: "Get early access", href: "@early_access" }
+    headline: "Flat pricing. No per-order fees."
+    sub: "Every plan includes all compliance features. Billed through Shopify."
+    cta_primary: { label: "Start your 7-day trial", href: "/early-access/", claim_ids: ["C-18"] }
+    claim_ids: ["C-04", "C-21"]
   - type: pricing_table
   - type: faq
+    title: "Pricing questions"
     items:
-      - { q: "How am I billed?", a: "Through the Shopify Billing API, on your Shopify invoice." }
+      - { q: "Is there a free trial?", a: "Yes, 7 days on every plan.", claim_ids: ["C-18"] }
+      - { q: "Are there usage charges?", a: "No. Each plan has fixed monthly limits; when you reach one, nothing is charged — you can upgrade or wait for the next period.", claim_ids: ["C-04"] }
+      - { q: "What counts as a store generation?", a: "A full store run (homepage, product page, about page). Single pages don't count until they're live." }
+      - { q: "Can I pay yearly?", a: "Yes: the annual plan costs 10 months.", claim_ids: ["C-23"] }
+      - { q: "How do I cancel?", a: "Uninstall the app or change the plan in your Shopify admin. Billing stops immediately." }
+      - { q: "Are prices include VAT?", a: "Prices are in USD and exclude VAT where applicable; Shopify shows the final amount on your invoice." }
   - type: cta
-    headline: "Pick a plan when you go live"
-    sub: "Early access members get onboarding help."
-    cta_primary: { label: "Get early access", href: "@early_access" }
+    headline: "Start with the plan that fits"
+    cta_primary: { label: "Get early access", href: "/early-access/" }
 ---
+Plan blurbs (rendered with the table from code in T-153):
+
+- **Starter** — For your first store.
+- **Pro** — For growing brands with more products and pages.
+- **Agency** — For agencies and multi-store owners.
