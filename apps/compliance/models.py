@@ -94,3 +94,94 @@ class WithdrawalRequest(models.Model):
 
     def __str__(self) -> str:
         return f"{self.reference} — {self.customer_name} ({self.status})"
+
+
+class DeliveryProfile(models.Model):
+    """Delivery estimate per source app (12 §2.4).
+
+    One row per (shop, source_app). transit_days and shipping_cost are
+    per-market JSON: {"NL": [5, 9]} and {"NL": {"amount": "4.95",
+    "free_from": "40.00"}}.
+    """
+
+    SOURCE_APPS = (
+        ("dsers", "DSers"),
+        ("cj", "CJ Dropshipping"),
+        ("zendrop", "Zendrop"),
+        ("autods", "AutoDS"),
+        ("printify", "Printify"),
+        ("printful", "Printful"),
+        ("manual", "Manual"),
+        ("other", "Other"),
+    )
+
+    shop = models.ForeignKey("core.Shop", on_delete=models.CASCADE, related_name="delivery_profiles")
+    source_app = models.CharField(max_length=20, choices=SOURCE_APPS)
+    ship_from_country = models.CharField(max_length=2, help_text="ISO 3166-1 alpha-2")
+    processing_days_min = models.PositiveSmallIntegerField()
+    processing_days_max = models.PositiveSmallIntegerField()
+    transit_days = models.JSONField(
+        help_text='Per market: {"NL": [5, 9], "DE": [6, 10]}; each [min, max]'
+    )
+    shipping_cost = models.JSONField(
+        null=True,
+        blank=True,
+        help_text='Per market: {"NL": {"amount": "4.95", "free_from": "40.00"}}',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["shop", "source_app"],
+                name="unique_delivery_profile_per_shop_source",
+            ),
+        ]
+
+    def clean(self) -> None:
+        super().clean()
+        errors: dict[str, str] = {}
+        if self.processing_days_max > 15:
+            errors["processing_days_max"] = "Max 15 working days."
+        if self.processing_days_min > self.processing_days_max:
+            errors["processing_days_min"] = "Min must be <= max."
+        if isinstance(self.transit_days, dict):
+            for market, rng in self.transit_days.items():
+                if not (isinstance(rng, list) and len(rng) == 2 and rng[0] <= rng[1]):
+                    errors["transit_days"] = (
+                        f"Market {market}: each entry must be [min, max] with min <= max."
+                    )
+                    break
+        if errors:
+            from django.core.exceptions import ValidationError
+
+            raise ValidationError(errors)
+
+    def __str__(self) -> str:
+        return f"DeliveryProfile {self.source_app} ({self.ship_from_country}) @ {self.shop.domain}"
+
+
+class DeliveryOverride(models.Model):
+    """Per-product delivery override (12 §2.4). Null fields fall back to the profile."""
+
+    shop = models.ForeignKey("core.Shop", on_delete=models.CASCADE, related_name="delivery_overrides")
+    product_gid = models.CharField(max_length=255)
+    ship_from_country = models.CharField(max_length=2, blank=True, null=True)
+    processing_days_min = models.PositiveSmallIntegerField(null=True, blank=True)
+    processing_days_max = models.PositiveSmallIntegerField(null=True, blank=True)
+    transit_days = models.JSONField(null=True, blank=True)
+    shipping_cost = models.JSONField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["shop", "product_gid"],
+                name="unique_delivery_override_per_shop_product",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"DeliveryOverride {self.product_gid} @ {self.shop.domain}"
