@@ -73,6 +73,14 @@ Second onboarding route: the merchant describes a niche and Mosaiq proposes a br
 5. **Product data for the prompt**: `products_by_ids.graphql` (nodes(ids:), priceRange.minVariantPrice) — fixture `tests/fixtures/shopify/products_by_ids.json` captured from the dev store.
 6. **Legacy webhook int IDs**: `imported_products` rows written before the T-114 str() guard hold numeric ids as ints; `_norm_gid` stringifies (live 500 found this; regression test added).
 
+### T-118 (2026-10-02)
+
+1. **Q20 answered**: a best-effort theme-editor deep link (`/admin/themes/current/editor?template=index&add_header_menu=mosaiq-main`, same family as the documented 03 §7 links) plus a "Done" checkbox — without `read_themes` the app cannot resolve the active theme or verify the parameter, so the checkbox is the source of truth (same stance as the 09 onboarding theme step).
+2. **The home page publishes as a metaobject only** — `home` is not in `PAGE_TYPES_NEEDING_SHOPIFY_PAGE` (it renders via the theme homepage + `SHOP:home_page` metafield), so it has no `/pages/` entry and shows `gid: null` in the publish result; the menu covers it via FRONTPAGE.
+3. **GPSR preconditions apply to product pages only** in `check_can_go_live` (the empty-`GpsrInfo` check blocked every standard page live; GPSR duties attach to products — same scoping as the T-117 publish-step gate).
+4. **Undo is unit-tested but deliberately not exercised live** on the dev store (it would delete the built store); the same GraphQL mutations are verified read-side by the publish E2E.
+5. **A Shopify page publish failure blocks the page** (F07-5 requires metaobjects ACTIVE + page published + status live together); `publish_store` lists such pages as blocked instead of marking them live.
+
 ### T-117 (2026-10-02)
 
 1. **ManagedResource gained a `title` field** (not in the 12 §2.3 table): menu items need their display title; handle alone cannot recover it after a rename.

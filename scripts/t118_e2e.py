@@ -24,12 +24,11 @@ shop = Shop.objects.get(domain="mosaiq-pod.myshopify.com")
 bp = StoreBlueprint.objects.filter(shop=shop).order_by("-created_at").first()
 print("0) build_job:", bp.build_job_id is not None, "| menu_placed:", bp.menu_placed)
 
-if bp.publish_result:
-    result = bp.publish_result
-    print("1) publish result (stored):", result)
-else:
-    result = run_store_publish(str(bp.id))
-    print("1) publish result:", result)
+bp.publish_result = None
+bp.save(update_fields=["publish_result", "updated_at"])
+print("publish_result reset for a fresh run")
+result = run_store_publish(str(bp.id))
+print("1) publish result:", result)
 
 client = ShopifyGraphQLClient(shop.domain, decrypt_token(shop.access_token_encrypted), settings.SHOPIFY_API_VERSION)
 

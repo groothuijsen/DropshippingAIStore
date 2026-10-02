@@ -1,5 +1,14 @@
 ## Unreleased
 
+### T-118 — Publish store (go-live) + Undo + menu placement (F15-12..14, 2026-10-02)
+
+- `StoreBlueprint.menu_placed` + `publish_result` (migration `generator/0009`).
+- `apps/generator/store_go_live.py`: `publish_collections` (resolve the Online Store publication → `publishablePublish` per blueprint collection — the only publish point for the collections created unpublished in T-117); `publish_store` (F07 go-live per eligible page; returns pages need complete `BusinessDetails` → `BUSINESS_DETAILS_MISSING`; blocked pages listed with reasons in `publish_result` + `AuditLog`); `undo_store_build` (live pages block the undo and must be archived first; otherwise `collectionDelete`/`menuDelete`/`pageDelete` + local Page archive + `ManagedResource.removed_at` + one `AuditLog` row per deletion; products and BrandKit untouched).
+- Menu placement (F15-12): theme-editor deep link + "Done" checkbox (`menu_placed`); Publish/Undo sections on the build panel with blocked-page reasons. **Q20 answered** in open-questions.
+- Live E2E (dev store): collection `Live geverifieerd` → **Online Store** verified read-side; shipping page `isPublished=True`; returns correctly blocked with `BUSINESS_DETAILS_MISSING`; `publish_result` stored. Undo deliberately not run live (would delete the dev store) — unit-tested.
+- **Live-found + fixed**: `pageUpdate` requires `id` as a top-level argument in 2026-07 (introspection fixture `page_update_shape.json`) — Shopify `isPublished` had silently stayed false; `go_live` now aborts when the page could not be published instead of marking it live; GPSR preconditions scoped to product pages (the empty-`GpsrInfo` check blocked every standard page).
+- Tests: `tests/test_t118.py` (16). 1145/1145 suite; ruff clean.
+
 ### T-117 — Store build job (12 §5/§7, F15-10, F15-15, 2026-10-02)
 
 - `generator.ManagedResource` (migration `generator/0008`): every wizard-created Shopify resource (collection/menu/page) with gid unique per shop + title — the undo bookkeeping for T-118. `StoreBlueprint.build_job` + `store_limit_reserved_at`.
