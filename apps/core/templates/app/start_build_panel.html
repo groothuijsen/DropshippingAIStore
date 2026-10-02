@@ -105,6 +105,17 @@
   {% for page_type, info in bp.publish_result.published_pages.items %}
   <li><span class="dot ok"></span> {{ page_type }} — {% trans "live" %}</li>
   {% endfor %}
+  {% if edit_pages %}
+  <h3>{% trans "Edit pages" %}</h3>
+  <ul class="mq-structure-list">
+    {% for pg in edit_pages %}
+    <li><span class="dot ok"></span> {{ pg.title }} <span class="mq-help">({{ pg.page_type }} · v{{ pg.version }})</span>
+      <a class="mq-btn mq-btn-small" href="/app/pages/{{ pg.id }}/edit/?id_token={{ request.GET.id_token }}">{% trans "Edit" %}</a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
   {% for blocked in bp.publish_result.blocked_pages %}
   <li><span class="dot warn"></span> {{ blocked.page_type }} — {{ blocked.reasons|join:"; " }}
     {% if blocked.product_gid %}<a href="/app/products/{{ blocked.product_gid|urlencode:"" }}/gpsr/?id_token={{ request.GET.id_token }}">{% trans "Fill in GPSR" %}</a>{% endif %}

@@ -1,3 +1,9 @@
+## 2026-10-02 — T-121: editor UI + S10 complete
+
+- Page editor screen: instruction (500), per-section ask, locale tabs, diff + Apply/Reject, claim highlighting, multi-locale apply, limit UX with reset date, HTMX polling panel.
+- Build panel links every blueprint page to its editor.
+- 1210/1210 tests. Sprint S10 (T-118, T-120, T-121) is complete.
+
 ## 2026-10-02 — T-120: plain-language page edits (F16 backend)
 
 - `EditOp`/`PageEditResult` schemas; `PageEdit` model (gen/0011); `AiCallPurpose.EDIT`.

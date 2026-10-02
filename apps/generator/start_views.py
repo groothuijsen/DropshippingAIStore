@@ -622,9 +622,11 @@ def _build_panel_context(bp) -> dict:
     children = list(GenerationJob.objects.filter(parent=job).order_by("page_type", "created_at"))
     steps = list(job.steps.all())
     from apps.core.deep_links import get_menu_placement_link
+    from apps.generator.models import Page
 
     ctx.update(
         {
+            "edit_pages": list(Page.objects.filter(job__parent=job).order_by("page_type")),
             "build_job": job,
             "build_steps": steps,
             "build_children": children,

@@ -10,6 +10,7 @@ from apps.compliance.views import (
     price_apply,
 )
 from apps.core.onboarding_views import onboarding
+from apps.generator.editor_views import apply_edit_view, editor_panel, page_editor, reject_edit_view
 from apps.generator.start_views import start_panel, start_wizard
 
 from .views import business_details, dashboard, settings_index, store_settings
@@ -25,6 +26,10 @@ urlpatterns = [
         delivery_override,
         name="delivery_override",
     ),
+    path("pages/<uuid:page_id>/edit/", page_editor, name="page_editor"),
+    path("pages/<uuid:page_id>/edit/panel/", editor_panel, name="page_editor_panel"),
+    path("pages/<uuid:page_id>/edit/<uuid:edit_id>/apply/", apply_edit_view, name="page_edit_apply"),
+    path("pages/<uuid:page_id>/edit/<uuid:edit_id>/reject/", reject_edit_view, name="page_edit_reject"),
     path(
         "products/<path:product_gid>/gpsr/",
         gpsr_form,

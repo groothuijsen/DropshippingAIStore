@@ -1,0 +1,49 @@
+{% load i18n %}
+{% if not edit %}
+  <div class="mq-message mq-info">{% trans "Describe a change above — Mosaiq proposes an edit you can review before anything changes." %}</div>
+{% elif edit.status == "proposed" and edit.locale == locale %}
+  <div class="mq-panel">
+    <h3>{% trans "Proposed change" %}</h3>
+    <p class="mq-subtitle">{{ edit.summary }}</p>
+    {% if fresh_blocks %}
+    <div class="mq-message mq-warning">
+      <strong>{% trans "Compliance note" %}</strong>
+      {% for f in fresh_blocks %}
+      <div>{{ f.text }} <span class="mq-help">({{ f.rule_id }})</span></div>
+      {% endfor %}
+      <span class="mq-help">{% trans "You can still apply — go-live stays blocked as usual." %}</span>
+    </div>
+    {% endif %}
+    <table class="mq-table">
+      <thead><tr><th>{% trans "Section" %}</th><th>{% trans "Field" %}</th><th>{% trans "Before" %}</th><th>{% trans "After" %}</th></tr></thead>
+      <tbody>
+        {% for row in diff_rows %}
+        <tr>
+          <td>{{ row.section }}</td>
+          <td><code>{{ row.field }}</code></td>
+          <td class="mq-diff-before">{{ row.before }}</td>
+          <td class="mq-diff-after">{{ row.after }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="mq-actions">
+      <form method="post" action="/app/pages/{{ page.id }}/edit/{{ edit.id }}/apply/?locale={{ locale }}&id_token={{ id_token|default:request.GET.id_token }}">
+        {% csrf_token %}
+        <button type="submit" class="mq-button">{% trans "Apply" %}</button>
+      </form>
+      <form method="post" action="/app/pages/{{ page.id }}/edit/{{ edit.id }}/reject/?locale={{ locale }}&id_token={{ id_token|default:request.GET.id_token }}">
+        {% csrf_token %}
+        <button type="submit" class="mq-btn">{% trans "Reject" %}</button>
+      </form>
+    </div>
+  </div>
+{% elif edit.status == "proposed" %}
+  <div class="mq-message mq-info">{% trans "A proposal for another language is ready — switch the language tab to review it." %}</div>
+{% elif edit.status == "applied" %}
+  <div class="mq-message mq-message-success">{% trans "Last edit applied to the draft." %}</div>
+{% elif edit.status == "rejected" %}
+  <div class="mq-message mq-info">{% trans "Last edit rejected — nothing changed." %}</div>
+{% elif edit.status == "failed" %}
+  <div class="mq-message mq-error">{{ edit.error_code }} — {% trans "nothing changed. Rephrase your instruction and try again." %}</div>
+{% endif %}

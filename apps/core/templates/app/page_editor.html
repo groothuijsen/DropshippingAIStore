@@ -1,0 +1,87 @@
+{% extends "app/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Page editor" %}{% endblock %}
+
+{% block content %}
+<div class="mq-delivery-settings">
+  <h1>{% trans "Page editor" %}</h1>
+  <p class="mq-subtitle">{{ page.title }} · {{ page.page_type }}</p>
+  {% if page.status == "live" %}
+  <div class="mq-message mq-warning">{% trans "This page is live. Edits change the draft only — re-publish to make them live." %}</div>
+  {% endif %}
+
+  {% if messages %}
+  <div class="mq-messages">
+    {% for message in messages %}
+    <div class="mq-message mq-message-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="mq-actions">
+    {% for lc in locales %}
+    <a class="mq-btn {% if lc == locale %}mq-btn-primary{% endif %}" href="?locale={{ lc }}&id_token={{ request.GET.id_token }}">{{ lc|upper }}</a>
+    {% endfor %}
+  </div>
+
+  <div id="mq-edit-panel"
+       hx-get="/app/pages/{{ page.id }}/edit/panel/?locale={{ locale }}&id_token={{ request.GET.id_token }}"
+       hx-trigger="every 3s"
+       hx-swap="innerHTML">
+    {% include "app/page_editor_panel.html" %}
+  </div>
+
+  {% if limit.allowed %}
+  <form method="post" class="mq-form" action="?locale={{ locale }}&id_token={{ request.GET.id_token }}">
+    {% csrf_token %}
+    <input type="hidden" name="locale" value="{{ locale }}">
+    <input type="hidden" name="action" value="propose">
+    <div class="mq-field">
+      <label for="instruction">{% trans "Ask for a change (whole page)" %}</label>
+      <textarea id="instruction" name="instruction" rows="3" maxlength="500"
+                placeholder="{% trans 'e.g. Make the hero more premium' %}"></textarea>
+      <p class="mq-help">{% trans "Plain language, max 500 characters." %}</p>
+    </div>
+    <div class="mq-field-checkbox">
+      <input type="checkbox" id="other_locales" name="other_locales">
+      <label for="other_locales">{% trans "Apply to other languages too (each counts as one edit)" %}</label>
+    </div>
+    <div class="mq-actions">
+      <button type="submit" class="mq-button">{% trans "Ask for a change" %}</button>
+    </div>
+  </form>
+  {% else %}
+  <div class="mq-field">
+    <label for="instruction">{% trans "Ask for a change (whole page)" %}</label>
+    <textarea id="instruction" name="instruction" rows="3" maxlength="500" disabled
+              placeholder="{% trans 'e.g. Make the hero more premium' %}"></textarea>
+    <p class="mq-help">{% trans "Plan limit reached. The limit resets on" %} {{ limit.reset_date|date:"d F Y" }}.</p>
+  </div>
+  <div class="mq-message mq-warning">
+    {% trans "Plan limit reached. The limit resets on" %} {{ limit.reset_date|date:"d F Y" }}.
+  </div>
+  {% endif %}
+
+  <h2>{% trans "Sections" %}</h2>
+  <ul class="mq-structure-list">
+    {% for section in sections %}
+    <li>
+      <span class="dot ok"></span> <strong>{{ section.type }}</strong>
+      <span class="mq-help">{{ section.preview }}</span>
+      {% if limit.allowed %}
+      <form method="post" class="mq-inline-form" action="?locale={{ locale }}&id_token={{ request.GET.id_token }}">
+        {% csrf_token %}
+        <input type="hidden" name="locale" value="{{ locale }}">
+        <input type="hidden" name="action" value="propose">
+        <input type="hidden" name="scope" value="{{ forloop.counter0 }}">
+        <input type="text" name="instruction" maxlength="500" required
+               placeholder="{% trans 'Change this section…' %}">
+        <button type="submit" class="mq-btn mq-btn-small">{% trans "Ask for a change" %}</button>
+      </form>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}
