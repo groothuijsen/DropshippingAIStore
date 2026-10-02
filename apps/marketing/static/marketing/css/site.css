@@ -51,3 +51,12 @@ h2 { font-size: var(--t-h2); letter-spacing: -.02em; text-align: center; margin-
 .prose p { color: var(--muted); margin-bottom: 14px; }
 .prose ul, .prose ol { color: var(--muted); padding-left: 1.3rem; margin-bottom: 14px; }
 .prose a { color: var(--acc); }
+
+/* pricing + comparison freshness (T-153) */
+.plan-blurb { color: var(--muted); font-size: .92rem; margin: 8px 0 14px; }
+.plan-limits { list-style: none; text-align: left; max-width: 260px; margin: 0 auto 20px; font-size: .88rem; color: var(--muted); }
+.plan-limits li { padding: 5px 0; border-bottom: 1px dashed var(--line); }
+.plan-limits li:last-child { border: none; }
+.freshness { max-width: 720px; margin: 0 auto 26px; padding: 12px 18px; border-radius: var(--rad); font-size: .92rem; text-align: center; }
+.freshness-review { background: rgba(232, 84, 47, .08); border: 1px solid rgba(232, 84, 47, .35); color: var(--fg); }
+.freshness-expired { background: rgba(20, 20, 20, .05); border: 1px dashed var(--line); color: var(--muted); }

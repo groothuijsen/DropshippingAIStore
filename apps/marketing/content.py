@@ -37,6 +37,7 @@ def load_page(lang: str, slug: str) -> dict:
         "description": meta.get("description", ""),
         "template": meta.get("template", "marketing/page_default.html"),
         "sections": meta.get("sections") or [],
+        "blurbs": meta.get("blurbs") or {},
         "body": body,
         "source_file": str(path),
     }

@@ -7,7 +7,10 @@ from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
 
+from apps.billing.plans import PLAN_LIMITS, PLAN_NAMES, PLAN_PRICES
+
 from .content import LANGUAGES, load_page
+from .freshness import annotate_comparisons
 from .schemas import validate_sections
 
 MARKETING_HOST = "shopify.mosaiq.marketing"
@@ -45,8 +48,31 @@ def page_view(request: HttpRequest, slug: str = "home") -> HttpResponse:
     if errors:
         raise Http404  # broken content never ships (check_marketing_content catches it in CI)
 
+    annotate_comparisons(page["sections"])
     page["body_html"] = markdown.markdown(page["body"], extensions=["extra"]) if page["body"] else ""
-    return render(request, page["template"], {"page": page, "lang": lang, "languages": LANGUAGES})
+    return render(request, page["template"], {
+        "page": page, "lang": lang, "languages": LANGUAGES, "plans": _plans_context(page)})
+
+
+def _plans_context(page: dict) -> list[dict]:
+    """Pricing cards rendered from plans.py — prices are never typed in copy."""
+    cards: list[dict] = []
+    for slug, prices in PLAN_PRICES.items():
+        limits = PLAN_LIMITS[slug]
+        cards.append({
+            "slug": slug,
+            "name": PLAN_NAMES[slug],
+            "monthly": f"${prices['every_30_days'].normalize()}",
+            "annual": f"${prices['annual'].normalize()}",
+            "blurb": page.get("blurbs", {}).get(slug, ""),
+            "limits": [
+                ("Store generations / 30 days", limits["store_generations"]),
+                ("Live pages", limits["live_pages"] if limits["live_pages"] is not None else "Unlimited"),
+                ("AI images / 30 days", limits["ai_images"]),
+                ("Page edits / 30 days", limits["page_edits"]),
+            ],
+        })
+    return cards
 
 
 @require_GET

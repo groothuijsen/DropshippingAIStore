@@ -50,23 +50,46 @@
         </div>
       </section>
     {% elif section.type == "pricing_table" %}
-      {# data wiring happens in T-153 (plans.py); template shell ships now #}
       <section class="block shell" id="pricing">
         <h2>{% trans "Simple pricing" %}</h2>
-        <div class="price-grid"></div>
+        <p class="sec-sub">{% trans "All compliance features in every plan. Billed through Shopify." %}</p>
+        <div class="price-grid">
+          {% for plan in plans %}
+            <div class="plan">
+              <strong>{{ plan.name }}</strong>
+              <div class="amt">{{ plan.monthly }}<small>/mo</small></div>
+              <p class="micro">{% trans "Annual billing costs 10 months" %}</p>
+              {% if plan.blurb %}<p class="plan-blurb">{{ plan.blurb }}</p>{% endif %}
+              <ul class="plan-limits">
+                {% for label, value in plan.limits %}<li>{{ label }}: {{ value }}</li>{% endfor %}
+              </ul>
+              <a class="btn btn-p" href="{% if lang == 'nl' %}/nl/vroege-toegang/{% else %}/early-access/{% endif %}">{% trans "Start 7-day trial" %}</a>
+            </div>
+          {% endfor %}
+        </div>
       </section>
     {% elif section.type == "comparison" %}
       <section class="block shell">
         {% if section.title %}<h2>{{ section.title }}</h2>{% else %}<h2>{% trans "Mosaiq vs. the rest" %}</h2>{% endif %}
-        <p class="sec-sub">&nbsp;</p>
-        <table class="cmp">
-          <thead><tr><th></th><th>Mosaiq</th><th>{% trans "Others" %}</th></tr></thead>
-          <tbody>
-            {% for row in section.rows %}<tr><td><strong>{{ row.label }}</strong></td><td>{{ row.mosaiq }}</td><td>{{ row.others }}</td></tr>{% endfor %}
-          </tbody>
-        </table>
-        <p class="micro" style="text-align:center;margin-top:16px">{% trans "Last checked" %}: {{ section.last_checked }}</p>
-        {% if section.sources %}<p class="micro" style="text-align:center">{% trans "Sources" %}: {{ section.sources|join:", " }}</p>{% endif %}
+        {% if section.comparison_state == "expired" %}
+          <p class="freshness freshness-expired">{% trans "This comparison is being re-verified and is temporarily hidden." %}</p>
+        {% else %}
+          {% if section.comparison_state == "review" %}
+            <p class="freshness freshness-review">{% trans "Last checked" %}: {{ section.last_checked }} ({{ section.comparison_age_days }} {% trans "days ago" %}) — {% trans "being re-verified." %}</p>
+          {% endif %}
+          <table class="cmp">
+            <thead><tr><th></th><th>Mosaiq</th><th>{% trans "Others" %}</th></tr></thead>
+            <tbody>
+              {% for row in section.rows %}<tr><td><strong>{{ row.label }}</strong></td><td>{{ row.mosaiq }}</td><td>{{ row.others }}</td></tr>{% endfor %}
+            </tbody>
+          </table>
+          {% if section.comparison_state == "fresh" %}<p class="micro" style="text-align:center;margin-top:16px">{% trans "Last checked" %}: {{ section.last_checked }}</p>{% endif %}
+          {% if section.sources %}
+            <p class="micro" style="text-align:center">{% trans "Sources" %}:
+              {% for src in section.sources %}<a href="{{ src }}">{{ src }}</a>{% if not forloop.last %} · {% endif %}{% endfor %}
+            </p>
+          {% endif %}
+        {% endif %}
       </section>
     {% endif %}
   {% endfor %}

@@ -3,6 +3,10 @@ title: "Pricing — Mosaiq"
 slug: "/pricing/"
 description: "Flat monthly plans. No usage charges, no revenue caps, no per-order fees. 7-day free trial."
 template: "marketing/page_default.html"
+blurbs:
+  starter: "For your first store."
+  pro: "For growing brands with more products and pages."
+  agency: "For agencies and multi-store owners."
 sections:
   - type: hero
     headline: "Flat pricing. No per-order fees."
@@ -23,8 +27,5 @@ sections:
     headline: "Start with the plan that fits"
     cta_primary: { label: "Get early access", href: "/early-access/" }
 ---
-Plan blurbs (rendered with the table from code in T-153):
 
-- **Starter** — For your first store.
-- **Pro** — For growing brands with more products and pages.
-- **Agency** — For agencies and multi-store owners.
+Prices render from code — never typed in copy.

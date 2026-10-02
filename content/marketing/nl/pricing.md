@@ -3,6 +3,10 @@ title: "Prijzen — Mosaiq"
 slug: "/nl/prijzen/"
 description: "Vaste maandprijzen. Geen gebruikskosten, geen omzetplafond, geen kosten per bestelling. 7 dagen gratis."
 template: "marketing/page_default.html"
+blurbs:
+  starter: "Voor je eerste winkel."
+  pro: "Voor groeiende merken met meer producten en pagina's."
+  agency: "Voor bureaus en eigenaren van meerdere winkels."
 sections:
   - type: hero
     headline: "Vaste prijs. Geen kosten per bestelling."
@@ -23,8 +27,5 @@ sections:
     headline: "Start met het abonnement dat past"
     cta_primary: { label: "Vroege toegang", href: "/nl/vroege-toegang/" }
 ---
-Abonnementsbeschrijvingen (worden samen met de tabel uit code gerenderd in T-153):
 
-- **Starter** — Voor je eerste winkel.
-- **Pro** — Voor groeiende merken met meer producten en pagina's.
-- **Agency** — Voor bureaus en eigenaren van meerdere winkels.
+Prijzen worden uit code gerenderd — nooit getypt in de copy.
