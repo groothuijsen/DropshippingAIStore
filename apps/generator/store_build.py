@@ -432,7 +432,12 @@ def children_state(store_job: GenerationJob) -> dict:
         "total": children.count(),
         "succeeded": children.filter(status=JobStatus.SUCCEEDED).count(),
         "failed": children.filter(status=JobStatus.FAILED).count(),
-        "running": children.filter(status__in=[JobStatus.RUNNING, JobStatus.QUEUED]).count(),
+        # Any non-terminal status (incl. needs_input) blocks the menu step:
+        # "parent succeeds when ALL children succeed" (12 §5). The live
+        # build showed a needs_input child slipping through before this.
+        "running": children.filter(
+            status__in=[JobStatus.RUNNING, JobStatus.QUEUED, JobStatus.NEEDS_INPUT]
+        ).count(),
     }
 
 

@@ -472,6 +472,32 @@ def _finish_child(job_id: str) -> None:
 
 
 class TestChildAdvance:
+    def test_needs_input_child_blocks_menu(self, db, shop):
+        """A needs_input child is NOT terminal: the menu step must wait
+        (found live — the first build published the menu while the PDP
+        child still hung in needs_input)."""
+        from apps.generator.store_build import children_state
+
+        bp = _bp(shop, selected_product_gids=[G1])
+        bp, _, _ = _run_build(shop, bp)
+        pdp = GenerationJob.objects.filter(parent=bp.build_job, page_type="pdp").first()
+        for child in GenerationJob.objects.filter(parent=bp.build_job):
+            child.status = JobStatus.SUCCEEDED
+            child.save(update_fields=["status"])
+        pdp.status = JobStatus.NEEDS_INPUT
+        pdp.save(update_fields=["status"])
+        state = children_state(bp.build_job)
+        assert state["running"] == 1
+        from apps.generator.store_build import advance_store_build
+
+        menu_step = bp.build_job.steps.get(name="publish")
+        menu_step.status = "pending"
+        menu_step.save(update_fields=["status"])
+        with patch("apps.generator.store_build._get_client"):
+            advance_store_build(bp.build_job)
+        menu_step.refresh_from_db()
+        assert menu_step.status == "pending"
+
     def test_failed_child_keeps_parent_running(self, db, shop):
         bp = _bp(shop, selected_product_gids=[G1])
 

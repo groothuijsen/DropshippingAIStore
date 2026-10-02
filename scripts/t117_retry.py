@@ -32,8 +32,19 @@ failed = GenerationJob.objects.filter(parent=job).filter(
 )
 print("failed/stuck children:", list(failed.values_list("page_type", flat=True)))
 for child in failed:
+    # Layout output is checkpointed: pre-fix runs stored the old
+    # per-section field keys, which poison publish on retry. Reset
+    # layout to pending so it re-runs with the current code.
+    child.steps.filter(name="layout").update(status=StepStatus.PENDING, output=None)
     retry_store_build_child.delay(str(child.id))
     print("retried:", child.page_type)
+
+# Diagnose the PDP research checkpoint (auto-angle depends on its angles)
+pdp = GenerationJob.objects.filter(parent=job, page_type="pdp").first()
+if pdp:
+    rs = pdp.steps.filter(name="research").first()
+    out = (rs.output if rs else None) or {}
+    print("pdp research output keys:", list(out.keys()), "| angles:", len(out.get("angles", [])), "| status:", pdp.status)
 
 # If the parent itself failed at a step (not children), re-run the parent
 if job.status == JobStatus.FAILED:
