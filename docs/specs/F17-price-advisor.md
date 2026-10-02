@@ -36,4 +36,10 @@ VAT standard rates (data in `compliance/vat_rates.py`, with source and date per 
 7. **Markets.** Prices per market other than the base currency are advice only (Shopify Markets price lists are out of scope); the screen says so.
 
 ## Assumptions made during build
-_(to be filled in by Hermes)_
+_(filled by Hermes, T-130, 2026-10-02)_
+
+1. **Rounding**: "smallest price ≥ P ending in price_ending" computed on integer cents with ceiling, then adjusted to the ending suffix (.95/.99/.00); half-up to 2 decimals applied only to displayed money values.
+2. **Boundary**: error when denominator `1 − r − m − p×(1+v) <= 0.05` (spec test case "≥ 0.95 → error" interpreted inclusively at the boundary).
+3. **Defaults on screen**: cost/shipping/ad_cost are free-form inputs (defaults from `inventoryItem.unitCost` need the `inventory_item_cost` GraphQL query — wired in T-131 with Apply).
+4. **Markets note**: non-base-currency markets show advice only + the explicit "Shopify Markets price lists are out of scope" note (F17-7).
+5. **GB**: `vat_rate_for("GB")` returns None → screen shows "VAT rules for GB not covered"; no price computed.
