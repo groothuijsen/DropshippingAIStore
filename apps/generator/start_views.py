@@ -332,10 +332,15 @@ def _import_products_context(shop: Shop, bp: StoreBlueprint) -> dict:
     from apps.sources.rules import detect_source
 
     window = bp.started_products_at
+    def _norm_gid(gid: str) -> str:
+        gid = gid or ""
+        return f"gid://shopify/Product/{gid}" if gid.isdigit() else gid
+
     merged: dict[str, dict] = {}
     for item in bp.imported_products or []:
-        merged[item.get("gid", "")] = {
-            "gid": item.get("gid", ""),
+        gid = _norm_gid(item.get("gid", ""))
+        merged[gid] = {
+            "gid": gid,
             "title": item.get("title") or "(untitled)",
             "vendor": item.get("vendor") or "",
             "created_at": item.get("created_at") or "",

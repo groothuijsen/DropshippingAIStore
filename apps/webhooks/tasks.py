@@ -205,9 +205,13 @@ def _record_imported_product(shop, body: dict | None) -> None:
 
     if not body:
         return
-    gid = body.get("id") or ""
+    gid = str(body.get("id") or "")
     if not gid:
         return
+    # Webhooks deliver plain numeric IDs, the Admin API returns GIDs —
+    # normalize so the import screen merges and selects consistently.
+    if gid.isdigit():
+        gid = f"gid://shopify/Product/{gid}"
     bp = (
         StoreBlueprint.objects.filter(shop=shop)
         .order_by("-created_at")
