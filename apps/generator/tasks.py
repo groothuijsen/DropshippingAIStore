@@ -290,9 +290,14 @@ def _run_compliance_check(job: GenerationJob, step: JobStep) -> dict[str, Any] |
         logger.warning("No copy output for compliance check, job %s", job.id)
         return None
 
-    sections_data = copy_step.output.get("sections", {})
-    sections = sections_data.get("sections", [])
-    locale = sections_data.get("locale", "nl")
+    sections_data = copy_step.output.get("sections") or []
+    if isinstance(sections_data, dict):
+        # Legacy checkpoints nested the payload under a second "sections" key
+        sections = sections_data.get("sections") or []
+        locale = sections_data.get("locale", "nl")
+    else:
+        sections = sections_data
+        locale = copy_step.output.get("locale", "nl")
 
     findings = check_sections(sections, locale)
 
