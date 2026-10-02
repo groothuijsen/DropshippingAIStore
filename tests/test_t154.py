@@ -46,3 +46,18 @@ class TestHeadTags:
     def test_nl_page_canonical(self):
         html = Client().get("/nl/prijzen/", **M).content.decode()
         assert 'href="https://shopify.mosaiq.marketing/nl/prijzen/"' in html
+
+
+class TestBeacon:
+    def test_beacon_logs_hit_no_cookies(self):
+        from apps.marketing.models import MarketingHit
+
+        resp = Client().get("/t.gif", {"p": "/", "r": "https://example.com/x", "l": "en"}, **M)
+        assert resp.status_code == 200
+        assert resp["Content-Type"] == "image/gif"
+        assert "Set-Cookie" not in resp
+        hit = MarketingHit.objects.get(path="/")
+        assert hit.referrer_host == "example.com" and hit.lang == "en"
+
+    def test_beacon_rejects_bad_host(self):
+        assert Client().get("/t.gif", {"p": "/"}, **A).status_code == 404

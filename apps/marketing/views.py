@@ -13,6 +13,7 @@ from apps.billing.plans import PLAN_LIMITS, PLAN_NAMES, PLAN_PRICES
 
 from .content import LANGUAGES, load_page
 from .freshness import annotate_comparisons
+from .models import MarketingHit
 from .schemas import validate_sections
 
 MARKETING_HOST = "shopify.mosaiq.marketing"
@@ -163,3 +164,23 @@ def robots_view(request: HttpRequest) -> HttpResponse:
     else:
         raise Http404
     return HttpResponse(body, content_type="text/plain")
+
+
+_PIXEL = bytes.fromhex('47494638396101000100800000000000ffffff21f90401000000002c00000000010001000002024401003b')
+
+
+@require_GET
+def beacon_view(request: HttpRequest) -> HttpResponse:
+    if _guard(request) == 'deny':
+        raise Http404
+    path = request.GET.get('p', '')[:300]
+    if path.startswith('/'):
+        raw_ref = request.GET.get('r', '')[:200]
+        ref_host = raw_ref.split('/')[2] if '://' in raw_ref else ''
+        lang = request.GET.get('l', '')[:5]
+        if lang not in LANGUAGES:
+            lang = ''
+        MarketingHit.objects.create(path=path, referrer_host=ref_host[:200], lang=lang)
+    resp = HttpResponse(_PIXEL, content_type='image/gif')
+    resp['Cache-Control'] = 'no-store'
+    return resp

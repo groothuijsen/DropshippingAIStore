@@ -33,6 +33,7 @@ urlpatterns = [
     path("blog/", views.blog_index, name="blog_index"),
     path("sitemap.xml", views.sitemap_view, name="sitemap"),
     path("robots.txt", views.robots_view, name="robots"),
+    path("t.gif", views.beacon_view, name="beacon"),
     # /de/ intentionally absent until T-158 (native review gate)
 ]
 urlpatterns += [
