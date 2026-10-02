@@ -22,8 +22,15 @@ bp = StoreBlueprint.objects.filter(shop=shop).order_by("-created_at").first()
 job = bp.build_job
 print("parent:", job.status)
 
-failed = GenerationJob.objects.filter(parent=job, status=JobStatus.FAILED)
-print("failed children:", list(failed.values_list("page_type", flat=True)))
+from apps.generator.models import JobStep, StepStatus  # noqa: E402
+
+stuck_ids = JobStep.objects.filter(
+    job__parent=job, status=StepStatus.FAILED
+).values_list("job_id", flat=True)
+failed = GenerationJob.objects.filter(parent=job).filter(
+    __import__("django").db.models.Q(status=JobStatus.FAILED) | __import__("django").db.models.Q(id__in=stuck_ids)
+)
+print("failed/stuck children:", list(failed.values_list("page_type", flat=True)))
 for child in failed:
     retry_store_build_child.delay(str(child.id))
     print("retried:", child.page_type)

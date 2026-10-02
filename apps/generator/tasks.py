@@ -990,6 +990,35 @@ def run_store_build(blueprint_id: str) -> None:
     job.save(update_fields=["status"])
 
 
+def _auto_angle(job: GenerationJob, angles: list[dict]) -> str:
+    """Deterministic angle choice for store-build children.
+
+    Scores each angle's text against the blueprint brief/audience
+    keywords; ties fall back to the first angle (recorded in the F15
+    assumptions).
+    """
+    import json as _json
+
+    bp_id = (job.input or {}).get("blueprint_id")
+    haystack = ""
+    if bp_id:
+        from apps.generator.models import StoreBlueprint
+
+        bp = StoreBlueprint.objects.filter(id=bp_id).first()
+        if bp is not None:
+            haystack = " ".join(
+                str(x) for x in [bp.description, bp.audience, bp.brand_name] if x
+            ).lower()
+    keywords = {w for w in haystack.split() if len(w) > 4}
+    best_id, best_score = angles[0].get("id"), -1
+    for angle in angles:
+        text = _json.dumps(angle, ensure_ascii=False).lower()
+        score = sum(1 for kw in keywords if kw in text)
+        if score > best_score:
+            best_id, best_score = angle.get("id"), score
+    return best_id
+
+
 @shared_task(acks_late=True, max_retries=3)
 def run_store_build_child(job_id: str) -> None:
     """Run one child page job of a store build, then advance the parent."""
@@ -1000,6 +1029,22 @@ def run_store_build_child(job_id: str) -> None:
         job = GenerationJob.objects.get(id=job_id)
     except GenerationJob.DoesNotExist:
         return
+
+    # F15 store builds have no angle screen (that was the F04 manual flow):
+    # auto-select the best-matching research angle and resume (12 §5).
+    if job.status == JobStatus.NEEDS_INPUT:
+        from apps.generator.research_step import select_angle
+
+        research_step = job.steps.filter(name="research").first()
+        angles = (research_step.output or {}).get("angles", []) if research_step and research_step.output else []
+        if angles:
+            chosen = _auto_angle(job, angles)
+            logger.info("Store-build child %s: auto-selected angle %s", job_id, chosen)
+            select_angle(job, chosen)
+            job.refresh_from_db()
+        else:
+            logger.error("Store-build child %s needs input but has no angles", job_id)
+
     if job.status == JobStatus.SUCCEEDED:
         blueprint_id = (job.input or {}).get("blueprint_id")
         if blueprint_id:

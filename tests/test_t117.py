@@ -501,6 +501,53 @@ class TestChildAdvance:
         task.delay.assert_called_once_with(str(child.id))
 
 
+class TestAutoAngle:
+    def test_needs_input_child_gets_auto_angle(self, db, shop):
+        """F15 store builds have no angle screen: the child auto-selects
+        an angle and resumes instead of hanging in needs_input."""
+        from apps.generator.models import JobStep, StepStatus
+        from apps.generator.tasks import run_store_build_child
+
+        bp = _bp(shop, selected_product_gids=[G1])
+        bp, _, _ = _run_build(shop, bp)
+        pdp = GenerationJob.objects.filter(parent=bp.build_job, page_type="pdp").first()
+        pdp.status = JobStatus.NEEDS_INPUT
+        pdp.save(update_fields=["status"])
+        research = JobStep.objects.get(job=pdp, name="research")
+        research.status = StepStatus.SUCCEEDED
+        research.output = {
+            "angles": [
+                {"id": "a1", "label": "Sleep better", "hook": "weighted blanket for deep sleep"},
+                {"id": "a2", "label": "Gift idea", "hook": "a lovely gift"},
+            ]
+        }
+        research.save(update_fields=["status", "output"])
+
+        with (
+            patch("apps.generator.tasks.execute_job") as ej,
+            patch("apps.generator.store_build.register_page_resources"),
+            patch("apps.generator.store_build.advance_store_build"),
+        ):
+            ej.return_value = {"status": "needs_input"}
+            run_store_build_child(str(pdp.id))
+        pdp.refresh_from_db()
+        assert pdp.input.get("angle_id") in {"a1", "a2"}
+        research.refresh_from_db()
+        assert research.output.get("chosen_angle", {}).get("id") == pdp.input["angle_id"]
+
+    def test_auto_angle_prefers_keyword_match(self, db, shop):
+        from apps.generator.tasks import _auto_angle
+
+        bp = _bp(shop, description="Weighted blankets for better sleep.", audience="tired parents")
+        bp.save()
+        job = GenerationJob(shop=shop, kind=JobKind.PAGE, content_locale="nl", input={"blueprint_id": str(bp.id)}, idempotency_key="x")
+        angles = [
+            {"id": "a1", "label": "Gift", "hook": "perfect present"},
+            {"id": "a2", "label": "Sleep", "hook": "weighted blanket deep sleep"},
+        ]
+        assert _auto_angle(job, angles) == "a2"
+
+
 class TestStatusScreen:
     def _auth(self, shop: Shop) -> str:
         import jwt as pyjwt
