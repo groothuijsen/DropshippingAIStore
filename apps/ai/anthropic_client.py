@@ -224,6 +224,14 @@ class AnthropicClient:
                 last_exception = RuntimeError(f"Provider error {response.status_code}: {response.text[:200]}")
                 continue
 
+            # Some models reject forced tool_choice ("type tool and any are
+            # not supported for this model"). Retry once without it — the
+            # tool stays in `tools`, and call() still validates the tool_use
+            # output against the schema.
+            if response.status_code == 400 and "tool_choice" in response.text:
+                payload.pop("tool_choice", None)
+                continue
+
             # Non-retryable error
             raise AnthropicToolCallError(f"API error {response.status_code}: {response.text[:500]}")
 
