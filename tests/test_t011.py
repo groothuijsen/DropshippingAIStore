@@ -240,6 +240,33 @@ class TestAnthropicClient:
         with pytest.raises(AnthropicToolCallError):
             AnthropicClient._extract_tool_input(response, "submit_test")
 
+    def test_missing_tool_use_triggers_nudge_retry(self):
+        """Without forced tool_choice the model may answer in plain text;
+        call() retries once with an explicit tool-call nudge (T-117 live)."""
+        from pydantic import BaseModel
+
+        class Simple(BaseModel):
+            key: str
+
+        text_only = {"content": [{"type": "text", "text": "plain answer"}], "usage": {}}
+        with_tool = {
+            "content": [{"type": "tool_use", "name": "submit_test", "input": {"key": "v"}}],
+            "usage": {"input_tokens": 10, "output_tokens": 5},
+        }
+        client = AnthropicClient(api_key="test-key")
+        client._make_request = MagicMock(side_effect=[text_only, with_tool])
+        validated, usage = client.call(
+            model="m",
+            system="sys",
+            user="usr",
+            schema=Simple,
+            tool_name="submit_test",
+        )
+        assert validated.key == "v"
+        assert client._make_request.call_count == 2
+        second_messages = client._make_request.call_args_list[1].kwargs["messages"]
+        assert any("MUST submit the result" in str(m.get("content", "")) for m in second_messages if m["role"] == "user")
+
     def test_usage_extraction(self):
         response = {"usage": {"input_tokens": 200, "output_tokens": 100}}
         usage = AnthropicClient._extract_usage(response)

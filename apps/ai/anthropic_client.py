@@ -143,7 +143,35 @@ class AnthropicClient:
         )
 
         usage = self._extract_usage(response_data)
-        tool_input = self._extract_tool_input(response_data, tool_name)
+        try:
+            tool_input = self._extract_tool_input(response_data, tool_name)
+        except AnthropicToolCallError:
+            # Forced tool_choice is rejected by newer models (dropped in
+            # _make_request on 400); without it the model sometimes answers
+            # in plain text. One nudge retry — the tool stays in `tools`
+            # and the output is still schema-validated (no bypass).
+            nudge = (
+                f"Your previous reply did not call the `{tool_name}` tool. "
+                f"You MUST submit the result by calling the `{tool_name}` "
+                "tool — a plain-text answer is not accepted."
+            )
+            messages = [
+                *messages,
+                {"role": "assistant", "content": response_data.get("content", [])},
+                {"role": "user", "content": nudge},
+            ]
+            logger.warning("No tool_use for %s — retrying with nudge", tool_name)
+            response_data = self._make_request(
+                model=model,
+                system=system,
+                messages=messages,
+                tools=[tool_def],
+                tool_choice={"type": "tool", "name": tool_name},
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+            usage = self._extract_usage(response_data)
+            tool_input = self._extract_tool_input(response_data, tool_name)
 
         try:
             validated = schema.model_validate(tool_input)
