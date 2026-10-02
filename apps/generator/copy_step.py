@@ -150,11 +150,16 @@ def run_copy(job: GenerationJob, step: JobStep) -> dict[str, Any] | None:
         step=step,
     )
 
+    # call_ai returns the validated Pydantic model — dump to plain dicts
+    # FIRST (live E2E lesson: real payloads hold Hero/Specs objects, not
+    # dicts; the old dict-based checks crashed with AttributeError).
+    output = payload.model_dump(mode="json")
+
     # Validate language
     from .language_detection import detect_language
 
     hero_text = ""
-    for section in payload.sections:
+    for section in output.get("sections") or []:
         if section.get("type") == "hero":
             hero_text = section.get("headline", "")
             break
@@ -167,7 +172,7 @@ def run_copy(job: GenerationJob, step: JobStep) -> dict[str, Any] | None:
     # Validate specs rows
     specs = import_result.get("specs", {})
     spec_keys = {k.lower().strip() for k in specs} if isinstance(specs, dict) else set()
-    for section in payload.sections:
+    for section in output.get("sections") or []:
         if section.get("type") == "specs":
             valid_rows = []
             for row in section.get("rows", []):
@@ -179,7 +184,6 @@ def run_copy(job: GenerationJob, step: JobStep) -> dict[str, Any] | None:
             section["rows"] = valid_rows
 
     # Create Page
-    output = payload.model_dump(mode="json")
     page = Page.objects.create(
         shop=job.shop,
         job=job,
