@@ -124,7 +124,6 @@ def run_publish(job: GenerationJob, step: JobStep) -> dict[str, Any] | None:
     4. Set metafield 'page' on product/page/shop
     5. Page.version += 1, store GIDs
     """
-    from apps.compliance.gpsr import GpsrInfo
     from apps.generator.layout_step import PAGE_TYPES_NEEDING_SHOPIFY_PAGE
     from apps.generator.models import Page
 
@@ -134,20 +133,13 @@ def run_publish(job: GenerationJob, step: JobStep) -> dict[str, Any] | None:
         logger.error("No page found for job %s", job.id)
         return None
 
-    # Load GPSR info from product metafield (or use defaults for now)
-    # TODO: Load from product metafield when GPSR form is implemented
-    gpsr = GpsrInfo(
-        manufacturer_name="",
-        manufacturer_address="",
-        manufacturer_email="",
-        manufacturer_in_eu=True,
-        eu_rp_name="",
-        eu_rp_address="",
-        eu_rp_email="",
-        product_identifier="",
-        warnings="",
-        no_warnings_confirmed=False,
-    )
+    # Load GPSR from the product metafield the merchant filled in via the
+    # GPSR form (T-161, 07 §5). Empty metafield -> empty GpsrInfo -> the
+    # gate below blocks the publish (safe default).
+    from apps.compliance.gpsr_loader import load_gpsr_info
+
+    gpsr = load_gpsr_info(client := _get_client(job.shop), page.product_gid or "")
+    del client
 
     # GPSR check first (05 §4.6) — GPSR obligations attach to PRODUCTS:
     # standard pages (faq/shipping/returns/home, T-117) publish without it.

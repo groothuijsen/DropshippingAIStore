@@ -1,0 +1,8 @@
+query ProductMetafield($id: ID!) {
+    product(id: $id) {
+        id
+        metafield(namespace: "$app:mosaiq", key: "gpsr") {
+            value
+        }
+    }
+}

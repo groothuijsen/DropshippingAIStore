@@ -1,0 +1,92 @@
+{% extends "app/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "GPSR" %}{% endblock %}
+
+{% block content %}
+<div class="mq-delivery-settings">
+  <h1>{% trans "GPSR product information" %}</h1>
+  <p class="mq-subtitle">{% trans "Manufacturer, EU responsible person, product identifier and safety warnings (art. 19). Required before this product can be published." %}</p>
+  <p class="mq-help"><code>{{ product_gid }}</code></p>
+
+  {% if messages %}
+  <div class="mq-messages">
+    {% for message in messages %}
+    <div class="mq-message mq-message-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if not info.complete %}
+  <div class="mq-message mq-warning">
+    {% trans "Incomplete — publishing stays blocked until every required field is filled." %}
+    {% if info.missing_fields %}
+    <br><strong>{% trans "Missing:" %}</strong> {{ info.missing_fields|join:", " }}
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="mq-message mq-message-success">{% trans "Complete — this product can be published." %}</div>
+  {% endif %}
+
+  <form method="post" class="mq-form">
+    {% csrf_token %}
+
+    <fieldset class="mq-fieldset">
+      <legend>{% trans "Manufacturer (required)" %}</legend>
+      <div class="mq-field">
+        <label for="manufacturer_name">{% trans "Name" %}</label>
+        <input type="text" id="manufacturer_name" name="manufacturer_name" value="{{ info.manufacturer_name }}">
+      </div>
+      <div class="mq-field">
+        <label for="manufacturer_address">{% trans "Address" %}</label>
+        <input type="text" id="manufacturer_address" name="manufacturer_address" value="{{ info.manufacturer_address }}">
+      </div>
+      <div class="mq-field">
+        <label for="manufacturer_email">{% trans "Email" %}</label>
+        <input type="text" id="manufacturer_email" name="manufacturer_email" value="{{ info.manufacturer_email }}">
+      </div>
+      <div class="mq-field-checkbox">
+        <input type="checkbox" id="manufacturer_in_eu" name="manufacturer_in_eu" {% if info.manufacturer_in_eu %}checked{% endif %}>
+        <label for="manufacturer_in_eu">{% trans "Manufacturer is established in the EU" %}</label>
+      </div>
+      <p class="mq-help">{% trans "Dropshipping from outside the EU? You need an EU responsible person (e.g. an importer or a service) — fill in the fields below." %}</p>
+    </fieldset>
+
+    <fieldset class="mq-fieldset">
+      <legend>{% trans "EU responsible person (required if manufacturer is outside the EU)" %}</legend>
+      <div class="mq-field">
+        <label for="eu_rp_name">{% trans "Name" %}</label>
+        <input type="text" id="eu_rp_name" name="eu_rp_name" value="{{ info.eu_rp_name }}">
+      </div>
+      <div class="mq-field">
+        <label for="eu_rp_address">{% trans "Address" %}</label>
+        <input type="text" id="eu_rp_address" name="eu_rp_address" value="{{ info.eu_rp_address }}">
+      </div>
+      <div class="mq-field">
+        <label for="eu_rp_email">{% trans "Email" %}</label>
+        <input type="text" id="eu_rp_email" name="eu_rp_email" value="{{ info.eu_rp_email }}">
+      </div>
+    </fieldset>
+
+    <fieldset class="mq-fieldset">
+      <legend>{% trans "Product identifier and warnings (required)" %}</legend>
+      <div class="mq-field">
+        <label for="product_identifier">{% trans "Product identifier (SKU, EAN or model number)" %}</label>
+        <input type="text" id="product_identifier" name="product_identifier" value="{{ info.product_identifier }}">
+      </div>
+      <div class="mq-field">
+        <label for="warnings">{% trans "Safety warnings (in the store language)" %}</label>
+        <textarea id="warnings" name="warnings" rows="3">{{ info.warnings }}</textarea>
+      </div>
+      <div class="mq-field-checkbox">
+        <input type="checkbox" id="no_warnings_confirmed" name="no_warnings_confirmed" {% if info.no_warnings_confirmed %}checked{% endif %}>
+        <label for="no_warnings_confirmed">{% trans "Confirmed: this product needs no safety warnings" %}</label>
+      </div>
+    </fieldset>
+
+    <div class="mq-actions">
+      <button type="submit" class="mq-button">{% trans "Save GPSR data" %}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

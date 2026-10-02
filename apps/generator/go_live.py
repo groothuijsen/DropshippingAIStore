@@ -69,20 +69,15 @@ def check_can_go_live(page: Page) -> tuple[bool, list[str]]:
     # (manufacturer/safety data for the product); standard pages
     # (faq/shipping/returns/home) have no GPSR duty (T-118/F15-13 live
     # lesson: the empty-GpsrInfo check blocked every page).
-    # TODO: Load from product metafield when GPSR form is implemented.
+    # Loaded from the product metafield the merchant filled via the GPSR
+    # form (T-161, 07 §5); empty metafield blocks the publish.
     if page.product_gid or page.page_type == "pdp":
-        gpsr = GpsrInfo(
-            manufacturer_name="",
-            manufacturer_address="",
-            manufacturer_email="",
-            manufacturer_in_eu=True,
-            eu_rp_name="",
-            eu_rp_address="",
-            eu_rp_email="",
-            product_identifier="",
-            warnings="",
-            no_warnings_confirmed=False,
-        )
+        from apps.compliance.gpsr_loader import load_gpsr_info
+
+        try:
+            gpsr = load_gpsr_info(_get_client(page.shop), page.product_gid or "")
+        except Exception:  # noqa: BLE001 — no client/token: safe default blocks
+            gpsr = GpsrInfo()
         allowed, _msg = check_gpsr_for_publish(gpsr)
         if not allowed:
             missing.append("GPSR data incomplete — fill in manufacturer and safety details")

@@ -488,3 +488,86 @@ def price_apply(request: HttpRequest, product_gid: str) -> HttpResponse:
     )
     messages.success(request, f"Price {price_str} applied to {len(nodes)} variant(s).")
     return redirect(back)
+
+
+def _get_client(shop):
+    """ShopifyGraphQLClient for a shop (T-161: GPSR form + metafield sync)."""
+    from apps.core.crypto import decrypt_token
+    from apps.core.shopify_client import ShopifyGraphQLClient
+
+    return ShopifyGraphQLClient(
+        shop.domain,
+        decrypt_token(shop.access_token_encrypted),
+        settings.SHOPIFY_API_VERSION,
+    )
+
+
+GPSR_FIELDS = (
+    "manufacturer_name",
+    "manufacturer_address",
+    "manufacturer_email",
+    "eu_rp_name",
+    "eu_rp_address",
+    "eu_rp_email",
+    "product_identifier",
+    "warnings",
+)
+
+
+def gpsr_form(request: HttpRequest, product_gid: str) -> HttpResponse:
+    """Per-product GPSR form (T-161, F11-E, 07 §5).
+
+    GET/POST /app/products/<gid>/gpsr/ — value stored in the product
+    metafield `$app:mosaiq.gpsr` (same field the mq-gpsr block renders).
+    Incomplete GPSR can be saved; publish stays blocked until complete.
+    """
+
+    from apps.compliance.gpsr import GpsrInfo
+    from apps.compliance.gpsr_loader import load_gpsr_info, sync_gpsr_metafield
+    from apps.core.models import AuditLog
+
+    shop = _get_shop(request)
+    if shop is None:
+        return JsonResponse({"error": "Shop not found"}, status=404)
+
+    if request.method == "POST":
+        info = GpsrInfo(
+            manufacturer_name=(request.POST.get("manufacturer_name") or "").strip(),
+            manufacturer_address=(request.POST.get("manufacturer_address") or "").strip(),
+            manufacturer_email=(request.POST.get("manufacturer_email") or "").strip(),
+            manufacturer_in_eu=request.POST.get("manufacturer_in_eu") == "on",
+            eu_rp_name=(request.POST.get("eu_rp_name") or "").strip(),
+            eu_rp_address=(request.POST.get("eu_rp_address") or "").strip(),
+            eu_rp_email=(request.POST.get("eu_rp_email") or "").strip(),
+            product_identifier=(request.POST.get("product_identifier") or "").strip(),
+            warnings=(request.POST.get("warnings") or "").strip(),
+            no_warnings_confirmed=request.POST.get("no_warnings_confirmed") == "on",
+            content_locale=shop.ui_locale if hasattr(shop, "ui_locale") else "nl",
+        )
+        errors = sync_gpsr_metafield(shop, product_gid, info, client=_get_client(shop))
+        if errors:
+            messages.error(request, errors[0].get("message", "Could not save GPSR data."))
+        else:
+            AuditLog.objects.create(
+                shop=shop,
+                actor="merchant",
+                action="gpsr_saved",
+                payload={"product_gid": product_gid, "complete": info.complete},
+            )
+            if info.complete:
+                messages.success(request, "GPSR data saved. This product can now be published.")
+            else:
+                missing = ", ".join(info.missing_fields)
+                messages.warning(
+                    request,
+                    f"Saved, but incomplete (missing: {missing}). Publishing stays blocked until complete.",
+                )
+        return redirect(f"/app/products/{quote(product_gid, safe='')}/gpsr/")
+
+    client = _get_client(shop)
+    info = load_gpsr_info(client, product_gid)
+    return render(
+        request,
+        "app/gpsr_form.html",
+        {"info": info, "product_gid": product_gid},
+    )

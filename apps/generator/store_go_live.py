@@ -107,12 +107,19 @@ def publish_store(bp) -> dict:
             if not allowed:
                 reasons.extend(missing)
         if reasons:
-            result["blocked_pages"].append({"page_type": page.page_type, "reasons": reasons})
+            entry = {"page_type": page.page_type, "reasons": reasons}
+            if page.product_gid:
+                # Lets the build panel link straight to the GPSR form (T-161).
+                entry["product_gid"] = page.product_gid
+            result["blocked_pages"].append(entry)
             continue
         try:
             go_live(page)
         except (ValueError, RuntimeError) as exc:
-            result["blocked_pages"].append({"page_type": page.page_type, "reasons": [str(exc)]})
+            entry = {"page_type": page.page_type, "reasons": [str(exc)]}
+            if page.product_gid:
+                entry["product_gid"] = page.product_gid
+            result["blocked_pages"].append(entry)
             continue
         page.refresh_from_db()
         result["published_pages"][page.page_type] = {

@@ -5,6 +5,7 @@ from django.urls import path
 from apps.compliance.views import (
     delivery_override,
     delivery_profiles,
+    gpsr_form,
     price_advisor,
     price_apply,
 )
@@ -23,6 +24,11 @@ urlpatterns = [
         "products/<path:product_gid>/delivery/",
         delivery_override,
         name="delivery_override",
+    ),
+    path(
+        "products/<path:product_gid>/gpsr/",
+        gpsr_form,
+        name="gpsr_form",
     ),
     path("onboarding/", onboarding, name="onboarding"),
     path("onboarding/<str:step>/", onboarding, name="onboarding_step"),
