@@ -65,3 +65,17 @@ EMBED_TARGETS = {
     "mq-cart-drawer": "body",
     "mq-withdrawal-link": "body",
 }
+
+
+def get_menu_placement_link(shop_domain: str, menu_handle: str) -> str:
+    """Deep link to the theme editor for selecting the store menu (F15-12).
+
+    Best-effort editor link following the documented deep-link family
+    (docs/03 §7); without ``read_themes`` we cannot resolve the active
+    theme or verify the parameter, so the merchant confirms via the
+    "Done" checkbox (same stance as the 09 onboarding theme step — Q20).
+    """
+    return (
+        f"https://{shop_domain}/admin/themes/current/editor"
+        f"?template=index&add_header_menu={menu_handle}"
+    )

@@ -86,4 +86,47 @@
   <button type="submit" class="mq-btn">{% trans "Retry build" %}</button>
 </form>
 {% endif %}
+
+{% if build_succeeded %}
+<h3>{% trans "Menu placement" %}</h3>
+<p class="mq-help">
+  {% trans "Open the theme editor and select the “Mosaiq” menu (mosaiq-main) in your header section." %}
+</p>
+<p><a href="{{ menu_placement_link }}" target="_blank" rel="noopener">{% trans "Open the theme editor" %}</a></p>
+<form method="post" action="/app/start/?id_token={{ request.GET.id_token }}">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="menu_placed">
+  <label><input type="checkbox" name="value" value="1" {% if bp.menu_placed %}checked{% endif %} onchange="this.form.submit()"> {% trans "I have selected the menu in my theme" %}</label>
+</form>
+
+<h3>{% trans "Publish store" %}</h3>
+{% if bp.publish_result %}
+<ul class="mq-structure-list">
+  {% for page_type, info in bp.publish_result.published_pages.items %}
+  <li>✅ {{ page_type }} — {% trans "live" %}</li>
+  {% endfor %}
+  {% for blocked in bp.publish_result.blocked_pages %}
+  <li>⚠️ {{ blocked.page_type }} — {{ blocked.reasons|join:"; " }}</li>
+  {% endfor %}
+  {% if bp.publish_result.collections_published %}
+  <li>✅ {% blocktrans count n=bp.publish_result.collections_published|length %}{{ n }} collection published{% plural %}{{ n }} collections published{% endblocktrans %}</li>
+  {% endif %}
+</ul>
+{% endif %}
+<p class="mq-help">{% trans "Publishing makes your collections and pages visible in the Online Store. Pages that miss required facts are listed above and stay draft." %}</p>
+<form method="post" action="/app/start/?id_token={{ request.GET.id_token }}">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="publish_store">
+  <button type="submit" class="mq-btn">{% trans "Publish store" %}</button>
+</form>
+
+<h3>{% trans "Undo" %}</h3>
+<p class="mq-help">{% trans "Undo removes the collections, menu and draft pages created by this build. Live pages must be archived first. Products are never deleted." %}</p>
+<form method="post" action="/app/start/?id_token={{ request.GET.id_token }}"
+      onsubmit="return confirm('{% trans "Undo the store build? This cannot be undone." %}');">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="undo_build">
+  <button type="submit" class="mq-btn mq-btn-small">{% trans "Undo store build" %}</button>
+</form>
+{% endif %}
 {% endif %}

@@ -22,8 +22,9 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Page types that need a Shopify page
-PAGE_TYPES_NEEDING_SHOPIFY_PAGE = {"landing", "advertorial", "listicle", "about"}
+# Page types that need a Shopify page — single source of truth lives in
+# layout_step (T-116 added faq/shipping/returns).
+from apps.generator.layout_step import PAGE_TYPES_NEEDING_SHOPIFY_PAGE  # noqa: E402,F401
 
 
 def _get_client(shop: Shop) -> ShopifyGraphQLClient:
@@ -64,23 +65,27 @@ def check_can_go_live(page: Page) -> tuple[bool, list[str]]:
     if has_open_block(findings):
         missing.append("Open compliance blocks — edit highlighted text first")
 
-    # 2. Check GPSR completeness
-    # TODO: Load from product metafield when GPSR form is implemented
-    gpsr = GpsrInfo(
-        manufacturer_name="",
-        manufacturer_address="",
-        manufacturer_email="",
-        manufacturer_in_eu=True,
-        eu_rp_name="",
-        eu_rp_address="",
-        eu_rp_email="",
-        product_identifier="",
-        warnings="",
-        no_warnings_confirmed=False,
-    )
-    allowed, _msg = check_gpsr_for_publish(gpsr)
-    if not allowed:
-        missing.append("GPSR data incomplete — fill in manufacturer and safety details")
+    # 2. GPSR completeness — GPSR obligations attach to PRODUCTS
+    # (manufacturer/safety data for the product); standard pages
+    # (faq/shipping/returns/home) have no GPSR duty (T-118/F15-13 live
+    # lesson: the empty-GpsrInfo check blocked every page).
+    # TODO: Load from product metafield when GPSR form is implemented.
+    if page.product_gid or page.page_type == "pdp":
+        gpsr = GpsrInfo(
+            manufacturer_name="",
+            manufacturer_address="",
+            manufacturer_email="",
+            manufacturer_in_eu=True,
+            eu_rp_name="",
+            eu_rp_address="",
+            eu_rp_email="",
+            product_identifier="",
+            warnings="",
+            no_warnings_confirmed=False,
+        )
+        allowed, _msg = check_gpsr_for_publish(gpsr)
+        if not allowed:
+            missing.append("GPSR data incomplete — fill in manufacturer and safety details")
 
     # 3. Check unit price (TODO: implement when UnitPriceInfo is fully wired)
     # For now, skip — will be checked when unit price form is live

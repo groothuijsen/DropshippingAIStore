@@ -1084,3 +1084,33 @@ def retry_store_build_child(job_id: str) -> None:
     else:
         job.steps.filter(status=StepStatus.FAILED).update(status=StepStatus.PENDING)
     run_store_build_child.delay(str(job.id))
+
+
+
+# ── Store go-live + undo (T-118, F15-13/14) ────────────────────────────────
+
+
+@shared_task(acks_late=True, max_retries=2)
+def run_store_publish(blueprint_id: str) -> dict:
+    """Publish collections + go live for every eligible blueprint page."""
+    from apps.generator.models import StoreBlueprint
+    from apps.generator.store_go_live import publish_store
+
+    try:
+        bp = StoreBlueprint.objects.get(id=blueprint_id)
+    except StoreBlueprint.DoesNotExist:
+        return {}
+    return publish_store(bp)
+
+
+@shared_task(acks_late=True, max_retries=2)
+def run_undo_build(blueprint_id: str) -> dict:
+    """Undo a store build: collections + menu + draft pages (F15-14)."""
+    from apps.generator.models import StoreBlueprint
+    from apps.generator.store_go_live import undo_store_build
+
+    try:
+        bp = StoreBlueprint.objects.get(id=blueprint_id)
+    except StoreBlueprint.DoesNotExist:
+        return {"blocked": ["blueprint_not_found"], "deleted": {}}
+    return undo_store_build(bp)

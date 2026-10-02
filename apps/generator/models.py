@@ -353,6 +353,10 @@ class StoreBlueprint(models.Model):
         "GenerationJob", null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
     )
     store_limit_reserved_at = models.DateTimeField(null=True, blank=True)
+    # T-118 (F15-12/13): merchant confirmed the mosaiq-main menu in the
+    # theme header; result of the last "Publish store" run.
+    menu_placed = models.BooleanField(default=False)
+    publish_result = models.JSONField(null=True, blank=True)
     # Assembled standard pages per type (T-116): {page_type: {title,
     # sections, warnings}} — AI intro/faq + code-inserted fact blocks.
     standard_pages = models.JSONField(null=True, blank=True)

@@ -162,7 +162,8 @@ def start_wizard(request: HttpRequest) -> HttpResponse:
             messages.success(request, f"{len(gids)} products selected.")
             return redirect(back)
 
-    # T-117 store build actions (F15-10): start, retry parent, retry child
+    # T-117/T-118 store build actions (F15-10/13/14): build, retry,
+    # publish store, undo build, menu-placed confirmation.
     if request.method == "POST" and bp.status == BlueprintStatus.BUILDING:
         build_action = request.POST.get("action", "")
         if build_action in {"build_store", "retry_build"}:
@@ -172,6 +173,20 @@ def start_wizard(request: HttpRequest) -> HttpResponse:
             job_id = request.POST.get("job_id", "")
             if job_id:
                 retry_store_build_child.delay(job_id)
+            return redirect(back)
+        if build_action == "publish_store" and bp.build_job_id:
+            from apps.generator.tasks import run_store_publish
+
+            run_store_publish.delay(str(bp.id))
+            return redirect(back)
+        if build_action == "undo_build" and bp.build_job_id:
+            from apps.generator.tasks import run_undo_build
+
+            run_undo_build.delay(str(bp.id))
+            return redirect(back)
+        if build_action == "menu_placed":
+            bp.menu_placed = request.POST.get("value") == "1"
+            bp.save(update_fields=["menu_placed", "updated_at"])
             return redirect(back)
 
     if bp.status == BlueprintStatus.STRUCTURE and bp.store_structure:
@@ -606,5 +621,17 @@ def _build_panel_context(bp) -> dict:
         return ctx
     children = list(GenerationJob.objects.filter(parent=job).order_by("page_type", "created_at"))
     steps = list(job.steps.all())
-    ctx.update({"build_job": job, "build_steps": steps, "build_children": children})
+    from apps.core.deep_links import get_menu_placement_link
+
+    ctx.update(
+        {
+            "build_job": job,
+            "build_steps": steps,
+            "build_children": children,
+            "menu_placement_link": get_menu_placement_link(
+                bp.shop.domain, "mosaiq-main"
+            ),
+            "build_succeeded": job.status == "succeeded",
+        }
+    )
     return ctx
