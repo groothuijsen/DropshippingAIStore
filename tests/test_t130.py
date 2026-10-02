@@ -188,3 +188,17 @@ class TestAdvisorScreen:
         )
         assert resp.status_code == 200
         assert "Target margin too high" in resp.content.decode()
+
+
+class TestSettingsRedirect:
+    def test_settings_index_redirects_keeping_qs(self, db, shop):
+        token = _token(shop)
+        resp = Client().get(f"/app/settings/?id_token={token}")
+        assert resp.status_code == 302
+        assert resp["Location"] == f"/app/settings/store/?id_token={token}"
+
+    def test_settings_index_no_token_bounce(self, db, shop):
+        # Without id_token the auth middleware shows the bounce page (200),
+        # never the redirect — by design (docs 03 §2.1).
+        resp = Client().get("/app/settings/")
+        assert resp.status_code == 200

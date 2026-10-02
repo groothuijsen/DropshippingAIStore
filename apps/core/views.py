@@ -176,6 +176,23 @@ def store_settings(request: HttpRequest):
     )
 
 
+def settings_index(request: HttpRequest):
+    """Redirect /app/settings/ to the first settings screen (store settings).
+
+    The Shopify admin app navigation points at /app/settings/, which has no
+    screen of its own. The query string (id_token, shop, host) is preserved —
+    the embedded iframe would otherwise lose its session token.
+    """
+    from django.shortcuts import redirect
+
+    qs = request.GET.urlencode()
+    target = "/app/settings/store/"
+    if qs:
+        target = f"{target}?{qs}"
+    return redirect(target)
+
+
+
 BUSINESS_FIELD_NAMES = (
     "legal_name",
     "trade_name",
