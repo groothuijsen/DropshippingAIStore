@@ -73,6 +73,12 @@
     {% include "app/start_panel.html" %}
   </div>
 
+  {% elif bp.status == "ideas" %}
+  <div class="mq-panel">
+    <h2>{% trans "Product ideas" %}</h2>
+    <p class="mq-subtitle">{% trans "Your brand is saved. Product ideas arrive with the next wizard step." %}</p>
+  </div>
+
   {% elif bp.status == "brand" %}
   <div class="mq-panel">
     <h2>{% trans "Brand name saved" %}</h2>

@@ -46,6 +46,11 @@ class BrandKit(models.Model):
         help_text="Key from bundled font list; empty = inherit theme font",
     )
     style_preset = models.CharField(max_length=20, choices=StylePreset.choices)
+    tagline = models.CharField(
+        max_length=60,
+        blank=True,
+        help_text="Brand tagline from the niche_brand proposal (F15-5)",
+    )
     logo_file_gid = models.CharField(max_length=255, null=True, blank=True)
     tokens_synced_at = models.DateTimeField(
         null=True,

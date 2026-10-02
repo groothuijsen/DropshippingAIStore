@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 
 from apps.ai.schemas import NicheBrief
 from apps.generator.models import BlueprintStatus, StoreBlueprint
+from apps.generator.tasks import generate_brand_proposal
 from apps.themes.brand_blocklist import is_blocked_brand
 
 logger = logging.getLogger(__name__)
@@ -148,6 +149,7 @@ def _pick_name(bp: StoreBlueprint, name: str) -> None:
         done.append("names")
     bp.completed_steps = done
     bp.save(update_fields=["brand_name", "brand_slug", "status", "completed_steps", "updated_at"])
+    generate_brand_proposal.delay(str(bp.id))  # F15-5: one niche_brand call
 
 
 def _save_brief(bp: StoreBlueprint, request: HttpRequest) -> list[str]:

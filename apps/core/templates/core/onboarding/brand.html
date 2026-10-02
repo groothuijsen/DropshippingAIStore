@@ -3,11 +3,67 @@
 
 {% block onboarding_content %}
 {% if shop.onboarding_route == "zero" %}
+  {% if bp.status == "ideas" %}
   <div class="mq-panel">
-    <h2>{% trans "Start from zero" %}</h2>
-    <p>{% trans "You are building a new store with Mosaiq. The store-builder wizard starts with a brief and brand names." %}</p>
-    <a class="mq-button" href="/app/start/?id_token={{ request.GET.id_token }}">{% trans "Open the store-builder wizard" %}</a>
+    <h2>{% trans "Brand saved" %}</h2>
+    <a class="mq-button" href="/app/start/?id_token={{ request.GET.id_token }}">{% trans "Continue in the wizard" %}</a>
   </div>
+  {% elif not proposal %}
+  <div class="mq-panel"
+       hx-get="{% url 'onboarding_step' 'brand' %}?id_token={{ request.GET.id_token }}"
+       hx-trigger="every 3s"
+       hx-swap="outerHTML">
+    <h2>{% trans "Designing your brand…" %}</h2>
+    <p class="mq-subtitle">{% trans "Mosaiq is proposing a tone, palette and fonts for your store." %}</p>
+  </div>
+  {% else %}
+  <h2>{% trans "Your brand proposal" %}</h2>
+  <p class="mq-help">{{ proposal.rationale }}</p>
+  <form method="post" class="mq-form">
+    {% csrf_token %}
+    <input type="hidden" name="route" value="zero">
+    <div class="mq-field">
+      <label for="brand_name">{% trans "Brand name" %}</label>
+      <input type="text" id="brand_name" name="brand_name" value="{{ bp.brand_name }}" readonly>
+    </div>
+    <div class="mq-field">
+      <label for="tagline">{% trans "Tagline" %}</label>
+      <input type="text" id="tagline" name="tagline" value="{{ proposal.tagline }}" maxlength="60">
+    </div>
+    <div class="mq-field-row">
+      <div class="mq-field">
+        <label for="tone">{% trans "Tone" %}</label>
+        <select id="tone" name="tone">
+          {% for t in tones %}
+          <option value="{{ t }}" {% if t == proposal.tone %}selected{% endif %}>{{ t }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="mq-field">
+        <label for="style_preset">{% trans "Style preset" %}</label>
+        <select id="style_preset" name="style_preset">
+          {% for pr in presets %}
+          <option value="{{ pr }}" {% if pr == proposal.style_preset %}selected{% endif %}>{{ pr }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="mq-field-row">
+      <div class="mq-field"><label for="primary">{% trans "Primary" %}</label><input type="text" id="primary" name="primary" value="{{ proposal.palette.primary }}"></div>
+      <div class="mq-field"><label for="secondary">{% trans "Secondary" %}</label><input type="text" id="secondary" name="secondary" value="{{ proposal.palette.secondary }}"></div>
+      <div class="mq-field"><label for="accent">{% trans "Accent" %}</label><input type="text" id="accent" name="accent" value="{{ proposal.palette.accent }}"></div>
+    </div>
+    <div class="mq-field-row">
+      <div class="mq-field"><label for="background">{% trans "Background" %}</label><input type="text" id="background" name="background" value="{{ proposal.palette.background }}"></div>
+      <div class="mq-field"><label for="text">{% trans "Text" %}</label><input type="text" id="text" name="text" value="{{ proposal.palette.text }}"></div>
+    </div>
+    <div class="mq-field-row">
+      <div class="mq-field"><label for="font_heading">{% trans "Heading font" %}</label><input type="text" id="font_heading" name="font_heading" value="{{ proposal.font_heading }}"></div>
+      <div class="mq-field"><label for="font_body">{% trans "Body font" %}</label><input type="text" id="font_body" name="font_body" value="{{ proposal.font_body }}"></div>
+    </div>
+    <button type="submit" class="mq-button">{% trans "Save brand" %}</button>
+  </form>
+  {% endif %}
 {% elif shop.onboarding_route == "existing" %}
   <h2>{% trans "Your brand" %}</h2>
   <form method="post" class="mq-form">

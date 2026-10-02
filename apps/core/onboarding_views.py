@@ -65,6 +65,11 @@ def onboarding(request: HttpRequest, step: str | None = None) -> HttpResponse:
             "is_first": get_prev_step(step) is None,
         }
     )
+    if step == "brand" and shop.onboarding_route == "zero":
+        extras = _brand_step_extras(shop, request)
+        if isinstance(extras, HttpResponse):
+            return extras
+        context.update(extras)
 
     context.update(_base_context(request))
     return render(request, f"core/onboarding/{step}.html", context)
@@ -134,7 +139,8 @@ def _handle_brand_step(request: HttpRequest, shop: Shop) -> HttpResponse | None:
     from apps.themes.validation import validate_palette
 
     route = request.POST.get("route", "").strip()
-    if route == "zero":
+    brand_name = request.POST.get("brand_name", "").strip()
+    if route == "zero" and not brand_name:
         from apps.generator.models import StoreBlueprint
 
         shop.onboarding_route = "zero"
@@ -153,7 +159,6 @@ def _handle_brand_step(request: HttpRequest, shop: Shop) -> HttpResponse | None:
         shop.onboarding_route = "existing"
         shop.save(update_fields=["onboarding_route"])
 
-    brand_name = request.POST.get("brand_name", "").strip()
     tone = request.POST.get("tone", "warm")
     style_preset = request.POST.get("style_preset", "clean")
     font_heading = request.POST.get("font_heading", "")
@@ -191,8 +196,71 @@ def _handle_brand_step(request: HttpRequest, shop: Shop) -> HttpResponse | None:
                 "style_preset": style_preset,
                 "font_heading": font_heading,
                 "font_body": font_body,
+                "tagline": request.POST.get("tagline", "").strip(),
             },
         )
+        if shop.onboarding_route == "zero":
+            # F15-5: the wizard continues with product ideas (T-114).
+            from apps.generator.models import BlueprintStatus, StoreBlueprint
+            from apps.themes.tasks import sync_brand_tokens
+
+            bp = StoreBlueprint.objects.filter(shop=shop).order_by("-created_at").first()
+            if bp is not None:
+                bp.palette = palette
+                bp.fonts = {"heading": font_heading, "body": font_body}
+                bp.status = BlueprintStatus.IDEAS
+                done = list(bp.completed_steps or [])
+                if "brand" not in done:
+                    done.append("brand")
+                bp.completed_steps = done
+                bp.save(
+                    update_fields=[
+                        "palette",
+                        "fonts",
+                        "status",
+                        "completed_steps",
+                        "updated_at",
+                    ]
+                )
+            sync_brand_tokens.delay(shop.id)  # F05-5 design tokens
+            qs = request.GET.urlencode()
+            target = "/app/start/"
+            if qs:
+                target = f"{target}?{qs}"
+            return redirect(target)
+
+
+def _brand_step_extras(shop: Shop, request: HttpRequest) -> dict | HttpResponse:
+    """Zero-route brand step: proposal state for the template.
+
+    Redirects to the wizard once the brand is saved (status ideas);
+    enqueues the niche_brand call while the proposal is missing.
+    """
+    from apps.generator.models import BlueprintStatus, StoreBlueprint
+    from apps.generator.tasks import generate_brand_proposal
+
+    bp = StoreBlueprint.objects.filter(shop=shop).order_by("-created_at").first()
+    if bp is None:
+        return {}
+    if bp.status == BlueprintStatus.IDEAS:
+        qs = request.GET.urlencode()
+        target = "/app/start/"
+        if qs:
+            target = f"{target}?{qs}"
+        return redirect(target)
+    proposal = bp.brand_proposal
+    if bp.status == BlueprintStatus.BRAND and proposal is None:
+        # The task no-ops when a proposal already exists (double-enqueue safe).
+        generate_brand_proposal.delay(str(bp.id))
+    from apps.themes.models import Tone
+    from apps.themes.presets import get_preset_names
+
+    return {
+        "bp": bp,
+        "proposal": proposal,
+        "tones": [t.value for t in Tone],
+        "presets": get_preset_names(),
+    }
 
 
 def _base_context(request: HttpRequest) -> dict:

@@ -286,6 +286,18 @@ class PaletteSuggestion(BaseModel):
     rationale: str = Field(max_length=200)
 
 
+class BrandProposal(BaseModel):
+    """F15-5 brand proposal — tool submit_brand (12 §3)."""
+
+    tone: Literal["warm", "premium", "playful", "clinical", "sporty"]
+    style_preset: Literal["clean", "bold", "organic", "luxe", "tech", "soft"]
+    palette: PaletteSuggestion  # contrast re-checked in code (F05-3)
+    font_heading: str  # key from themes/fonts.py; validated against the list
+    font_body: str
+    tagline: str = Field(max_length=60)
+    rationale: str = Field(max_length=240)
+
+
 class FieldRewrite(BaseModel):
     field_path: str
     new_value: str = Field(max_length=600)

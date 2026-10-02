@@ -428,3 +428,88 @@ def generate_name_suggestions(blueprint_id: str) -> None:
     bp.name_suggestions = kept
     bp.save(update_fields=["name_suggestions", "updated_at"])
     logger.info("Stored %d name suggestions for blueprint %s", len(kept), blueprint_id)
+
+
+# ── Store-builder wizard: brand proposal (F15-5, T-113) ──────────────────
+
+
+@shared_task(acks_late=True, max_retries=2)
+def generate_brand_proposal(blueprint_id: str) -> None:
+    """One niche_brand call → BrandProposal, corrected per F05-3/4.
+
+    Invalid font keys fall back to ``theme`` (inherit); a failing
+    text-on-background contrast is corrected with the suggestion from
+    ``validate_palette`` (never silently kept).
+    """
+    import json
+
+    from apps.ai.anthropic_client import call_ai
+    from apps.ai.prompts import render_prompt
+    from apps.ai.schemas import BrandProposal
+    from apps.generator.models import StoreBlueprint
+    from apps.themes.fonts import get_font_keys, is_valid_font
+    from apps.themes.presets import STYLE_PRESETS
+    from apps.themes.validation import validate_palette
+
+    try:
+        bp = StoreBlueprint.objects.get(id=blueprint_id)
+    except StoreBlueprint.DoesNotExist:
+        logger.warning("Brand proposal: blueprint %s not found", blueprint_id)
+        return
+    if bp.status != "brand" or bp.brand_proposal is not None:
+        return  # not in the brand state, or already proposed
+
+    font_lines = ", ".join(get_font_keys())
+    presets_json = json.dumps(STYLE_PRESETS, ensure_ascii=False)
+    system, user = render_prompt(
+        "niche_brand",
+        {
+            "brand_name": bp.brand_name,
+            "brief_json": json.dumps(
+                {
+                    "description": bp.description,
+                    "markets": bp.markets,
+                    "content_locales": bp.content_locales,
+                    "audience": bp.audience,
+                    "price_level": bp.price_level,
+                    "import_app": bp.import_app,
+                },
+                ensure_ascii=False,
+            ),
+            "font_keys": font_lines,
+            "presets_json": presets_json,
+            "ui_locale_name": {"nl": "Dutch", "en": "English", "de": "German"}.get(
+                (bp.content_locales or ["en"])[0], "English"
+            ),
+        },
+    )
+    try:
+        proposal, _usage = call_ai(
+            shop=bp.shop,
+            purpose="brand_proposal",
+            model_key="copy",
+            system=system,
+            user=user or "Generate a brand proposal.",
+            schema=BrandProposal,
+            tool_name="submit_brand",
+        )
+    except Exception as exc:
+        logger.error("Brand proposal AI call failed for %s: %s", bp.id, exc)
+        return
+
+    data = proposal.model_dump()
+    # F05-4: font keys must come from the bundled list; else inherit theme
+    if not is_valid_font(data["font_heading"]):
+        data["font_heading"] = ""
+    if not is_valid_font(data["font_body"]):
+        data["font_body"] = ""
+    # F05-3: text on background ≥ 4.5:1 — correct with the suggestion
+    palette = {k: data["palette"][k] for k in ("primary", "secondary", "accent", "background", "text")}
+    validation = validate_palette(palette)
+    if not validation["valid"] and "text" in validation["suggestions"]:
+        palette["text"] = validation["suggestions"]["text"]
+    data["palette"] = palette
+
+    bp.brand_proposal = data
+    bp.save(update_fields=["brand_proposal", "updated_at"])
+    logger.info("Stored brand proposal for blueprint %s", bp.id)

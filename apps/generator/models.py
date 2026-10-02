@@ -308,6 +308,7 @@ class StoreBlueprint(models.Model):
 
     # Names (F15-4)
     name_suggestions = models.JSONField(default=list, blank=True)
+    brand_proposal = models.JSONField(null=True, blank=True)
     regenerate_count = models.IntegerField(default=0)
     brand_name = models.CharField(max_length=40, blank=True, default="")
     brand_slug = models.CharField(max_length=80, blank=True, default="")

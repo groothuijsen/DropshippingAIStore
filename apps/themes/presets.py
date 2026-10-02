@@ -8,36 +8,42 @@ from typing import Any
 
 STYLE_PRESETS: dict[str, dict[str, Any]] = {
     "clean": {
+        "description": "Neutral and trustworthy; moderate radius, no shouting.",
         "radius": {"base": "8px", "button": "6px", "card": "10px"},
         "spacing": {"scale": 1.0, "section_padding": "48px"},
         "button": {"style": "solid", "text_transform": "none", "font_weight": "500"},
         "heading": {"font_weight": "600", "letter_spacing": "-0.01em", "text_transform": "none"},
     },
     "bold": {
+        "description": "Loud and confident; tight radius, uppercase buttons and headings.",
         "radius": {"base": "4px", "button": "4px", "card": "6px"},
         "spacing": {"scale": 0.9, "section_padding": "40px"},
         "button": {"style": "solid", "text_transform": "uppercase", "font_weight": "700"},
         "heading": {"font_weight": "800", "letter_spacing": "-0.02em", "text_transform": "uppercase"},
     },
     "organic": {
+        "description": "Natural and calm; rounded shapes, restrained weight.",
         "radius": {"base": "16px", "button": "24px", "card": "20px"},
         "spacing": {"scale": 1.2, "section_padding": "64px"},
         "button": {"style": "solid", "text_transform": "none", "font_weight": "500"},
         "heading": {"font_weight": "500", "letter_spacing": "0em", "text_transform": "none"},
     },
     "luxe": {
+        "description": "Refined and premium; generous spacing, elegant detail.",
         "radius": {"base": "2px", "button": "0px", "card": "2px"},
         "spacing": {"scale": 1.3, "section_padding": "72px"},
         "button": {"style": "outline", "text_transform": "uppercase", "font_weight": "600"},
         "heading": {"font_weight": "300", "letter_spacing": "0.08em", "text_transform": "uppercase"},
     },
     "tech": {
+        "description": "Precise and modern; sharp corners, strong hierarchy.",
         "radius": {"base": "6px", "button": "4px", "card": "8px"},
         "spacing": {"scale": 0.85, "section_padding": "36px"},
         "button": {"style": "solid", "text_transform": "uppercase", "font_weight": "600"},
         "heading": {"font_weight": "700", "letter_spacing": "-0.02em", "text_transform": "none"},
     },
     "soft": {
+        "description": "Gentle and friendly; soft radii, low-contrast palette support.",
         "radius": {"base": "20px", "button": "30px", "card": "24px"},
         "spacing": {"scale": 1.15, "section_padding": "56px"},
         "button": {"style": "solid", "text_transform": "none", "font_weight": "500"},
