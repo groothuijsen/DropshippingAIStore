@@ -1,0 +1,7 @@
+{% extends "marketing/base.html" %}
+{% block content %}<main>
+{% if article.draft %}<div class="draft-banner">{% if lang == "nl" %}CONCEPT — in afwachting van redactionele review.{% else %}DRAFT — pending editorial review.{% endif %}</div>{% endif %}
+<header class="hero shell"><p class="micro"><a href="{{ list_href }}">{{ section_title }}</a>{% if article.date %} · {{ article.date }}{% endif %}</p>
+<h1>{{ article.title }}</h1></header>
+<section class="block shell"><div class="prose">{{ article.body_html|safe }}</div></section>
+</main>{% endblock %}

@@ -1,0 +1,8 @@
+{% extends "marketing/base.html" %}
+{% block content %}<main><header class="hero shell"><h1>{{ section_title }}</h1>
+<p class="sub">{% if section == "help" %}{% if lang == "nl" %}Antwoorden over installatie, blokken, compliance en facturering.{% else %}Answers about installation, blocks, compliance and billing.{% endif %}{% else %}{% if lang == "nl" %}Updates over EU-regels voor webshops.{% else %}EU rules for webshops, explained.{% endif %}{% endif %}</p></header>
+<section class="block shell"><div class="art-list">
+{% for a in articles %}<a class="art-item" href="/{% if section == "blog" %}blog{% else %}help{% endif %}/{{ a.slug }}/">
+<strong>{{ a.title }}</strong>{% if a.draft %} <span class="chip">draft</span>{% endif %}{% if a.date %}<span class="micro">{{ a.date }}</span>{% endif %}<p class="micro">{{ a.description }}</p></a>
+{% empty %}<p class="micro">—</p>{% endfor %}
+</div></section></main>{% endblock %}

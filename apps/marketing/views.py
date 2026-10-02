@@ -15,6 +15,7 @@ from django.views.decorators.http import require_GET
 
 from apps.billing.plans import PLAN_LIMITS, PLAN_NAMES, PLAN_PRICES
 
+from .articles import get_article, list_articles
 from .content import LANGUAGES, load_page
 from .emails import send_email
 from .forms import EarlyAccessForm
@@ -280,3 +281,80 @@ def early_access_confirm(request: HttpRequest) -> HttpResponse:
     if lang == 'nl':
         text = 'Bevestigd - je staat op de lijst.' if ok else 'Deze link is ongeldig of al gebruikt.'
     return HttpResponse(f'<html lang="{lang}"><body><p>{text}</p></body></html>', content_type='text/html')
+
+
+import markdown as _md
+
+
+def _article_page(request, section, slug):
+    lang = 'nl' if request.path.startswith('/nl/') else 'en'
+    if _guard(request) == 'deny':
+        raise Http404
+    show = getattr(settings, 'MARKETING_SHOW_DRAFTS', False)
+    article = get_article(lang, section, slug, include_drafts=show)
+    if article is None:
+        raise Http404
+    article['body_html'] = _resolve_placeholders(_md.markdown(article['body'], extensions=['extra']))
+    section_titles = {'blog': ('Blog', 'Blog'), 'help': ('Help centre', 'Helpcentrum')}
+    t_en, t_nl = section_titles.get(section, (section, section))
+    return render(request, 'marketing/article.html', {
+        'article': article, 'section': section,
+        'section_title': t_nl if lang == 'nl' else t_en,
+        'lang': lang, 'languages': LANGUAGES,
+        'list_href': f'/nl/{section}/' if (lang == 'nl' and section == 'blog') else (f'/{section}/'),
+        'page': {'title': article['title'], 'slug': f'/{section}/{article[chr(39)+chr(39)] if False else article["slug"]}/', 'alts': [], 'jsonld': '', 'draft': article['draft']},
+        'plans': [], 'install_href': _install_href(lang), 'form': None, 'form_message': '',
+    })
+
+
+@require_GET
+def blog_list_view(request: HttpRequest) -> HttpResponse:
+    return _article_list(request, 'blog')
+
+
+@require_GET
+def help_index_view(request: HttpRequest) -> HttpResponse:
+    return _article_list(request, 'help')
+
+
+def _article_list(request, section):
+    lang = 'nl' if request.path.startswith('/nl/') else 'en'
+    if _guard(request) == 'deny':
+        raise Http404
+    show = getattr(settings, 'MARKETING_SHOW_DRAFTS', False)
+    articles = list_articles(lang, section, include_drafts=show)
+    section_titles = {'blog': ('Blog', 'Blog'), 'help': ('Help centre', 'Helpcentrum')}
+    t_en, t_nl = section_titles.get(section, (section, section))
+    return render(request, 'marketing/article_list.html', {
+        'articles': articles, 'section': section,
+        'section_title': t_nl if lang == 'nl' else t_en,
+        'lang': lang, 'languages': LANGUAGES,
+        'page': {'title': t_nl if lang == 'nl' else t_en, 'slug': f'/{section}/', 'alts': [], 'jsonld': '', 'draft': False},
+        'plans': [], 'install_href': _install_href(lang), 'form': None, 'form_message': '',
+    })
+
+
+@require_GET
+def blog_rss_view(request: HttpRequest) -> HttpResponse:
+    if _guard(request) == 'deny':
+        raise Http404
+    posts = list_articles('en', 'blog', include_drafts=getattr(settings, 'MARKETING_SHOW_DRAFTS', False))
+    host = request.get_host().split(':')[0]
+    items = ''.join(
+        f'<item><title>{p["title"]}</title><link>https://{host}/blog/{p["slug"]}/</link>'
+        f'<guid>https://{host}/blog/{p["slug"]}/</guid><pubDate>{p["date"]}</pubDate></item>'
+        for p in posts
+    )
+    body = '<?xml version="1.0"?><rss version="2.0"><channel><title>Mosaiq blog</title>' \
+        f'<link>https://{host}/blog/</link>{items}</channel></rss>'
+    return HttpResponse(body, content_type='application/rss+xml')
+
+
+@require_GET
+def blog_post_view(request: HttpRequest, slug: str) -> HttpResponse:
+    return _article_page(request, 'blog', slug)
+
+
+@require_GET
+def help_article_view(request: HttpRequest, slug: str) -> HttpResponse:
+    return _article_page(request, 'help', slug)
