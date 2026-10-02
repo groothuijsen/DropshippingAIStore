@@ -23,16 +23,19 @@ def _get(path: str) -> str:
 
 class TestNoThirdPartyRequests:
     def test_home_has_no_external_assets(self):
+        """Zero third-party REQUESTS: the only absolute URLs allowed in
+        link/script positions are same-origin SEO metadata (canonical,
+        hreflang) — no external fonts, scripts or assets."""
+        import re
+
         html = _get("/")
         assert "fonts.googleapis" not in html
         assert "cdn." not in html
-        for needle in ("<link", "<script", "@import"):
-            assert f"{needle}[^>]*http" not in html.replace("\n", " ")
-        import re
-
-        assert not re.search(r'<link[^>]+href="https?://', html)
-        assert not re.search(r'<script[^>]+src="https?://', html)
         assert "url(http" not in html
+        refs = re.findall(r'<link[^>]+href="(https?://[^"]+)"', html)
+        refs += re.findall(r'<script[^>]+src="(https?://[^"]+)"', html)
+        for ref in refs:
+            assert ref.startswith("https://shopify.mosaiq.marketing/"), f"external ref: {ref}"
 
     def test_features_page_renders_styled(self):
         html = _get("/features/")
