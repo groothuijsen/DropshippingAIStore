@@ -1,5 +1,13 @@
 ## Unreleased
 
+### T-160 — UI styling: WhiteNoise + Carbon Emerald theme (2026-10-02)
+
+- **Static serving fixed**: WhiteNoise middleware + `CompressedStaticFilesStorage` in prod (CT 412 has no nginx — every `/static/*` URL 404'd and the admin ran on a 4-line inline style). `collectstatic` live; `/static/app/styles.css` verified 200 on the VPS.
+- **`static/app/styles.css` — direction C "Carbon Emerald"** (user picked from a 3-way mockup: `mosaiq-ui-directions-2026-10-02.html`): near-black `#0e0f0f` surfaces, emerald `#10b981` accent, semantic CSS tokens, all 50 `mq-*` classes used by the templates (panels, forms, tables, steps, messages, lists, price advisor, cards), 44px tap targets, visible focus rings, dark scrollbars.
+- **`dashboard.html` rewritten**: emoji icons removed (user rule), dead links dropped (`/app/generate/`, `/app/pages/`, `/app/offers/` — those screens are not built), cards now link only built screens (start wizard, delivery, store settings).
+- **Live E2E**: app root + store settings + delivery all render `rgb(14,15,15)` with emerald accents; zero white/unstyled areas; zero emoji.
+- Commits `749142a` (infra) + `3a9f2f0` (theme + dashboard).
+
 ### T-118 — Publish store (go-live) + Undo + menu placement (F15-12..14, 2026-10-02)
 
 - `StoreBlueprint.menu_placed` + `publish_result` (migration `generator/0009`).
