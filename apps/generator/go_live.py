@@ -84,6 +84,25 @@ def check_can_go_live(page: Page) -> tuple[bool, list[str]]:
     # 3. Check unit price (TODO: implement when UnitPriceInfo is fully wired)
     # For now, skip — will be checked when unit price form is live
 
+    # 3b. 30-day delivery rule (F18-7, CRD art. 18): any market with
+    # max_days > 30 blocks go-live — beyond 30 days needs explicit
+    # agreement with the consumer.
+    if page.product_gid:
+        from apps.compliance.delivery import estimate
+        from apps.compliance.models import DeliveryProfile
+
+        markets: set[str] = set()
+        for prof in DeliveryProfile.objects.filter(shop=page.shop):
+            markets |= set((prof.transit_days or {}).keys())
+        for market in markets or {""}:
+            est = estimate(page.shop, page.product_gid, market)
+            if est is not None and est.over_30_days:
+                missing.append(
+                    "DELIVERY_OVER_30_DAYS — delivery exceeds 30 working days in "
+                    f"market {market or 'default'}; needs explicit customer agreement"
+                )
+                break
+
     # 4. Check live pages limit
     from apps.billing.models import Subscription
     from apps.billing.plans import get_plan_limits

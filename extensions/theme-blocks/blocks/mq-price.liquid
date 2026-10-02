@@ -9,7 +9,35 @@
   assign price_metafield = product.metafields["$app:mosaiq"].price.value
   assign unit_price_metafield = product.metafields["$app:mosaiq"].unit_price.value
   assign prior_price = product.metafields["$app:mosaiq"].prior_price.value
+  assign delivery_metafield = product.metafields["$app:mosaiq"].delivery.value
 -%}
+
+{%- comment -%} Delivery estimate (F18-5): per visitor market, fallback first market. {%- endcomment -%}
+{%- if delivery_metafield -%}
+  {%- assign delivery_market = localization.country.iso_code -%}
+  {%- assign delivery_range = delivery_metafield.by_market[delivery_market] -%}
+  {%- if delivery_range == nil -%}
+    {%- assign delivery_market = delivery_metafield.default_market -%}
+    {%- assign delivery_range = delivery_metafield.by_market[delivery_market] -%}
+  {%- endif -%}
+  {%- if delivery_range -%}
+    {%- case delivery_metafield.ship_from -%}
+      {%- when "CN" -%}{%- assign delivery_country = "China" -%}
+      {%- when "DE" -%}{%- assign delivery_country = "Germany" -%}
+      {%- when "NL" -%}{%- assign delivery_country = "the Netherlands" -%}
+      {%- when "BE" -%}{%- assign delivery_country = "Belgium" -%}
+      {%- when "US" -%}{%- assign delivery_country = "the United States" -%}
+      {%- when "GB" -%}{%- assign delivery_country = "the United Kingdom" -%}
+      {%- when "FR" -%}{%- assign delivery_country = "France" -%}
+      {%- when "ES" -%}{%- assign delivery_country = "Spain" -%}
+      {%- when "IT" -%}{%- assign delivery_country = "Italy" -%}
+      {%- when "PL" -%}{%- assign delivery_country = "Poland" -%}
+      {%- when "TR" -%}{%- assign delivery_country = "Türkiye" -%}
+      {%- else -%}{%- assign delivery_country = delivery_metafield.ship_from -%}
+    {%- endcase -%}
+    <div class="mq-price__delivery">{{ 'price.delivery_time' | t: min: delivery_range[0], max: delivery_range[1], country: delivery_country }}</div>
+  {%- endif -%}
+{%- endif -%}
 
 {%- if price_metafield or unit_price_metafield -%}
   <div class="mq-price">

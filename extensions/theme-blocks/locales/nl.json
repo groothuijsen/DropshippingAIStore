@@ -28,7 +28,8 @@
     "sale_price": "Actieprijs",
     "regular_price": "Normale prijs",
     "unit_price": "Eenheidsprijs",
-    "you_save": "Je bespaart"
+    "you_save": "Je bespaart",
+    "delivery_time": "Levering binnen {{ min }}–{{ max }} werkdagen (verzonden vanuit {{ country }})"
   },
   "compliance": {
     "ai_generated": "Deze inhoud is gegenereerd met AI-ondersteuning en gecontroleerd op nauwkeurigheid."

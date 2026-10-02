@@ -194,6 +194,7 @@ METAFIELD_DEFINITIONS = [
     ("PRODUCT", "page", "list.metaobject_reference", "Page Content", "$app:page_content"),
     ("PRODUCT", "gpsr", "json", "GPSR", None),
     ("PRODUCT", "offer", "metaobject_reference", "Offer", "$app:offer_display"),
+    ("PRODUCT", "delivery", "json", "Delivery", None),
     # Page metafields
     ("PAGE", "page", "list.metaobject_reference", "Page Content", "$app:page_content"),
     # Shop metafields
