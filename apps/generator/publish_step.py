@@ -138,12 +138,14 @@ def run_publish(job: GenerationJob, step: JobStep) -> dict[str, Any] | None:
         no_warnings_confirmed=False,
     )
 
-    # GPSR check first (05 §4.6)
-    allowed, message = check_gpsr_for_publish(gpsr)
-    if not allowed:
-        from apps.generator.errors import GpsrIncomplete
+    # GPSR check first (05 §4.6) — GPSR obligations attach to PRODUCTS:
+    # standard pages (faq/shipping/returns/home, T-117) publish without it.
+    if page.page_type == "pdp" or page.product_gid:
+        allowed, message = check_gpsr_for_publish(gpsr)
+        if not allowed:
+            from apps.generator.errors import GpsrIncomplete
 
-        raise GpsrIncomplete(message)
+            raise GpsrIncomplete(message)
 
     client = _get_client(job.shop)
     try:

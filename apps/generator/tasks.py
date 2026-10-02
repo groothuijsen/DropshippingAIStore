@@ -146,8 +146,8 @@ def execute_job(job_id: str) -> dict[str, Any]:
         check_job_budget(job.ai_cost_usd)
     except AiBudgetExceeded as exc:
         job.status = JobStatus.FAILED
-        job.error_code = exc.code
-        job.error_message = exc.merchant_message
+        job.error_code = str(exc.code)[:60]
+        job.error_message = str(exc.merchant_message)[:2000]
         job.finished_at = timezone.now()
         job.save(update_fields=["status", "error_code", "error_message", "finished_at"])
         return {"error": exc.code}
@@ -211,8 +211,10 @@ def execute_job(job_id: str) -> dict[str, Any]:
             step.finished_at = timezone.now()
             step.save(update_fields=["status", "finished_at"])
             job.status = JobStatus.FAILED
-            job.error_code = getattr(exc, "code", "UNKNOWN_ERROR")
-            job.error_message = str(exc)
+            # error_code is varchar(60): a long exception code crashed the
+            # save and masked the real failure (T-117 live DataError).
+            job.error_code = str(getattr(exc, "code", "UNKNOWN_ERROR"))[:60]
+            job.error_message = str(exc)[:2000]
             job.finished_at = timezone.now()
             job.save(update_fields=["status", "error_code", "error_message", "finished_at"])
             _release_usage(job)
