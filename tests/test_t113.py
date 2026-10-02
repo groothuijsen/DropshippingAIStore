@@ -3,10 +3,10 @@
 from unittest.mock import MagicMock, patch
 
 import jwt as pyjwt
-from pydantic import ValidationError
 import pytest
 from django.conf import settings
 from django.test import Client
+from pydantic import ValidationError
 
 from apps.ai.schemas import BrandProposal
 from apps.core.models import Shop
