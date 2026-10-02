@@ -140,15 +140,20 @@ code {
   min-height: 44px;
   padding: 0 18px;
   border-radius: var(--mq-radius-sm);
-  border: 1px solid transparent;
+  border: 1px solid var(--mq-accent);
   font: inherit;
   font-weight: 650;
   cursor: pointer;
   text-decoration: none;
   transition: background 0.15s ease-out, border-color 0.15s ease-out, color 0.15s ease-out;
-  background: transparent;
-  color: var(--mq-fg);
+  /* A bare .mq-btn/.mq-button is a PRIMARY action by convention
+     (T-160 visual walkthrough: transparent default read as plain text). */
+  background: var(--mq-accent);
+  color: var(--mq-accent-fg);
 }
+.mq-btn:hover,
+.mq-button:hover,
+.btn:hover { background: var(--mq-accent-hover); border-color: var(--mq-accent-hover); color: var(--mq-accent-fg); }
 .mq-btn:hover, .mq-button:hover, .btn:hover { text-decoration: none; }
 
 .mq-btn-primary,
@@ -396,14 +401,18 @@ code {
   background: var(--mq-bg-elevated);
   font-weight: 500;
 }
+.dot,
 .mq-step .dot,
 .step .dot {
+  display: inline-block;
   width: 10px;
   height: 10px;
   border-radius: 50%;
   background: var(--mq-fg-faint);
   flex: none;
 }
+.dot.err { background: var(--mq-error-fg); }
+.dot.warn { background: var(--mq-warn-fg); }
 .mq-step.ok .dot,
 .step.ok .dot { background: var(--mq-ok); }
 .mq-step.run .dot,

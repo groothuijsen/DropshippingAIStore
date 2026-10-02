@@ -51,7 +51,7 @@
 <ul class="mq-structure-list">
   {% for step in build_steps %}
   <li>
-    {% if step.status == "succeeded" %}✅{% elif step.status == "failed" %}❌{% elif step.status == "running" %}⏳{% else %}⬜{% endif %}
+    <span class="dot {% if step.status == "succeeded" %}ok{% elif step.status == "failed" %}err{% elif step.status == "running" %}run{% endif %}"></span>
     {{ step.name }}
     {% if step.status == "failed" and step.output.last_error %}
     <span class="mq-help">— {{ step.output.last_error|truncatechars:160 }}</span>
@@ -64,7 +64,7 @@
 <ul class="mq-structure-list">
   {% for child in build_children %}
   <li>
-    {% if child.status == "succeeded" %}✅{% elif child.status == "failed" %}❌{% elif child.status == "running" %}⏳{% else %}⬜{% endif %}
+    <span class="dot {% if child.status == "succeeded" %}ok{% elif child.status == "failed" %}err{% elif child.status == "running" %}run{% endif %}"></span>
     {{ child.page_type }}
     {% if child.status == "failed" %}
     <span class="mq-help">— {{ child.error_message|truncatechars:160 }}</span>
@@ -103,13 +103,13 @@
 {% if bp.publish_result %}
 <ul class="mq-structure-list">
   {% for page_type, info in bp.publish_result.published_pages.items %}
-  <li>✅ {{ page_type }} — {% trans "live" %}</li>
+  <li><span class="dot ok"></span> {{ page_type }} — {% trans "live" %}</li>
   {% endfor %}
   {% for blocked in bp.publish_result.blocked_pages %}
-  <li>⚠️ {{ blocked.page_type }} — {{ blocked.reasons|join:"; " }}</li>
+  <li><span class="dot warn"></span> {{ blocked.page_type }} — {{ blocked.reasons|join:"; " }}</li>
   {% endfor %}
   {% if bp.publish_result.collections_published %}
-  <li>✅ {% blocktrans count n=bp.publish_result.collections_published|length %}{{ n }} collection published{% plural %}{{ n }} collections published{% endblocktrans %}</li>
+  <li><span class="dot ok"></span> {% blocktrans count n=bp.publish_result.collections_published|length %}{{ n }} collection published{% plural %}{{ n }} collections published{% endblocktrans %}</li>
   {% endif %}
 </ul>
 {% endif %}
