@@ -124,14 +124,15 @@ def run_publish(job: GenerationJob, step: JobStep) -> dict[str, Any] | None:
     4. Set metafield 'page' on product/page/shop
     5. Page.version += 1, store GIDs
     """
+    # Find the page for this job
+    from apps.generator.errors import PageNotFound
     from apps.generator.layout_step import PAGE_TYPES_NEEDING_SHOPIFY_PAGE
     from apps.generator.models import Page
 
-    # Find the page for this job
     page = Page.objects.filter(job=job).first()
     if not page:
         logger.error("No page found for job %s", job.id)
-        return None
+        raise PageNotFound()
 
     # Load GPSR from the product metafield the merchant filled in via the
     # GPSR form (T-161, 07 §5). Empty metafield -> empty GpsrInfo -> the

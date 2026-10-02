@@ -122,6 +122,10 @@ def run_job(self, job_id: str) -> dict[str, Any]:
     return execute_job(job_id)
 
 
+# Steps whose contract requires a checkpoint output (execute_job docstring).
+_CONTRACT_STEPS = {"import", "research", "copy", "layout", "publish"}
+
+
 def execute_job(job_id: str) -> dict[str, Any]:
     """Run a generation job through its pending steps.
 
@@ -200,6 +204,13 @@ def execute_job(job_id: str) -> dict[str, Any]:
         # Execute the step (dispatch to the appropriate handler)
         try:
             result = _execute_step(job, step)
+            if result is None and step.name in _CONTRACT_STEPS:
+                # A contract step returning None is a bug, not a success
+                # (T-161 live lesson: copy/layout/publish "succeeded" with no
+                # output and the PDP page was never created).
+                from apps.generator.errors import GeneratorError
+
+                raise GeneratorError("STEP_NO_OUTPUT", f"Step {step.name} produced no output")
             if result is not None:
                 step.output = result
             step.status = StepStatus.SUCCEEDED

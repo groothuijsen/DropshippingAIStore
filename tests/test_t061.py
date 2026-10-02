@@ -147,7 +147,7 @@ class TestReserveConsumeRelease:
 
 
 class TestPipelineLimitsIntegration:
-    @patch("apps.generator.tasks._execute_step", return_value=None)
+    @patch("apps.generator.tasks._execute_step", return_value={"ok": True})
     def test_job_success_consumes_usage(self, mock_step, shop, starter_subscription):
         job = _make_job(shop)
         result = execute_job(str(job.id))
@@ -196,7 +196,7 @@ class TestPipelineLimitsIntegration:
         job.refresh_from_db()
         assert job.status == JobStatus.FAILED
 
-    @patch("apps.generator.tasks._execute_step", return_value=None)
+    @patch("apps.generator.tasks._execute_step", return_value={"ok": True})
     def test_resume_does_not_double_reserve(self, mock_step, shop, starter_subscription):
         job = _make_job(shop)
         job.started_at = timezone.now()

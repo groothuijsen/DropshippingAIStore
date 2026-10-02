@@ -183,13 +183,17 @@ class TestCopyStep:
 
     @patch("apps.ai.anthropic_client.call_ai")
     def test_copy_no_import(self, mock_ai, job, research_step):
-        result = run_copy(job, JobStep(job=job, name="copy"))
-        assert result is None
+        from apps.generator.errors import CopyInputMissing
+
+        with pytest.raises(CopyInputMissing):
+            run_copy(job, JobStep(job=job, name="copy"))
 
     @patch("apps.ai.anthropic_client.call_ai")
     def test_copy_no_research(self, mock_ai, job, import_step):
-        result = run_copy(job, JobStep(job=job, name="copy"))
-        assert result is None
+        from apps.generator.errors import CopyInputMissing
+
+        with pytest.raises(CopyInputMissing):
+            run_copy(job, JobStep(job=job, name="copy"))
 
     @patch("apps.ai.anthropic_client.call_ai")
     def test_copy_no_chosen_angle(self, mock_ai, job, import_step, research_step):
@@ -197,8 +201,10 @@ class TestCopyStep:
         research_step.save(update_fields=["output"])
         job.input.pop("angle_id", None)
         job.save(update_fields=["input"])
-        result = run_copy(job, JobStep(job=job, name="copy"))
-        assert result is None
+        from apps.generator.errors import CopyInputMissing
+
+        with pytest.raises(CopyInputMissing):
+            run_copy(job, JobStep(job=job, name="copy"))
 
     @patch("apps.ai.anthropic_client.call_ai")
     def test_copy_specs_row_filtering(self, mock_ai, job, import_step, research_step):

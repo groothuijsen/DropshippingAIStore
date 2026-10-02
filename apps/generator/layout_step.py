@@ -87,13 +87,15 @@ def run_layout(job: GenerationJob, step: JobStep) -> dict[str, Any] | None:
     3. Determine template_suffix
     4. Store in step output
     """
+    # Find the page for this job
+    from apps.generator.errors import PageNotFound
+
     from .models import Page
 
-    # Find the page for this job
     page = Page.objects.filter(job=job).first()
     if not page:
         logger.error("No page found for job %s", job.id)
-        return None
+        raise PageNotFound()
 
     # Build metaobject fields
     fields = build_metaobject_fields(page)

@@ -85,3 +85,13 @@ def check_job_budget(job_cost_usd) -> None:
 
     if job_cost_usd >= Decimal(str(AI_COST_BUDGET_USD)):
         raise AiBudgetExceeded(message=f"Job cost ${job_cost_usd} exceeded budget ${AI_COST_BUDGET_USD}")
+
+
+class CopyInputMissing(GeneratorError):  # noqa: N818
+    code = "COPY_INPUT_MISSING"
+    merchant_message = "Research input is incomplete for this page. Retry the step."
+
+
+class PageNotFound(GeneratorError):  # noqa: N818
+    code = "PAGE_NOT_FOUND"
+    merchant_message = "The page record is missing for this job. Retry the step."

@@ -394,7 +394,7 @@ class TestRunJob:
     @patch("apps.generator.tasks._execute_step")
     def test_runs_pending_steps(self, mock_execute, page_job):
         """run_job executes all pending steps."""
-        mock_execute.return_value = None
+        mock_execute.return_value = {"ok": True}
         result = execute_job(str(page_job.id))
         assert result["status"] == JobStatus.SUCCEEDED
         page_job.refresh_from_db()
@@ -404,7 +404,7 @@ class TestRunJob:
     @patch("apps.generator.tasks._execute_step")
     def test_skips_succeeded_steps(self, mock_execute, page_job):
         """Already-succeeded steps are not re-run."""
-        mock_execute.return_value = None
+        mock_execute.return_value = {"ok": True}
         JobStep.objects.create(job=page_job, name="import", status=StepStatus.SUCCEEDED)
         result = execute_job(str(page_job.id))
         assert result["status"] == JobStatus.SUCCEEDED
@@ -466,7 +466,7 @@ class TestRunJob:
     @patch("apps.generator.tasks._execute_step")
     def test_store_job_only_two_steps(self, mock_execute, store_job):
         """Store job runs only import + research."""
-        mock_execute.return_value = None
+        mock_execute.return_value = {"ok": True}
         result = execute_job(str(store_job.id))
         assert result["status"] == JobStatus.SUCCEEDED
         steps = JobStep.objects.filter(job=store_job)

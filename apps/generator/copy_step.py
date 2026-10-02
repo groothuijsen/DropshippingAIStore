@@ -78,20 +78,22 @@ def run_copy(job: GenerationJob, step: JobStep) -> dict[str, Any] | None:
     from apps.ai.anthropic_client import call_ai
     from apps.ai.prompts import render_prompt
     from apps.ai.schemas import SectionsPayload
-    from apps.themes.models import BrandKit
 
     # Load ImportResult
+    from apps.generator.errors import CopyInputMissing
+    from apps.themes.models import BrandKit
+
     import_step = JobStep.objects.filter(job=job, name="import", status="succeeded").first()
     if not import_step or not import_step.output:
         logger.error("No import result for job %s", job.id)
-        return None
+        raise CopyInputMissing()
     import_result = import_step.output
 
     # Load ResearchResult + chosen angle
     research_step = JobStep.objects.filter(job=job, name="research", status="succeeded").first()
     if not research_step or not research_step.output:
         logger.error("No research result for job %s", job.id)
-        return None
+        raise CopyInputMissing()
     research_output = research_step.output
 
     chosen_angle = research_output.get("chosen_angle") or next(
@@ -100,7 +102,7 @@ def run_copy(job: GenerationJob, step: JobStep) -> dict[str, Any] | None:
     )
     if not chosen_angle:
         logger.error("No chosen angle for job %s", job.id)
-        return None
+        raise CopyInputMissing()
 
     # Get guarantee_policy from shop
     guarantee_policy = job.shop.guarantee_policy
