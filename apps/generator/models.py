@@ -280,6 +280,7 @@ class Page(models.Model):
         default=PageStatus.DRAFT,
     )
     compliance_score = models.PositiveSmallIntegerField(default=0)
+    compliance_findings = models.JSONField(default=list, blank=True)
     variant_of = models.ForeignKey(
         "self",
         null=True,
