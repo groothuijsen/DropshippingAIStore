@@ -8,6 +8,8 @@ from apps.compliance.views import (
     price_advisor,
     price_apply,
 )
+from apps.core.onboarding_views import onboarding
+from apps.generator.start_views import start_panel, start_wizard
 
 from .views import business_details, dashboard, settings_index, store_settings
 
@@ -22,6 +24,10 @@ urlpatterns = [
         delivery_override,
         name="delivery_override",
     ),
+    path("onboarding/", onboarding, name="onboarding"),
+    path("onboarding/<str:step>/", onboarding, name="onboarding_step"),
+    path("start/", start_wizard, name="start_wizard"),
+    path("start/panel/", start_panel, name="start_panel"),
     path(
         "products/<path:product_gid>/pricing/apply/",
         price_apply,

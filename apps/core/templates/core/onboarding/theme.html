@@ -1,0 +1,11 @@
+{% extends "core/onboarding/base.html" %}
+{% load i18n %}
+
+{% block onboarding_content %}
+<h2>{% trans "Theme" %}</h2>
+<p class="mq-subtitle">{% trans "Mosaiq works with your current theme through the Mosaiq app extension — nothing in your theme files is changed." %}</p>
+<form method="post" class="mq-form">
+  {% csrf_token %}
+  <button type="submit" class="mq-button">{% trans "Continue" %}</button>
+</form>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "core/onboarding/base.html" %}
+{% load i18n %}
+
+{% block onboarding_content %}
+<h2>{% trans "Language" %}</h2>
+<form method="post" class="mq-form">
+  {% csrf_token %}
+  <div class="mq-field">
+    <label><input type="radio" name="locale" value="en" {% if shop.ui_locale == "en" %}checked{% endif %}> English</label>
+  </div>
+  <div class="mq-field">
+    <label><input type="radio" name="locale" value="nl" {% if shop.ui_locale == "nl" %}checked{% endif %}> Nederlands</label>
+  </div>
+  <div class="mq-field">
+    <label><input type="radio" name="locale" value="de" {% if shop.ui_locale == "de" %}checked{% endif %}> Deutsch</label>
+  </div>
+  <button type="submit" class="mq-button">{% trans "Continue" %}</button>
+</form>
+{% endblock %}

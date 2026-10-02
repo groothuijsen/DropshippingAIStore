@@ -1,0 +1,21 @@
+{% extends "app/base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="mq-onboarding">
+  <h1>{% trans "Store setup" %}</h1>
+  <ol class="mq-steps">
+    {% for s in steps %}
+    <li{% if s == current_step %} class="active"{% endif %}>{{ s }}</li>
+    {% endfor %}
+  </ol>
+  {% if messages %}
+  <div class="mq-messages">
+    {% for message in messages %}
+    <div class="mq-message mq-message-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% block onboarding_content %}{% endblock %}
+</div>
+{% endblock %}

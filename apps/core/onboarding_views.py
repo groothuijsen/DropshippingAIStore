@@ -7,11 +7,16 @@ Route: GET/POST /app/onboarding/<step>/
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
-from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render
+from django.http import HttpResponse
+from django.shortcuts import redirect, render
 
 from apps.core.models import Shop
+
+if TYPE_CHECKING:
+    from django.http import HttpRequest
+
 from apps.core.onboarding import (
     ONBOARDING_STEPS,
     advance,
@@ -61,6 +66,7 @@ def onboarding(request: HttpRequest, step: str | None = None) -> HttpResponse:
         }
     )
 
+    context.update(_base_context(request))
     return render(request, f"core/onboarding/{step}.html", context)
 
 
@@ -73,7 +79,9 @@ def _handle_step_post(request: HttpRequest, shop: Shop, step: str) -> HttpRespon
             shop.save(update_fields=["ui_locale"])
 
     elif step == "brand":
-        _handle_brand_step(request, shop)
+        response = _handle_brand_step(request, shop)
+        if response is not None:
+            return response
 
     elif step == "sources":
         apps = request.POST.getlist("import_apps")
@@ -108,16 +116,42 @@ def _handle_step_post(request: HttpRequest, shop: Shop, step: str) -> HttpRespon
                 "is_first": get_prev_step(next_step) is None,
             }
         )
+        context.update(_base_context(request))
         return render(request, f"core/onboarding/{next_step}.html", context)
 
     # Regular POST: redirect to next step
     return _redirect_to_onboarding(next_step)
 
 
-def _handle_brand_step(request: HttpRequest, shop: Shop) -> None:
-    """Process the brand step — create/update BrandKit."""
+def _handle_brand_step(request: HttpRequest, shop: Shop) -> HttpResponse | None:
+    """Process the brand step — route choice (F15-1) + create/update BrandKit.
+
+    Returns an HttpResponse to short-circuit the generic advance (route
+    "zero" sends the merchant to the start-from-zero wizard; "existing"
+    without a brand name stays on the step), or None to advance normally.
+    """
     from apps.themes.models import BrandKit
     from apps.themes.validation import validate_palette
+
+    route = request.POST.get("route", "").strip()
+    if route == "zero":
+        from apps.generator.models import StoreBlueprint
+
+        shop.onboarding_route = "zero"
+        shop.save(update_fields=["onboarding_route"])
+        StoreBlueprint.objects.get_or_create(
+            shop=shop,
+            status="brief",
+            defaults={"onboarding_route": "zero"},
+        )
+        qs = request.GET.urlencode()
+        target = "/app/start/"
+        if qs:
+            target = f"{target}?{qs}"
+        return redirect(target)
+    if route == "existing":
+        shop.onboarding_route = "existing"
+        shop.save(update_fields=["onboarding_route"])
 
     brand_name = request.POST.get("brand_name", "").strip()
     tone = request.POST.get("tone", "warm")
@@ -143,6 +177,10 @@ def _handle_brand_step(request: HttpRequest, shop: Shop) -> None:
         if "text" in validation["suggestions"]:
             palette["text"] = validation["suggestions"]["text"]
 
+    if not brand_name and shop.onboarding_route == "existing":
+        # Route stored; wait for the BrandKit form submission before advancing
+        return redirect("/app/onboarding/brand/")
+
     if brand_name:
         BrandKit.objects.update_or_create(
             shop=shop,
@@ -157,15 +195,22 @@ def _handle_brand_step(request: HttpRequest, shop: Shop) -> None:
         )
 
 
+def _base_context(request: HttpRequest) -> dict:
+    """Shared template context (App Bridge key, shop domain, locale)."""
+    from django.conf import settings
+
+    return {
+        "shopify_api_key": settings.SHOPIFY_API_KEY,
+        "shop_domain": getattr(request, "shop_domain", ""),
+        "ui_locale": getattr(request, "ui_locale", "en"),
+    }
+
+
 def _get_shop(request: HttpRequest) -> Shop | None:
-    """Get the shop from the request (via session token middleware)."""
-    # This would be populated by SessionTokenMiddleware
-    shop_id = getattr(request, "shop_id", None)
-    if shop_id:
-        try:
-            return Shop.objects.get(id=shop_id)
-        except Shop.DoesNotExist:
-            return None
+    """Get the shop from the request (populated by SessionTokenMiddleware)."""
+    shop_domain = getattr(request, "shop_domain", None)
+    if shop_domain:
+        return Shop.objects.filter(domain=shop_domain).first()
     return None
 
 

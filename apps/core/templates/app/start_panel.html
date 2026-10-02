@@ -1,0 +1,44 @@
+{% load i18n %}
+
+{% if bp.name_suggestions %}
+<h2>{% trans "Name suggestions" %}</h2>
+<p class="mq-help">{% trans "Not a trademark check — check before you commit." %}</p>
+<form method="post" action="/app/start/?id_token={{ request.GET.id_token }}" class="mq-form">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="pick">
+  <ul class="mq-name-list">
+    {% for item in bp.name_suggestions %}
+    <li>
+      <label>
+        <input type="radio" name="pick_index" value="{{ forloop.counter0 }}">
+        <strong>{{ item.name }}</strong>
+        <span class="mq-domain mq-domain-{{ item.domain_status }}">{{ item.domain_status }}</span>
+      </label>
+      <p class="mq-help">{{ item.rationale }}</p>
+      <a href="{{ tmview_url }}" target="_blank" rel="noopener">{% trans "Search TMview" %}</a>
+    </li>
+    {% endfor %}
+  </ul>
+  <button type="submit" class="mq-button">{% trans "Use this name" %}</button>
+</form>
+
+<form method="post" action="/app/start/?id_token={{ request.GET.id_token }}" class="mq-form">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="pick_own">
+  <div class="mq-field">
+    <label for="own_name">{% trans "Or type your own name" %}</label>
+    <input type="text" id="own_name" name="own_name" maxlength="40">
+  </div>
+  <button type="submit" class="mq-button mq-button-secondary">{% trans "Use my own name" %}</button>
+</form>
+
+{% if bp.regenerate_count < max_regenerate %}
+<form method="post" action="/app/start/?id_token={{ request.GET.id_token }}">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="regenerate">
+  <button type="submit" class="mq-button mq-button-secondary">{% trans "Regenerate suggestions" %}</button>
+</form>
+{% endif %}
+{% else %}
+<p class="mq-subtitle">{% trans "Generating name suggestions…" %}</p>
+{% endif %}

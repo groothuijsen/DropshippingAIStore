@@ -310,3 +310,28 @@ class PublishResult(BaseModel):
     shopify_page_gid: str | None
     product_gid: str | None
     status: Literal["draft"]
+
+
+# ── Store-builder wizard (F15, 12 §3) ─────────────────────────────────────
+
+Market = Literal["NL", "BE", "DE", "AT", "FR", "LU", "GB", "IE", "OTHER_EU"]
+PriceLevel = Literal["budget", "mid", "premium"]
+
+
+class NicheBrief(BaseModel):
+    description: str = Field(min_length=20, max_length=500)
+    markets: list[Market] = Field(min_length=1, max_length=5)
+    content_locales: list[Locale] = Field(min_length=1, max_length=3)
+    audience: str = Field(max_length=200)
+    price_level: PriceLevel
+    import_app: Literal["dsers", "cj", "zendrop", "autods", "printify", "printful", "manual", "other"]
+
+
+class NameIdea(BaseModel):
+    name: str = Field(min_length=3, max_length=14, pattern=r"^[A-Za-z][A-Za-z0-9]*$")
+    rationale: str = Field(max_length=160)
+    pronunciation_ok: list[Locale]
+
+
+class NameSuggestions(BaseModel):  # tool submit_names
+    names: list[NameIdea] = Field(min_length=8, max_length=8)

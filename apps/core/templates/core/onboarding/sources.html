@@ -1,0 +1,18 @@
+{% extends "core/onboarding/base.html" %}
+{% load i18n %}
+
+{% block onboarding_content %}
+<h2>{% trans "Import sources" %}</h2>
+<p class="mq-subtitle">{% trans "Which apps do you source products from?" %}</p>
+<form method="post" class="mq-form">
+  {% csrf_token %}
+  <div class="mq-field"><label><input type="checkbox" name="import_apps" value="dsers"> DSers</label></div>
+  <div class="mq-field"><label><input type="checkbox" name="import_apps" value="cj"> CJ Dropshipping</label></div>
+  <div class="mq-field"><label><input type="checkbox" name="import_apps" value="zendrop"> Zendrop</label></div>
+  <div class="mq-field"><label><input type="checkbox" name="import_apps" value="autods"> AutoDS</label></div>
+  <div class="mq-field"><label><input type="checkbox" name="import_apps" value="printify"> Printify</label></div>
+  <div class="mq-field"><label><input type="checkbox" name="import_apps" value="printful"> Printful</label></div>
+  <div class="mq-field"><label><input type="checkbox" name="import_apps" value="manual"> Manual</label></div>
+  <button type="submit" class="mq-button">{% trans "Continue" %}</button>
+</form>
+{% endblock %}

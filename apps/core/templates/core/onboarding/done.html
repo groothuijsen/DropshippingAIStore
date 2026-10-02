@@ -1,0 +1,8 @@
+{% extends "core/onboarding/base.html" %}
+{% load i18n %}
+
+{% block onboarding_content %}
+<h2>{% trans "All set!" %}</h2>
+<p class="mq-subtitle">{% trans "Your onboarding is complete. You can reach everything from the dashboard." %}</p>
+<a class="mq-button" href="/app/?id_token={{ request.GET.id_token }}">{% trans "Go to dashboard" %}</a>
+{% endblock %}

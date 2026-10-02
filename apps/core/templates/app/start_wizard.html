@@ -1,0 +1,84 @@
+{% extends "app/base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="mq-start-wizard">
+  <h1>{% trans "Build your store from zero" %}</h1>
+
+  {% if messages %}
+  <div class="mq-messages">
+    {% for message in messages %}
+    <div class="mq-message mq-message-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if bp.status == "brief" %}
+  <h2>{% trans "Your store in a few words" %}</h2>
+  <form method="post" class="mq-form">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="brief">
+
+    <div class="mq-field">
+      <label for="description">{% trans "What do you want to sell? (20–500 characters)" %}</label>
+      <textarea id="description" name="description" rows="4" maxlength="500">{{ bp.description }}</textarea>
+    </div>
+
+    <div class="mq-field">
+      <label>{% trans "Markets (1–5)" %}</label>
+      {% for m in markets %}
+      <label class="mq-inline"><input type="checkbox" name="markets" value="{{ m }}" {% if m in bp.markets %}checked{% endif %}> {{ m }}</label>
+      {% endfor %}
+    </div>
+
+    <div class="mq-field">
+      <label>{% trans "Content languages (1–3)" %}</label>
+      {% for l in locales %}
+      <label class="mq-inline"><input type="checkbox" name="content_locales" value="{{ l }}" {% if l in bp.content_locales %}checked{% endif %}> {{ l }}</label>
+      {% endfor %}
+    </div>
+
+    <div class="mq-field">
+      <label for="audience">{% trans "Who is your customer?" %}</label>
+      <input type="text" id="audience" name="audience" value="{{ bp.audience }}" maxlength="200">
+    </div>
+
+    <div class="mq-field-row">
+      <div class="mq-field">
+        <label for="price_level">{% trans "Price level" %}</label>
+        <select id="price_level" name="price_level">
+          {% for p in price_levels %}
+          <option value="{{ p }}" {% if p == bp.price_level %}selected{% endif %}>{{ p }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="mq-field">
+        <label for="import_app">{% trans "Import app" %}</label>
+        <select id="import_app" name="import_app">
+          {% for a in import_apps %}
+          <option value="{{ a }}" {% if a == bp.import_app %}selected{% endif %}>{{ a }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <button type="submit" class="mq-button">{% trans "Save brief and generate names" %}</button>
+  </form>
+
+  {% elif bp.status == "names" %}
+  <div id="mq-names-panel"
+       hx-get="/app/start/panel/?id_token={{ request.GET.id_token }}"
+       hx-trigger="every 3s"
+       hx-swap="innerHTML">
+    {% include "app/start_panel.html" %}
+  </div>
+
+  {% elif bp.status == "brand" %}
+  <div class="mq-panel">
+    <h2>{% trans "Brand name saved" %}</h2>
+    <p>{% blocktrans %}Your brand name is {{ bp.brand_name }}. Continue in the onboarding brand step.{% endblocktrans %}</p>
+    <a class="mq-button" href="/app/onboarding/brand/?id_token={{ request.GET.id_token }}">{% trans "Continue" %}</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

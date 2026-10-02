@@ -301,3 +301,130 @@ def _run_compliance_check(job: GenerationJob, step: JobStep) -> dict[str, Any] |
         page.save(update_fields=["compliance_findings", "compliance_score"])
 
     return output
+
+
+# ── Store-builder wizard: name suggestions (F15-4, T-112) ─────────────────
+
+LOCALE_NAMES = {"nl": "Dutch", "en": "English", "de": "German"}
+
+
+def check_domain_status(name: str) -> str:
+    """Heuristic .com availability via rdap.org (F15-4).
+
+    404 → likely_free, 200 → taken, anything else / error → unknown.
+    Low volume (8 names × ≤4 generations), spaced by the caller (Q21).
+    """
+    import httpx
+
+    url = f"https://rdap.org/domain/{name.lower()}.com"
+    try:
+        resp = httpx.get(url, timeout=5.0, follow_redirects=True)
+        if resp.status_code == 404:
+            return "likely_free"
+        if resp.status_code == 200:
+            return "taken"
+        return "unknown"
+    except Exception:
+        return "unknown"
+
+
+def _blocklist_terms(locales: list[str]) -> str:
+    """Comma-joined generic-claim terms for the chosen locales (prompt var)."""
+    from apps.themes.brand_blocklist import GENERIC_CLAIM_TERMS
+
+    return ", ".join(sorted(GENERIC_CLAIM_TERMS)[:20])
+
+
+def _filter_name_ideas(ideas: list, seen: set[str]) -> list[dict[str, Any]]:
+    """Validate NameIdea objects against the blocklist; dedupe; to dicts."""
+    from apps.themes.brand_blocklist import is_blocked_brand
+
+    kept: list[dict[str, Any]] = []
+    for idea in ideas:
+        name = idea.name.strip()
+        if not name or name.lower() in seen:
+            continue
+        if is_blocked_brand(name):
+            logger.info("Name suggestion blocked: %s", name)
+            continue
+        seen.add(name.lower())
+        kept.append(
+            {
+                "name": name,
+                "rationale": idea.rationale,
+                "pronunciation_ok": list(idea.pronunciation_ok),
+                "domain_status": "unknown",
+            }
+        )
+    return kept
+
+
+@shared_task(acks_late=True, max_retries=2)
+def generate_name_suggestions(blueprint_id: str) -> None:
+    """F15-4: one AI call (niche_names.md) → 8 names, blocklisted, RDAP-checked.
+
+    Names that fail the blocklist are dropped; the call is repeated once for
+    the missing count. RDAP failures yield domain_status "unknown", never an
+    error. Result stored on StoreBlueprint.name_suggestions.
+    """
+    import time
+
+    from apps.ai.anthropic_client import call_ai
+    from apps.ai.prompts import render_prompt
+    from apps.ai.schemas import NameSuggestions
+    from apps.generator.models import StoreBlueprint
+
+    try:
+        bp = StoreBlueprint.objects.get(id=blueprint_id)
+    except StoreBlueprint.DoesNotExist:
+        logger.warning("StoreBlueprint %s not found — names task exiting", blueprint_id)
+        return
+
+    if bp.status != "names":
+        logger.info("Blueprint %s status %s — names task skipping", blueprint_id, bp.status)
+        return
+
+    locales = bp.content_locales or ["en"]
+    locale_names = ", ".join(LOCALE_NAMES.get(loc, loc) for loc in locales)
+    brief_json = bp.description or ""
+    variables = {
+        "brief_json": brief_json,
+        "locale_names": locale_names,
+        "exclude_names": "",
+        "blocklist_terms": _blocklist_terms(locales),
+    }
+
+    def _call(count: int, exclude: str):
+        variables["exclude_names"] = exclude
+        system, user = render_prompt("niche_names", variables)
+        return call_ai(
+            shop=bp.shop,
+            purpose="niche_names",
+            model_key="claude",
+            system=system,
+            user=f"Generate {count} brand name suggestions.",
+            schema=NameSuggestions,
+            tool_name="submit_names",
+        )
+
+    seen: set[str] = set()
+    kept: list[dict[str, Any]] = []
+    try:
+        result = _call(8, "")
+        kept = _filter_name_ideas(result.names, seen)
+        if len(kept) < 8:
+            missing = 8 - len(kept)
+            retry = _call(missing, ", ".join(item["name"] for item in kept))
+            kept.extend(_filter_name_ideas(retry.names, seen))
+    except Exception as exc:
+        logger.error("Name suggestion AI call failed for %s: %s", blueprint_id, exc)
+        return
+
+    kept = kept[:8]
+    for item in kept:
+        item["domain_status"] = check_domain_status(item["name"])
+        time.sleep(0.5)  # RDAP spacing (Q21 guardrail)
+
+    bp.name_suggestions = kept
+    bp.save(update_fields=["name_suggestions", "updated_at"])
+    logger.info("Stored %d name suggestions for blueprint %s", len(kept), blueprint_id)

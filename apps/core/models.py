@@ -54,6 +54,13 @@ class Shop(models.Model):
 
     # Onboarding
     mosaiq_templates_ready = models.BooleanField(default=False)
+    onboarding_route = models.CharField(
+        max_length=16,
+        choices=[("", "Not chosen"), ("existing", "Existing brand"), ("zero", "Start from zero")],
+        blank=True,
+        default="",
+        help_text="F15-1: route chosen at the onboarding brand step",
+    )
     onboarding_step = models.CharField(
         max_length=40,
         choices=OnboardingStep.choices,

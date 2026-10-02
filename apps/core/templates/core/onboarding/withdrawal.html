@@ -1,0 +1,11 @@
+{% extends "core/onboarding/base.html" %}
+{% load i18n %}
+
+{% block onboarding_content %}
+<h2>{% trans "Withdrawal form" %}</h2>
+<p class="mq-subtitle">{% trans "The EU withdrawal form is generated from your business details in settings." %}</p>
+<form method="post" class="mq-form">
+  {% csrf_token %}
+  <button type="submit" class="mq-button">{% trans "Continue" %}</button>
+</form>
+{% endblock %}

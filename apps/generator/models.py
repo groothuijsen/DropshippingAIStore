@@ -270,3 +270,71 @@ class Page(models.Model):
 
     def __str__(self) -> str:
         return f"{self.title} ({self.page_type}) — {self.status}"
+
+
+
+class BlueprintStatus(models.TextChoices):
+    """Store-builder wizard status (F15, 12 §2.2 state machine)."""
+
+    BRIEF = "brief", "Brief"
+    NAMES = "names", "Names"
+    BRAND = "brand", "Brand"
+    IDEAS = "ideas", "Product ideas"
+    STRUCTURE = "structure", "Store structure"
+    BUILDING = "building", "Building"
+    DONE = "done", "Done"
+
+
+class StoreBlueprint(models.Model):
+    """One start-from-zero store build (12 §2.2)."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    shop = models.ForeignKey("core.Shop", on_delete=models.CASCADE, related_name="store_blueprints")
+    onboarding_route = models.CharField(max_length=16, blank=True, default="")
+    status = models.CharField(
+        max_length=16, choices=BlueprintStatus.choices, default=BlueprintStatus.BRIEF
+    )
+
+    # Brief (F15-3)
+    niche_hint = models.CharField(max_length=40, blank=True, default="")
+    free_text = models.TextField(blank=True, default="")
+    description = models.TextField(blank=True, default="")
+    markets = models.JSONField(default=list, blank=True)
+    content_locales = models.JSONField(default=list, blank=True)
+    audience = models.CharField(max_length=200, blank=True, default="")
+    price_level = models.CharField(max_length=16, blank=True, default="")
+    import_app = models.CharField(max_length=16, blank=True, default="")
+    niche_slug = models.CharField(max_length=80, blank=True, default="")
+
+    # Names (F15-4)
+    name_suggestions = models.JSONField(default=list, blank=True)
+    regenerate_count = models.IntegerField(default=0)
+    brand_name = models.CharField(max_length=40, blank=True, default="")
+    brand_slug = models.CharField(max_length=80, blank=True, default="")
+
+    # Later steps (filled by T-113+)
+    logo_concept = models.JSONField(null=True, blank=True)
+    palette = models.JSONField(null=True, blank=True)
+    fonts = models.JSONField(null=True, blank=True)
+    store_structure = models.JSONField(null=True, blank=True)
+    product_ideas = models.JSONField(null=True, blank=True)
+
+    completed_steps = models.JSONField(default=list, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["shop", "status"])]
+
+    def __str__(self):
+        return f"StoreBlueprint {self.shop.domain} [{self.status}]"
+
+    def advance(self, step: str) -> None:
+        """Advance the state machine; records the step as completed."""
+        done = list(self.completed_steps or [])
+        if step not in done:
+            done.append(step)
+        self.completed_steps = done
+        self.status = step
+        self.save(update_fields=["completed_steps", "status", "updated_at"])

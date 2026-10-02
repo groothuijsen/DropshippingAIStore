@@ -1,0 +1,71 @@
+{% extends "core/onboarding/base.html" %}
+{% load i18n %}
+
+{% block onboarding_content %}
+{% if shop.onboarding_route == "zero" %}
+  <div class="mq-panel">
+    <h2>{% trans "Start from zero" %}</h2>
+    <p>{% trans "You are building a new store with Mosaiq. The store-builder wizard starts with a brief and brand names." %}</p>
+    <a class="mq-button" href="/app/start/?id_token={{ request.GET.id_token }}">{% trans "Open the store-builder wizard" %}</a>
+  </div>
+{% elif shop.onboarding_route == "existing" %}
+  <h2>{% trans "Your brand" %}</h2>
+  <form method="post" class="mq-form">
+    {% csrf_token %}
+    <input type="hidden" name="route" value="existing">
+    <div class="mq-field">
+      <label for="brand_name">{% trans "Brand name" %}</label>
+      <input type="text" id="brand_name" name="brand_name" value="{{ brandkit.brand_name|default:'' }}">
+    </div>
+    <div class="mq-field-row">
+      <div class="mq-field">
+        <label for="tone">{% trans "Tone" %}</label>
+        <select id="tone" name="tone">
+          <option value="warm">{% trans "Warm" %}</option>
+          <option value="premium">{% trans "Premium" %}</option>
+          <option value="playful">{% trans "Playful" %}</option>
+          <option value="clinical">{% trans "Clinical" %}</option>
+          <option value="sporty">{% trans "Sporty" %}</option>
+        </select>
+      </div>
+      <div class="mq-field">
+        <label for="style_preset">{% trans "Style preset" %}</label>
+        <select id="style_preset" name="style_preset">
+          <option value="clean">{% trans "Clean" %}</option>
+          <option value="bold">{% trans "Bold" %}</option>
+          <option value="organic">{% trans "Organic" %}</option>
+          <option value="luxe">{% trans "Luxe" %}</option>
+          <option value="tech">{% trans "Tech" %}</option>
+          <option value="soft">{% trans "Soft" %}</option>
+        </select>
+      </div>
+    </div>
+    <div class="mq-field-row">
+      <div class="mq-field"><label for="primary">{% trans "Primary" %}</label><input type="text" id="primary" name="primary" value="{{ brandkit.palette.primary|default:'#1A1A2E' }}"></div>
+      <div class="mq-field"><label for="secondary">{% trans "Secondary" %}</label><input type="text" id="secondary" name="secondary" value="{{ brandkit.palette.secondary|default:'#16213E' }}"></div>
+      <div class="mq-field"><label for="accent">{% trans "Accent" %}</label><input type="text" id="accent" name="accent" value="{{ brandkit.palette.accent|default:'#E94560' }}"></div>
+    </div>
+    <div class="mq-field-row">
+      <div class="mq-field"><label for="background">{% trans "Background" %}</label><input type="text" id="background" name="background" value="{{ brandkit.palette.background|default:'#FFFFFF' }}"></div>
+      <div class="mq-field"><label for="text">{% trans "Text" %}</label><input type="text" id="text" name="text" value="{{ brandkit.palette.text|default:'#1A1A1A' }}"></div>
+    </div>
+    <div class="mq-field-row">
+      <div class="mq-field"><label for="font_heading">{% trans "Heading font" %}</label><input type="text" id="font_heading" name="font_heading" value="{{ brandkit.font_heading|default:'' }}"></div>
+      <div class="mq-field"><label for="font_body">{% trans "Body font" %}</label><input type="text" id="font_body" name="font_body" value="{{ brandkit.font_body|default:'' }}"></div>
+    </div>
+    <button type="submit" class="mq-button">{% trans "Save brand" %}</button>
+  </form>
+{% else %}
+  <h2>{% trans "Do you already have a brand?" %}</h2>
+  <form method="post" class="mq-form">
+    {% csrf_token %}
+    <div class="mq-field">
+      <label><input type="radio" name="route" value="existing" checked> {% trans "I already have a brand and products" %}</label>
+    </div>
+    <div class="mq-field">
+      <label><input type="radio" name="route" value="zero"> {% trans "Start from zero — let Mosaiq help me build the store" %}</label>
+    </div>
+    <button type="submit" class="mq-button">{% trans "Continue" %}</button>
+  </form>
+{% endif %}
+{% endblock %}
