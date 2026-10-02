@@ -1,0 +1,19 @@
+{
+  "_comment": "API 2026-07 introspection of metaobjectUpsert captured live against mosaiq-pod.myshopify.com on 2026-10-02 (scripts/introspect_metaobject.py). The old query (top-level type/fields/status args) was rejected by the real API during the T-117 E2E; this record drives the new query shape. A live mutation response capture replaces/extends this after the next E2E (AGENTS.md \u00a75).",
+  "operation": "metaobject_upsert",
+  "introspection": {
+    "mutation_args": {
+      "handle": "MetaobjectHandleInput! {type: String!, handle: String!}",
+      "metaobject": "MetaobjectUpsertInput {handle: String, fields: [MetaobjectFieldInput!]!, capabilities: MetaobjectCapabilityDataInput}",
+      "values": "JSON (alternative to metaobject.fields)"
+    },
+    "payload": "MetaobjectUpsertPayload {metaobject {id handle type displayName}, userErrors {field message}}",
+    "removed_in_2026_07": [
+      "top-level $type",
+      "top-level $fields",
+      "$status",
+      "userErrors.code",
+      "Metaobject.status"
+    ]
+  }
+}

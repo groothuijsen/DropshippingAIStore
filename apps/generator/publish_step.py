@@ -49,17 +49,24 @@ def _upsert_metaobject(
     """Upsert a metaobject. Returns metaobject GID or None."""
     field_list = [{"key": k, "value": v} for k, v in fields.items()]
 
+    # API 2026-07 shape (introspected live on the dev store, deviation
+    # record in tests/fixtures/shopify/metaobject_upsert_shape.json):
+    # metaobjectUpsert(handle: MetaobjectHandleInput!, metaobject:
+    # MetaobjectUpsertInput) — no top-level type/fields/status args.
     data = client.execute(
         load_query("metaobject_upsert"),
         variables={
-            "handle": handle,
-            "type": METAOBJECT_TYPE,
-            "fields": field_list,
-            "status": status,
+            "handle": {"type": METAOBJECT_TYPE, "handle": handle},
+            "metaobject": {"handle": handle, "fields": field_list},
         },
     )
 
-    metaobject = data.get("metaobjectUpsert", {}).get("metaobject", {})
+    payload = data.get("metaobjectUpsert", {})
+    errors = payload.get("userErrors") or []
+    if errors:
+        logger.error("metaobjectUpsert failed for %s: %s", handle, errors[0].get("message"))
+        return None
+    metaobject = payload.get("metaobject", {})
     return metaobject.get("id")
 
 

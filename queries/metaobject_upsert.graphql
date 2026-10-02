@@ -1,14 +1,14 @@
-mutation metaobjectUpsert($handle: String!, $type: String!, $fields: [MetaobjectFieldInput!]!, $status: MetaobjectStatus) {
-  metaobjectUpsert(handle: $handle, type: $type, fields: $fields, status: $status) {
+mutation MetaobjectUpsert($handle: MetaobjectHandleInput!, $metaobject: MetaobjectUpsertInput) {
+  metaobjectUpsert(handle: $handle, metaobject: $metaobject) {
     metaobject {
       id
       handle
-      status
+      type
+      displayName
     }
     userErrors {
       field
       message
-      code
     }
   }
 }

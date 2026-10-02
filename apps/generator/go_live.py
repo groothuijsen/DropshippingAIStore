@@ -146,10 +146,15 @@ def go_live(page: Page) -> dict[str, Any]:
             if metaobject_gid:
                 try:
                     query = load_query("metaobject_upsert")
-                    # Update status to ACTIVE via metaobjectUpsert
+                    # Update status to ACTIVE via metaobjectUpsert. fields is
+                    # NON_NULL in 2026-07: send the current field values back
+                    # so the upsert never wipes content.
                     variables = {
                         "handle": {"type": "mosaiq_page", "handle": _handle},
-                        "metaobject": {"capabilities": {"publishable": {"status": "ACTIVE"}}},
+                        "metaobject": {
+                            "fields": _current_metaobject_fields(client, metaobject_gid),
+                            "capabilities": {"publishable": {"status": "ACTIVE"}},
+                        },
                     }
                     client.execute(query, variables)
                     logger.info("Metaobject %s set ACTIVE for locale %s", _handle, locale)
@@ -207,7 +212,10 @@ def archive_page(page: Page) -> dict[str, Any]:
                     query = load_query("metaobject_upsert")
                     variables = {
                         "handle": {"type": "mosaiq_page", "handle": _handle},
-                        "metaobject": {"capabilities": {"publishable": {"status": "DRAFT"}}},
+                        "metaobject": {
+                            "fields": _current_metaobject_fields(client, metaobject_gid),
+                            "capabilities": {"publishable": {"status": "DRAFT"}},
+                        },
                     }
                     client.execute(query, variables)
                     logger.info("Metaobject %s set DRAFT for locale %s", _handle, locale)
@@ -255,3 +263,17 @@ def archive_page(page: Page) -> dict[str, Any]:
 
     finally:
         client.close()
+
+
+def _current_metaobject_fields(client, metaobject_gid: str) -> list[dict]:
+    """Fetch a metaobject's current key/value fields (2026-07 upserts must
+    resend them — the fields argument is NON_NULL)."""
+    from apps.core.shopify_client import load_query
+
+    try:
+        data = client.execute(load_query("metaobject_get"), variables={"id": metaobject_gid})
+        metaobject = data.get("metaobject") or {}
+        return [{"key": f["key"], "value": f["value"]} for f in metaobject.get("fields") or []]
+    except Exception as exc:  # noqa: BLE001 — never block a status flip on a read
+        logger.warning("Could not read metaobject %s fields: %s", metaobject_gid, exc)
+        return []
