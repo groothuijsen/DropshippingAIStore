@@ -39,6 +39,40 @@
   {%- endif -%}
 {%- endif -%}
 
+{%- comment -%}
+  Cut-off notice (07 §3, F18-6): "order before {time} for delivery in
+  {min}-{max} working days". Rendered only on the merchant's configured
+  shipping days, before the cut-off time (shop timezone). Suppressed when
+  the product's max_days exceeds ship_cutoff.delivery_days — the notice
+  would promise faster delivery than the estimate allows.
+{%- endcomment -%}
+{%- if delivery_metafield and delivery_range -%}
+  {%- assign cutoff = shop.metafields["$app:mosaiq"].settings.value.ship_cutoff -%}
+  {%- if cutoff and cutoff.time and cutoff.days.size > 0 -%}
+    {%- assign suppressed = false -%}
+    {%- if cutoff.delivery_days and delivery_range[1] > cutoff.delivery_days -%}
+      {%- assign suppressed = true -%}
+    {%- endif -%}
+    {%- unless suppressed -%}
+      {%- assign today_num = 'now' | date: '%u' | plus: 0 -%}
+      {%- assign now_hm = 'now' | date: '%H:%M' -%}
+      {%- assign today_code = '' -%}
+      {%- case today_num -%}
+        {%- when 1 -%}{%- assign today_code = 'mon' -%}
+        {%- when 2 -%}{%- assign today_code = 'tue' -%}
+        {%- when 3 -%}{%- assign today_code = 'wed' -%}
+        {%- when 4 -%}{%- assign today_code = 'thu' -%}
+        {%- when 5 -%}{%- assign today_code = 'fri' -%}
+        {%- when 6 -%}{%- assign today_code = 'sat' -%}
+        {%- when 7 -%}{%- assign today_code = 'sun' -%}
+      {%- endcase -%}
+      {%- if cutoff.days contains today_code and now_hm < cutoff.time -%}
+        <div class="mq-price__cutoff">{{ 'price.cutoff_notice' | t: time: cutoff.time, min: delivery_range[0], max: delivery_range[1] }}</div>
+      {%- endif -%}
+    {%- endunless -%}
+  {%- endif -%}
+{%- endif -%}
+
 {%- if price_metafield or unit_price_metafield -%}
   <div class="mq-price">
     {%- if price_metafield -%}

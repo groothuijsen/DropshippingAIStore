@@ -29,7 +29,8 @@
     "regular_price": "Regular price",
     "unit_price": "Unit price",
     "you_save": "You save",
-    "delivery_time": "Delivery in {{ min }}–{{ max }} working days (ships from {{ country }})"
+    "delivery_time": "Delivery in {{ min }}–{{ max }} working days (ships from {{ country }})",
+    "cutoff_notice": "Order before {{ time }} — delivery in {{ min }}–{{ max }} working days"
   },
   "compliance": {
     "ai_generated": "This content was generated with AI assistance and reviewed for accuracy."

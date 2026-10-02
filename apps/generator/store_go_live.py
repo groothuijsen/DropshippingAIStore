@@ -171,6 +171,10 @@ def undo_store_build(bp) -> dict:
         elif mr.kind == ManagedResource.Kind.MENU:
             data = client.execute(load_query("menu_delete"), variables={"id": mr.gid})
             errors = (data.get("menuDelete") or {}).get("userErrors") or []
+        elif "/Metaobject/" in mr.gid:
+            # Metaobject-only page (home): delete the metaobject, not a page.
+            data = client.execute(load_query("metaobject_delete"), variables={"id": mr.gid})
+            errors = (data.get("metaobjectDelete") or {}).get("userErrors") or []
         else:  # page
             data = client.execute(load_query("page_delete"), variables={"id": mr.gid})
             errors = (data.get("pageDelete") or {}).get("userErrors") or []

@@ -485,14 +485,24 @@ def register_page_resources(blueprint_id) -> None:
         return
     if bp.build_job_id is None:
         return
-    pages = Page.objects.filter(job__parent=bp.build_job).exclude(shopify_page_gid__isnull=True).exclude(
-        shopify_page_gid=""
-    )
+    pages = Page.objects.filter(job__parent=bp.build_job)
     for page in pages:
-        handle = f"mq-{page.page_type}-{str(page.id)[:8]}-{page.content_locale}"
+        if page.shopify_page_gid:
+            gid = page.shopify_page_gid
+            handle = f"mq-{page.page_type}-{str(page.id)[:8]}-{page.content_locale}"
+        elif page.metaobject_gids:
+            # Metaobject-only page (home renders via the theme homepage,
+            # T-117 lesson): the metaobject is still a managed resource so
+            # Undo can remove it (12 §2.3).
+            gid = next(iter(page.metaobject_gids.values()))
+            handle = page.metaobject_handles.get(page.content_locale) or (
+                f"mq-{page.page_type}-{str(page.id)[:8]}"
+            )
+        else:
+            continue
         ManagedResource.objects.get_or_create(
             shop=bp.shop,
-            gid=page.shopify_page_gid,
+            gid=gid,
             defaults={
                 "blueprint": bp,
                 "kind": ManagedResource.Kind.PAGE,

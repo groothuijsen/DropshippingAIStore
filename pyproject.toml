@@ -67,6 +67,11 @@ strict = true
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
+# apps/core/models.py resolved as both "core.models" and "apps.core.models"
+# (the DoD-blocked config error); package bases must be explicit.
+explicit_package_bases = true
+mypy_path = "."
+namespace_packages = true
 
 [[tool.mypy.overrides]]
 module = "tests.*"

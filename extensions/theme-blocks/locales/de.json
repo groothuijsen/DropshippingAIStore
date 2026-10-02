@@ -29,7 +29,8 @@
     "regular_price": "Regulärer Preis",
     "unit_price": "Grundpreis",
     "you_save": "Sie sparen",
-    "delivery_time": "Lieferung in {{ min }}–{{ max }} Werktagen (Versand aus {{ country }})"
+    "delivery_time": "Lieferung in {{ min }}–{{ max }} Werktagen (Versand aus {{ country }})",
+    "cutoff_notice": "Bestellung vor {{ time }} — Lieferung in {{ min }}–{{ max }} Werktagen"
   },
   "compliance": {
     "ai_generated": "Dieser Inhalt wurde mit KI-Unterstützung erstellt und auf Genauigkeit geprüft."

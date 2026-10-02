@@ -29,7 +29,8 @@
     "regular_price": "Normale prijs",
     "unit_price": "Eenheidsprijs",
     "you_save": "Je bespaart",
-    "delivery_time": "Levering binnen {{ min }}–{{ max }} werkdagen (verzonden vanuit {{ country }})"
+    "delivery_time": "Levering binnen {{ min }}–{{ max }} werkdagen (verzonden vanuit {{ country }})",
+    "cutoff_notice": "Vóór {{ time }} besteld — levering binnen {{ min }}–{{ max }} werkdagen"
   },
   "compliance": {
     "ai_generated": "Deze inhoud is gegenereerd met AI-ondersteuning en gecontroleerd op nauwkeurigheid."
