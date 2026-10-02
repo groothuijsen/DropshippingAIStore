@@ -90,7 +90,7 @@ Pick these up only after the MVP release checklist (T-092) passes. Recommended o
 | **Delivery times (F18)** | | | | |
 | T-140 | `DeliveryProfile` + `DeliveryOverride` models, settings and product screens, `estimate()` | F18-1..3, 12 §2.4 | T-111 | **DONE** 2026-10-01. Models + estimate() + validation deployed; migration 0003 applied; 922/922 tests. Settings/product screens (F18-1..2 UI) + metafield sync (F18-4) in T-141/T-142. |
 | T-141 | Delivery metafield sync task + `mq-price` rendering + cut-off suppression + 30-day block | F18-4..7, 12 §8 | T-140, T-072 | **DONE** 2026-10-01. sync_delivery_metafields (batched 25, default_market = first entered market), mq-price delivery line (per-visitor-market + fallback, nl/en/de), DELIVERY_OVER_30_DAYS in check_can_go_live, delivery metafield definition registered. Cut-off notice itself not yet rendered by any theme block — suppression condition tested at estimate level. 935/935 tests. |
-| T-142 | Claim rule `SHIPPING_CLAIM` + copy-step input/guardrail + 5 evalset cases | F18-8..9, 12 §5, §8 | T-140 | criteria F18-8..9 |
+| T-142 | Claim rule `SHIPPING_CLAIM` + copy-step input/guardrail + 5 evalset cases | F18-8..9, 12 §5, §8 | T-140 | **DONE** 2026-10-01. Context-aware SHIPPING_CLAIM (block max_days>3, warn no-estimate, EU-ship check); delivery_guardrail() in copy_step; 5 long-delivery eval cases (max 18-25). 948/948 tests. Sprint S7 complete. |
 | **Price advisor (F17)** | | | | |
 | T-130 | `PricingSettings`, VAT table, `advise()` with the exact test cases, advisor screen | F17-1..3, 6..7 | T-110 | criteria F17-1..3, 6..7 |
 | T-131 | Apply price for writable products + guard tests for sync-app products + audit log | F17-4..5 | T-130, T-021 | criteria F17-4..5 |

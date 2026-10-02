@@ -19,3 +19,8 @@ Merchants set delivery estimates per source app (and per product where needed). 
 
 ## Assumptions made during build
 _(to be filled in by Hermes)_
+
+1. **F18-6 cut-off suppression**: no theme block currently renders the 07 §3 cut-off notice — the suppression condition (max_days vs ship_cutoff.delivery_days) is tested at the estimate level and gates apply when the notice block is built (T-141 sprints note).
+2. **F18-8 severity mapping**: fast-delivery phrase → block when estimate max_days > 3, warn when no estimate exists (spec 12 §8). 'Ships from EU' claims use a fixed EU member-state list (ISO 3166-1 alpha-2, 27 states) in claims.EU_COUNTRIES.
+3. **F18-9 evalset**: 5 long-delivery cases added to the 30-product evalset (total 35) with a `delivery_estimate` field ({min_days, max_days, ship_from}); T-091 assertions relaxed from == to >=.
+4. **F18-4 deletion of stale metafields**: sync_delivery_metafields writes for affected products only; deleting the metafield from products that lost their profile is deferred to the source-detection run (T-020 flow) to keep this task idempotent and read-only towards unprofiled products.
