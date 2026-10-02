@@ -1,3 +1,9 @@
+## 2026-10-02 — T-150: marketing site foundation (F19)
+
+- New `apps/marketing`: host-guarded routes (marketing host only; app host root redirect preserved), language-prefixed /nl/ ( /de/ waits for T-158), Markdown+YAML content loader, Pydantic section schemas, `check_marketing_content` CI command with claims verification and language parity.
+- `apps/core/salespage.py` + template removed (F19-1). Minimal en/nl content seeds (home, features, pricing) — real copy lands in T-152.
+- 1221/1221 tests. Sprint S11 started.
+
 ## 2026-10-02 — T-121: editor UI + S10 complete
 
 - Page editor screen: instruction (500), per-section ask, locale tabs, diff + Apply/Reject, claim highlighting, multi-locale apply, limit UX with reset date, HTMX polling panel.

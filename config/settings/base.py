@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "apps.themes",
     "apps.offers",
     "apps.compliance",
+    "apps.marketing",
     "apps.templates_lib",
     "apps.analytics",
     "apps.support",

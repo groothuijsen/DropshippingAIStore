@@ -1,0 +1,22 @@
+{% extends "marketing/base.html" %}
+{% load i18n %}
+{% block content %}
+<main>
+  <h1>{{ page.title }}</h1>
+  {% for section in page.sections %}
+    <section data-section="{{ section.type }}">
+      {% if section.type == "hero" %}
+        <h2>{{ section.headline }}</h2>
+        <p>{{ section.sub }}</p>
+      {% elif section.type == "features" %}
+        <ul>{% for item in section.items %}<li><strong>{{ item.title }}</strong> — {{ item.text }}</li>{% endfor %}</ul>
+      {% elif section.type == "faq" %}
+        <dl>{% for item in section.items %}<dt>{{ item.q }}</dt><dd>{{ item.a }}</dd>{% endfor %}</dl>
+      {% elif section.type == "steps" %}
+        <ol>{% for item in section.items %}<li>{{ item.title }} — {{ item.text }}</li>{% endfor %}</ol>
+      {% endif %}
+    </section>
+  {% endfor %}
+  {% if page.body %}<div>{{ page.body }}</div>{% endif %}
+</main>
+{% endblock %}
