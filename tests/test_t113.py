@@ -92,8 +92,7 @@ class TestBrandProposalSchema:
 
 def _mock_ai(proposal: dict) -> MagicMock:
     m = MagicMock()
-    p = BrandProposal(**proposal)
-    m.return_value = (p, {"input_tokens": 10, "output_tokens": 20})
+    m.return_value = BrandProposal(**proposal)  # call_ai returns the model
     return m
 
 
