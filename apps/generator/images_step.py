@@ -44,8 +44,9 @@ def run_images(job: GenerationJob, step: JobStep) -> dict[str, Any] | None:
         logger.warning("No copy output for job %s", job.id)
         return None
 
-    sections_data = copy_step.output.get("sections", {})
-    sections = sections_data.get("sections", [])
+    sections_data = copy_step.output.get("sections") or []
+    # Legacy checkpoints nested the payload under a second "sections" key
+    sections = sections_data.get("sections") or [] if isinstance(sections_data, dict) else sections_data
 
     # Build prompts from sections
     prompts = _build_image_prompts(sections)
