@@ -178,7 +178,9 @@ class AnthropicClient:
             return validated, usage
         except ValidationError as e:
             # One repair attempt (05 §2.4)
-            repair_messages = self._build_repair_messages(messages, tool_input, e, tool_name)
+            repair_messages = self._build_repair_messages(
+                messages, response_data.get("content", []), tool_input, e, tool_name
+            )
             logger.warning("Schema validation failed for %s, attempting repair: %s", tool_name, e)
 
             response_data = self._make_request(
@@ -293,11 +295,17 @@ class AnthropicClient:
     @staticmethod
     def _build_repair_messages(
         original_messages: list[dict[str, Any]],
+        assistant_content: list[dict[str, Any]],
         bad_input: dict[str, Any],
         validation_error: ValidationError,
         tool_name: str,
     ) -> list[dict[str, Any]]:
-        """Build repair messages with the original output + validation errors."""
+        """Build repair messages with the original output + validation errors.
+
+        The assistant turn replays the ORIGINAL response content verbatim —
+        Anthropic requires every tool_use block to carry its `id`; a
+        synthesized block without one is rejected with a 400 (live lesson).
+        """
         import json
 
         error_details = json.dumps(
@@ -315,7 +323,7 @@ class AnthropicClient:
 
         # Append the assistant's response and the repair request
         return original_messages + [
-            {"role": "assistant", "content": [{"type": "tool_use", "name": tool_name, "input": bad_input}]},
+            {"role": "assistant", "content": assistant_content},
             {"role": "user", "content": repair_content},
         ]
 
