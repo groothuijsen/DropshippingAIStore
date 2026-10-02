@@ -1,0 +1,86 @@
+{% extends "app/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Price Advisor" %}{% endblock %}
+
+{% block content %}
+<div class="mq-price-advisor">
+  <h1>{% trans "Price Advisor" %}</h1>
+  <p class="mq-subtitle">{% trans "Consumer price incl. VAT from cost, fees, returns allowance and target margin." %}</p>
+  <p class="mq-help"><code>{{ product_gid }}</code></p>
+
+  {% if messages %}
+  <div class="mq-messages">
+    {% for message in messages %}
+    <div class="mq-message mq-message-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <form method="post" class="mq-form">
+    {% csrf_token %}
+
+    <div class="mq-field">
+      <label for="market">{% trans "Market" %}</label>
+      <select id="market" name="market">
+        {% for m in ps.markets %}
+        <option value="{{ m }}" {% if m == market %}selected{% endif %}>{{ m }}</option>
+        {% empty %}
+        <option value="NL" {% if market == "NL" or not market %}selected{% endif %}>NL</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mq-field-row">
+      <div class="mq-field">
+        <label for="cost">{% trans "Supplier cost (excl. VAT)" %}</label>
+        <input type="text" id="cost" name="cost" value="{{ cost }}" placeholder="8.00">
+      </div>
+      <div class="mq-field">
+        <label for="shipping">{% trans "Shipping cost per unit" %}</label>
+        <input type="text" id="shipping" name="shipping" value="{{ shipping }}" placeholder="4.00">
+      </div>
+    </div>
+
+    <div class="mq-field-row">
+      <div class="mq-field">
+        <label for="ad_cost">{% trans "Ad cost per order (optional)" %}</label>
+        <input type="text" id="ad_cost" name="ad_cost" value="{{ ad_cost }}" placeholder="0">
+      </div>
+      <div class="mq-field">
+        <label for="margin_pct">{% trans "Target margin % (default from settings)" %}</label>
+        <input type="text" id="margin_pct" name="margin_pct" value="{{ margin_pct }}" placeholder="{{ ps.target_margin_pct }}">
+      </div>
+    </div>
+
+    <div class="mq-field">
+      <label for="returns_pct">{% trans "Returns allowance % (default from settings)" %}</label>
+      <input type="text" id="returns_pct" name="returns_pct" value="{{ returns_pct }}" placeholder="{{ ps.returns_allowance_pct }}">
+    </div>
+
+    <button type="submit" class="mq-button">{% trans "Calculate advice" %}</button>
+  </form>
+
+  {% if advice %}
+  <div class="mq-advice-panel">
+    {% if advice.error %}
+      <p class="mq-message mq-message-error">{{ advice.error }}</p>
+    {% elif advice.result and advice.result.error %}
+      <p class="mq-message mq-message-error">{{ advice.result.error }}</p>
+    {% else %}
+      <h2>{% trans "Advice for" %} {{ advice.market }}</h2>
+      <table class="mq-table">
+        <tr><td>{% trans "Break-even price" %}</td><td>€ {{ advice.result.break_even_price }}</td></tr>
+        <tr><td>{% trans "Consumer price (excl. rounding)" %}</td><td>€ {{ advice.result.consumer_price }}</td></tr>
+        <tr><td><strong>{% trans "Rounded advised price" %}</strong></td><td><strong>€ {{ advice.result.rounded_price }}</strong></td></tr>
+        <tr><td>{% trans "Actual margin at rounded price" %}</td><td>{% widthratio advice.result.actual_margin 1 100 %}%</td></tr>
+      </table>
+      <p class="mq-help">
+        {% blocktrans with vat=advice.vat %}VAT rate {{ vat }} (standard rate, reduced rates not handled).{% endblocktrans %}
+        {% trans "Prices for markets other than the base currency are advice only — Shopify Markets price lists are out of scope." %}
+      </p>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

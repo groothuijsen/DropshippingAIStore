@@ -2,7 +2,7 @@
 
 from django.urls import path
 
-from apps.compliance.views import delivery_override, delivery_profiles
+from apps.compliance.views import delivery_override, delivery_profiles, price_advisor
 
 from .views import business_details, dashboard, store_settings
 
@@ -15,5 +15,10 @@ urlpatterns = [
         "products/<path:product_gid>/delivery/",
         delivery_override,
         name="delivery_override",
+    ),
+    path(
+        "products/<path:product_gid>/pricing/",
+        price_advisor,
+        name="price_advisor",
     ),
 ]

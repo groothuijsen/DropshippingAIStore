@@ -252,3 +252,76 @@ def delivery_override(request: HttpRequest, product_gid: str) -> HttpResponse:
             "override": override,
         },
     )
+
+
+def price_advisor(request: HttpRequest, product_gid: str) -> HttpResponse:
+    """Price advisor screen (F17-1..3, 6..7, docs/12 §6).
+
+    GET/POST /app/products/<gid>/pricing/ — computes a price advice per
+    market from PricingSettings defaults. Advisory only for non-base markets.
+    """
+    from apps.compliance.models import PricingSettings
+    from apps.compliance.pricing_advisor import advise
+    from apps.compliance.vat_rates import GB_NOT_COVERED_MESSAGE, vat_rate_for
+
+    shop = _get_shop(request)
+    if shop is None:
+        return JsonResponse({"error": "Shop not found"}, status=404)
+
+    ps, _ = PricingSettings.objects.get_or_create(shop=shop)
+    advice = None
+    market = ""
+    cost = shipping = ad_cost = ""
+    margin_pct = returns_pct = ""
+
+    if request.method == "POST":
+        market = request.POST.get("market", "NL").strip().upper()
+        cost = request.POST.get("cost", "").strip()
+        shipping = request.POST.get("shipping", "").strip()
+        ad_cost = request.POST.get("ad_cost", "0").strip() or "0"
+        margin_pct = request.POST.get("margin_pct", "").strip()
+        returns_pct = request.POST.get("returns_pct", "").strip()
+
+        vat = vat_rate_for(market)
+        if vat is None:
+            advice = {"error": GB_NOT_COVERED_MESSAGE}
+        else:
+            try:
+                from decimal import Decimal, InvalidOperation
+
+                m_pct = Decimal(margin_pct) / 100 if margin_pct else ps.target_margin_pct
+                r_pct = Decimal(returns_pct) / 100 if returns_pct else ps.returns_allowance_pct
+                result = advise(
+                    cost=Decimal(cost or "0"),
+                    shipping=Decimal(shipping or "0"),
+                    ad_cost=Decimal(ad_cost or "0"),
+                    payment_fee_fixed=ps.payment_fee_fixed,
+                    payment_fee_pct=ps.payment_fee_pct,
+                    returns_pct=r_pct,
+                    margin_pct=m_pct,
+                    vat_rate=vat,
+                    price_ending=int(ps.price_ending),
+                )
+                advice = {"result": result, "market": market, "vat": vat}
+            except (InvalidOperation, ValueError):
+                advice = {"error": "Invalid number in cost fields."}
+
+    return render(
+        request,
+        "app/price_advisor.html",
+        {
+            "shopify_api_key": settings.SHOPIFY_API_KEY,
+            "shop_domain": shop.domain,
+            "ui_locale": getattr(request, "ui_locale", "en"),
+            "shop": shop,
+            "product_gid": product_gid,
+            "ps": ps,
+            "advice": advice,
+            "market": market,
+            "cost": cost,
+            "shipping": shipping,
+            "ad_cost": ad_cost,
+            "margin_pct": margin_pct,
+            "returns_pct": returns_pct,
+        },
+    )

@@ -5,7 +5,9 @@ See docs/02-data-model.md, docs/07-compliance.md.
 
 import json
 import uuid
+from decimal import Decimal
 
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -194,3 +196,43 @@ class DeliveryOverride(models.Model):
     @property
     def shipping_cost_json(self) -> str:
         return json.dumps(self.shipping_cost) if self.shipping_cost else ""
+
+
+class PricingSettings(models.Model):
+    """Price advisor defaults per shop (F17-2, 12 §2.6)."""
+
+    shop = models.OneToOneField("core.Shop", on_delete=models.CASCADE, related_name="pricing_settings")
+    payment_fee_pct = models.DecimalField(max_digits=5, decimal_places=4, default=Decimal("0.029"))
+    payment_fee_fixed = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal("0.30"))
+    returns_allowance_pct = models.DecimalField(max_digits=5, decimal_places=4, default=Decimal("0.05"))
+    target_margin_pct = models.DecimalField(max_digits=5, decimal_places=4, default=Decimal("0.30"))
+    price_ending = models.CharField(
+        max_length=2,
+        choices=[("95", ".95"), ("99", ".99"), ("00", ".00")],
+        default="95",
+    )
+    markets = models.JSONField(default=lambda: ["NL"], blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        super().clean()
+        if self.returns_allowance_pct + self.target_margin_pct >= Decimal("0.90"):
+            raise ValidationError("Returns allowance + target margin must sum to less than 0.90.")
+        if self.price_ending not in ("95", "99", "00"):
+            raise ValidationError("Price ending must be 95, 99 or 00.")
+
+    def __str__(self):
+        return f"PricingSettings @ {self.shop.domain}"
+
+    @property
+    def payment_fee_pct_display(self) -> str:
+        return str(self.payment_fee_pct * 100)
+
+    @property
+    def returns_allowance_pct_display(self) -> str:
+        return str(self.returns_allowance_pct * 100)
+
+    @property
+    def target_margin_pct_display(self) -> str:
+        return str(self.target_margin_pct * 100)

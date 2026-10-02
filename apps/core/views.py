@@ -130,6 +130,38 @@ def store_settings(request: HttpRequest):
             for error in errors:
                 messages.error(request, error)
 
+    # Pricing advisor settings (F17-2, editable here per 12 §2.6)
+    from decimal import Decimal, InvalidOperation
+
+    from apps.compliance.models import PricingSettings
+
+    ps, _ = PricingSettings.objects.get_or_create(shop=shop)
+    if request.method == "POST":
+        ps_errors = []
+        try:
+            ps.payment_fee_pct = Decimal(request.POST.get("payment_fee_pct", "2.9")) / 100
+            ps.payment_fee_fixed = Decimal(request.POST.get("payment_fee_fixed", "0.30"))
+            ps.returns_allowance_pct = Decimal(request.POST.get("returns_allowance_pct", "5")) / 100
+            ps.target_margin_pct = Decimal(request.POST.get("target_margin_pct", "30")) / 100
+            ps.price_ending = request.POST.get("price_ending", "95")
+            markets_raw = request.POST.get("markets", "NL").strip()
+            ps.markets = [m.strip().upper() for m in markets_raw.split(",") if m.strip()] or ["NL"]
+            ps.full_clean()
+            ps.save()
+        except (InvalidOperation, ValueError):
+            ps_errors.append("Pricing settings contain invalid numbers.")
+        except Exception as exc:  # ValidationError
+            if hasattr(exc, "message_dict"):
+                ps_errors.extend(sum(exc.message_dict.values(), []))
+            else:
+                ps_errors.append(str(exc))
+        if ps_errors:
+            for error in ps_errors:
+                messages.error(request, error)
+        elif not errors:
+            messages.success(request, "Settings saved and synced to store.")
+            return redirect("/app/settings/store/")
+
     return render(
         request,
         "app/store_settings.html",
@@ -139,6 +171,7 @@ def store_settings(request: HttpRequest):
             "ui_locale": getattr(request, "ui_locale", "en"),
             "shop": shop,
             "errors": errors,
+            "ps": ps,
         },
     )
 

@@ -83,5 +83,51 @@
       <button type="submit" class="mq-button mq-button-primary">{% trans "Save settings" %}</button>
     </div>
   </form>
+
+  <h2>{% trans "Price Advisor Settings" %}</h2>
+  <p class="mq-subtitle">{% trans "Defaults for the price advisor (per market)." %}</p>
+  <form method="post" class="mq-form">
+    {% csrf_token %}
+    <div class="mq-field-row">
+      <div class="mq-field">
+        <label for="payment_fee_pct">{% trans "Payment fee %" %}</label>
+        <input type="text" id="payment_fee_pct" name="payment_fee_pct"
+               value="{{ ps.payment_fee_pct_display }}" placeholder="2.9">
+      </div>
+      <div class="mq-field">
+        <label for="payment_fee_fixed">{% trans "Payment fee fixed" %}</label>
+        <input type="text" id="payment_fee_fixed" name="payment_fee_fixed"
+               value="{{ ps.payment_fee_fixed }}" placeholder="0.30">
+      </div>
+    </div>
+    <div class="mq-field-row">
+      <div class="mq-field">
+        <label for="returns_allowance_pct">{% trans "Returns allowance %" %}</label>
+        <input type="text" id="returns_allowance_pct" name="returns_allowance_pct"
+               value="{{ ps.returns_allowance_pct_display }}" placeholder="5">
+      </div>
+      <div class="mq-field">
+        <label for="target_margin_pct">{% trans "Target margin %" %}</label>
+        <input type="text" id="target_margin_pct" name="target_margin_pct"
+               value="{{ ps.target_margin_pct_display }}" placeholder="30">
+      </div>
+    </div>
+    <div class="mq-field-row">
+      <div class="mq-field">
+        <label for="price_ending">{% trans "Price ending" %}</label>
+        <select id="price_ending" name="price_ending">
+          <option value="95" {% if ps.price_ending == "95" %}selected{% endif %}>.95</option>
+          <option value="99" {% if ps.price_ending == "99" %}selected{% endif %}>.99</option>
+          <option value="00" {% if ps.price_ending == "00" %}selected{% endif %}>.00</option>
+        </select>
+      </div>
+      <div class="mq-field">
+        <label for="markets">{% trans "Markets (comma-separated)" %}</label>
+        <input type="text" id="markets" name="markets"
+               value="{{ ps.markets|join:',' }}" placeholder="NL,DE,BE">
+      </div>
+    </div>
+    <button type="submit" class="mq-button">{% trans "Save pricing settings" %}</button>
+  </form>
 </div>
 {% endblock %}
