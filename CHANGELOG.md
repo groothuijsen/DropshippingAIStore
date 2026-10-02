@@ -1,5 +1,14 @@
 ## Unreleased
 
+### T-115 — Store structure proposal + editable tree (F15-8, 2026-10-02)
+
+- `StoreStructure`/`CollectionPlan`/`MenuItemPlan` schemas (12 §3); tool `submit_structure`, `model_key="copy"`, temperature 0.3 per prompt header.
+- `StoreBlueprint.store_structure` + `structure_error` (migration `generator/0006`); `queries/products_by_ids.graphql` (fixture captured from the dev store).
+- `generate_store_structure` task: selected products → one AI call; collection GIDs outside the merchant's selection trigger ONE repair round, then a merchant-facing `structure_error` (F15-8); `select_products` now enqueues the proposal.
+- Wizard structure screen: editable tree (rename, reorder, remove with floors 1 collection / 3 menu items / 2 pages, add collection from the selection, add page types); retry button on failure; confirm validates coverage, shipping+returns pages, menu refs and menu size → status `building`.
+- **Live E2E**: real AI proposal (1 collection for the 1 selected product, menu of 4, shipping+returns) → confirm → `building`; rename edit live-verified after fixing `_norm_gid` (legacy webhook rows store product ids as ints — str() guard + regression test).
+- 1086/1086 tests; ruff clean. Commits `c296548`, `20abff0`.
+
 ### T-114 — Product ideas + import-waiting screen + selection (F15-6/7, 2026-10-02)
 
 - **F15-6**: `ProductIdea`/`ProductIdeas` schemas (12 §3); `generate_product_ideas` task (`model_key="research"`, temperature 0.6); `apps/generator/import_apps.py` deep links (CJ/Printify search links); wizard ideas screen (HTMX, ideas + avoid + Open-app link) and `start_import` action setting `started_products_at` (first click keeps the window).

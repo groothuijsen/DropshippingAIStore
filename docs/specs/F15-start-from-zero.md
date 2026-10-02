@@ -64,6 +64,15 @@ Second onboarding route: the merchant describes a niche and Mosaiq proposes a br
 7. **Webhook product IDs are plain numeric**, the Admin API returns GIDs — `_record_imported_product` prefixes digit IDs (`str()` guard: payloads may carry `id` as an int) and the panel merge normalizes both shapes.
 8. **Plan maximum** comes from `PLAN_LIMITS[*]["products_per_build"]` (12 §7: starter 5, pro 20, agency 20); the selection screen disables Next at 0 selected and the server rejects 0 or over-max (`BLUEPRINT_NO_PRODUCTS` / plan-max message).
 
+### T-115 (2026-10-02)
+
+1. **`store_structure` runs as a plain Celery task** (like names/brand), not a `GenerationJob` sequence — the build job (T-117) owns job bookkeeping. Failure surfaces via `StoreBlueprint.structure_error` (plain English merchant message; the wizard renders it as-is).
+2. **Repair-once semantics** (F15-8): collections referencing GIDs outside `selected_product_gids` trigger exactly one retry with a repair note listing the valid GIDs; a second violation fails with a merchant message and keeps status `structure` (retry button re-enqueues).
+3. **Edits are saved per operation** into `store_structure` (rename/move/delete/add) — there is no separate draft field; confirm re-validates the edited tree (coverage, shipping+returns, menu refs, menu 3–8) and advances to `building`. The build job itself is T-117.
+4. **Page titles are NOT part of the AI structure** (12 §3 pages are literals only) — titles/descriptions come from the page templates at build time (T-116/T-117).
+5. **Product data for the prompt**: `products_by_ids.graphql` (nodes(ids:), priceRange.minVariantPrice) — fixture `tests/fixtures/shopify/products_by_ids.json` captured from the dev store.
+6. **Legacy webhook int IDs**: `imported_products` rows written before the T-114 str() guard hold numeric ids as ints; `_norm_gid` stringifies (live 500 found this; regression test added).
+
 ### T-111 (2026-10-01)
 
 1. **T-111 `is_complete()` purposes** (12 §2.1 lists the four purposes but not their required fields):
