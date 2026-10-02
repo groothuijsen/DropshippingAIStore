@@ -1025,5 +1025,15 @@ def retry_store_build_child(job_id: str) -> None:
     job.error_message = None
     job.finished_at = None
     job.save(update_fields=["status", "error_code", "error_message", "finished_at"])
-    job.steps.filter(status=StepStatus.FAILED).update(status=StepStatus.PENDING)
+    # Standard-page/home children run layout+publish only (T-117): their
+    # product-pipeline steps must stay SKIPPED on retry, not re-run.
+    from apps.generator.store_build import PRODUCT_PIPELINE_STEPS
+
+    if job.page_type != "pdp":
+        job.steps.filter(name__in=PRODUCT_PIPELINE_STEPS).update(status=StepStatus.SKIPPED)
+        job.steps.filter(status=StepStatus.FAILED).exclude(name__in=PRODUCT_PIPELINE_STEPS).update(
+            status=StepStatus.PENDING
+        )
+    else:
+        job.steps.filter(status=StepStatus.FAILED).update(status=StepStatus.PENDING)
     run_store_build_child.delay(str(job.id))
