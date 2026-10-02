@@ -72,6 +72,89 @@ class Shop(models.Model):
         return f"{self.domain} ({self.status})"
 
 
+class BusinessDetails(models.Model):
+    """Merchant business facts (12 §2.1).
+
+    Used by legal templates, the contact page and the shipping/returns
+    pages. Mosaiq never invents these facts — missing ones block go-live
+    of the pages that need them (D-15.4).
+    """
+
+    shop = models.OneToOneField(
+        Shop, on_delete=models.CASCADE, related_name="business_details"
+    )
+    legal_name = models.CharField(max_length=200)
+    trade_name = models.CharField(
+        max_length=200, blank=True, help_text="Defaults to BrandKit.brand_name"
+    )
+    street = models.CharField(max_length=200)
+    postal_code = models.CharField(max_length=20)
+    city = models.CharField(max_length=100)
+    country_code = models.CharField(
+        max_length=2, help_text="ISO 3166-1 alpha-2, uppercase"
+    )
+    email = models.EmailField()
+    phone = models.CharField(max_length=40, blank=True)
+    company_reg_no = models.CharField(
+        max_length=40, blank=True, help_text="KvK / HRB / BCE"
+    )
+    vat_id = models.CharField(
+        max_length=20, blank=True, help_text="Format checked against country prefix only"
+    )
+    return_address_same = models.BooleanField(default=True)
+    return_address = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Same keys as the address fields when return_address_same is False",
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    PURPOSE_FIELDS: dict[str, list[str]] = {
+        "legal": ["legal_name", "street", "postal_code", "city", "country_code", "email"],
+        "contact": ["legal_name", "email"],
+        "impressum": [
+            "legal_name",
+            "street",
+            "postal_code",
+            "city",
+            "country_code",
+            "email",
+            "company_reg_no",
+        ],
+        "returns": ["legal_name", "street", "postal_code", "city", "country_code"],
+    }
+
+    def clean(self) -> None:
+        """VAT ID format check per country prefix only (12 §2.1)."""
+        super().clean()
+        if (
+            self.vat_id
+            and self.country_code
+            and not self.vat_id.upper().startswith(self.country_code.upper())
+        ):
+            from django.core.exceptions import ValidationError
+
+            raise ValidationError(
+                {"vat_id": f"Must start with the country prefix ({self.country_code})."}
+            )
+
+    def is_complete(self, purpose: str) -> list[str]:
+        """Return the list of missing fields for a purpose.
+
+        Purposes: legal, contact, impressum, returns.
+        """
+        fields = self.PURPOSE_FIELDS.get(purpose)
+        if fields is None:
+            raise ValueError(f"Unknown purpose: {purpose!r}")
+        missing = [f for f in fields if not getattr(self, f)]
+        if purpose == "returns" and not self.return_address_same and not self.return_address:
+            missing.append("return_address")
+        return missing
+
+    def __str__(self) -> str:
+        return f"BusinessDetails {self.legal_name} ({self.shop.domain})"
+
+
 class AuditLog(models.Model):
     """Audit trail for sensitive actions."""
 

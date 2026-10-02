@@ -141,3 +141,89 @@ def store_settings(request: HttpRequest):
             "errors": errors,
         },
     )
+
+
+BUSINESS_FIELD_NAMES = (
+    "legal_name",
+    "trade_name",
+    "street",
+    "postal_code",
+    "city",
+    "country_code",
+    "email",
+    "phone",
+    "company_reg_no",
+    "vat_id",
+)
+
+
+def business_details(request: HttpRequest):
+    """Business details settings (12 §6, T-111).
+
+    GET/POST /app/settings/business/ — the merchant's business facts used by
+    legal templates, the contact page and the shipping/returns pages.
+    """
+    from django.contrib import messages
+
+    from apps.core.models import AuditLog, BusinessDetails, Shop
+
+    shop_domain = getattr(request, "shop_domain", None)
+    shop = Shop.objects.filter(domain=shop_domain).first() if shop_domain else None
+    if shop is None:
+        return JsonResponse({"error": "Shop not found"}, status=404)
+
+    details = BusinessDetails.objects.filter(shop=shop).first()
+
+    if request.method == "POST":
+        data = {name: request.POST.get(name, "").strip() for name in BUSINESS_FIELD_NAMES}
+        country = data.pop("country_code", "").upper()
+        data["country_code"] = country
+        return_address_same = request.POST.get("return_address_same") == "on"
+        return_address = None
+        if not return_address_same:
+            return_address = {
+                key: request.POST.get(key, "").strip()
+                for key in ("legal_name", "street", "postal_code", "city", "country_code")
+                if request.POST.get(key, "").strip()
+            }
+
+        if details is None:
+            details = BusinessDetails(shop=shop)
+
+        for name, value in data.items():
+            setattr(details, name, value)
+        details.return_address_same = return_address_same
+        details.return_address = return_address
+
+        errors = []
+        try:
+            details.full_clean()
+        except Exception as exc:  # django.core.exceptions.ValidationError
+            if hasattr(exc, "message_dict"):
+                for field_errors in exc.message_dict.values():
+                    errors.extend(field_errors)
+            else:
+                errors.append(str(exc))
+
+        if errors:
+            for error in errors:
+                messages.error(request, error)
+        else:
+            details.save()
+            AuditLog.objects.create(
+                shop=shop, actor="merchant", action="business_details_saved", payload={}
+            )
+            messages.success(request, "Business details saved.")
+            return redirect("/app/settings/business/")
+
+    return render(
+        request,
+        "app/business_details.html",
+        {
+            "shopify_api_key": settings.SHOPIFY_API_KEY,
+            "shop_domain": shop_domain,
+            "ui_locale": getattr(request, "ui_locale", "en"),
+            "shop": shop,
+            "details": details,
+        },
+    )

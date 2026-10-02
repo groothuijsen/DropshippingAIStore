@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from apps.core.models import Shop
+    from apps.core.models import BusinessDetails, Shop
 
 # Draft banner per language (07 §7)
 DRAFT_BANNERS: dict[str, str] = {
@@ -86,6 +86,42 @@ GPSR_CONTACT_TEMPLATES: dict[str, str] = {
 }
 
 
+def fill_legal_details(template: str, details: BusinessDetails) -> str:
+    """Fill merchant business facts into a legal template (12 §2.1).
+
+    Replaces the [Adres]-style placeholders from BusinessDetails. Placeholders
+    whose facts are missing stay in place — the draft state stays visible
+    (D-15.4: never invent business facts).
+    """
+    result = template
+    name = details.trade_name or details.legal_name
+    if details.street and details.postal_code and details.city:
+        full_address = f"{details.street}, {details.postal_code} {details.city}"
+    else:
+        full_address = ""  # incomplete — placeholder stays (D-15.4)
+    country = details.country_code
+
+    replacements = {
+        "[Winkelnaam]": name,
+        "[Shop-Name]": name,
+        "[Shop name]": name,
+        "[Winkelname]": name,
+        "[Adres]": full_address,
+        "[Adresse]": full_address,
+        "[Address]": full_address,
+        "[Straße und Hausnummer]": details.street,
+        "[PLZ und Ort]": f"{details.postal_code} {details.city}".strip(),
+        "[Land]": country,
+        "[E-mail]": details.email,
+        "[E-Mail]": details.email,
+        "[Email]": details.email,
+    }
+    for placeholder, value in replacements.items():
+        if value:
+            result = result.replace(placeholder, value)
+    return result
+
+
 def fill_template(template: str, shop: Shop) -> str:
     """Fill merchant details into a legal template.
 
@@ -108,8 +144,11 @@ def get_legal_pages(shop: Shop, locale: str) -> list[dict[str, str]]:
     pages = []
 
     # Withdrawal page (all languages)
+    details = getattr(shop, "business_details", None)
     if locale in WITHDRAWAL_TEMPLATES:
         html = fill_template(WITHDRAWAL_TEMPLATES[locale], shop)
+        if details is not None:
+            html = fill_legal_details(html, details)
         pages.append(
             {
                 "key": "withdrawal",
@@ -124,6 +163,8 @@ def get_legal_pages(shop: Shop, locale: str) -> list[dict[str, str]]:
     # Impressum (DE only)
     if locale == "de" and locale in IMPRESSUM_TEMPLATES:
         html = fill_template(IMPRESSUM_TEMPLATES[locale], shop)
+        if details is not None:
+            html = fill_legal_details(html, details)
         pages.append(
             {
                 "key": "impressum",
@@ -136,6 +177,8 @@ def get_legal_pages(shop: Shop, locale: str) -> list[dict[str, str]]:
     # GPSR/contact page
     if locale in GPSR_CONTACT_TEMPLATES:
         html = fill_template(GPSR_CONTACT_TEMPLATES[locale], shop)
+        if details is not None:
+            html = fill_legal_details(html, details)
         pages.append(
             {
                 "key": "gpsr_contact",

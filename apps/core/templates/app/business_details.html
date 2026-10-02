@@ -1,0 +1,98 @@
+{% extends "app/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Business Details" %}{% endblock %}
+
+{% block content %}
+<div class="mq-store-settings">
+  <h1>{% trans "Business Details" %}</h1>
+  <p class="mq-subtitle">{% trans "Legal name, address and registration data used on legal, contact and returns pages." %}</p>
+
+  {% if messages %}
+  <div class="mq-messages">
+    {% for message in messages %}
+    <div class="mq-message mq-message-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <form method="post" class="mq-form">
+    {% csrf_token %}
+
+    <div class="mq-field">
+      <label for="legal_name">{% trans "Legal name" %}</label>
+      <input type="text" id="legal_name" name="legal_name" maxlength="200" required
+             value="{{ details.legal_name|default:'' }}">
+    </div>
+
+    <div class="mq-field">
+      <label for="trade_name">{% trans "Trade name" %}</label>
+      <input type="text" id="trade_name" name="trade_name" maxlength="200"
+             value="{{ details.trade_name|default:'' }}">
+      <p class="mq-help">{% trans "Shown to customers; defaults to your brand name." %}</p>
+    </div>
+
+    <div class="mq-field">
+      <label for="street">{% trans "Street and number" %}</label>
+      <input type="text" id="street" name="street" maxlength="200" required
+             value="{{ details.street|default:'' }}">
+    </div>
+
+    <div class="mq-field">
+      <label for="postal_code">{% trans "Postal code" %}</label>
+      <input type="text" id="postal_code" name="postal_code" maxlength="20" required
+             value="{{ details.postal_code|default:'' }}">
+    </div>
+
+    <div class="mq-field">
+      <label for="city">{% trans "City" %}</label>
+      <input type="text" id="city" name="city" maxlength="100" required
+             value="{{ details.city|default:'' }}">
+    </div>
+
+    <div class="mq-field">
+      <label for="country_code">{% trans "Country code" %}</label>
+      <input type="text" id="country_code" name="country_code" maxlength="2" required
+             placeholder="NL"
+             value="{{ details.country_code|default:'' }}">
+      <p class="mq-help">{% trans "ISO 3166-1 alpha-2, e.g. NL, DE, BE." %}</p>
+    </div>
+
+    <div class="mq-field">
+      <label for="email">{% trans "E-mail" %}</label>
+      <input type="email" id="email" name="email" required
+             value="{{ details.email|default:'' }}">
+    </div>
+
+    <div class="mq-field">
+      <label for="phone">{% trans "Phone" %}</label>
+      <input type="text" id="phone" name="phone" maxlength="40"
+             value="{{ details.phone|default:'' }}">
+    </div>
+
+    <div class="mq-field">
+      <label for="company_reg_no">{% trans "Company registration no." %}</label>
+      <input type="text" id="company_reg_no" name="company_reg_no" maxlength="40"
+             value="{{ details.company_reg_no|default:'' }}">
+      <p class="mq-help">{% trans "KvK (NL), HRB (DE) or BCE (BE). Required for the German Impressum." %}</p>
+    </div>
+
+    <div class="mq-field">
+      <label for="vat_id">{% trans "VAT ID" %}</label>
+      <input type="text" id="vat_id" name="vat_id" maxlength="20"
+             value="{{ details.vat_id|default:'' }}">
+      <p class="mq-help">{% trans "Must start with the country code (e.g. NL123456789B01)." %}</p>
+    </div>
+
+    <div class="mq-field mq-field-checkbox">
+      <label>
+        <input type="checkbox" name="return_address_same"
+               {% if not details or details.return_address_same %}checked{% endif %}>
+        {% trans "Return address is the same as the business address" %}
+      </label>
+    </div>
+
+    <button type="submit" class="mq-button">{% trans "Save" %}</button>
+  </form>
+</div>
+{% endblock %}
