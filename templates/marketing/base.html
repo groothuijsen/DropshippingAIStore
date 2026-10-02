@@ -9,6 +9,10 @@
   <meta property="og:title" content="{{ page.title }}">
   <meta property="og:description" content="{{ page.description }}">
   <meta property="og:image" content="{% static 'marketing/og/home-1200x630.png' %}">
+  {% with canon="https://shopify.mosaiq.marketing" %}<link rel="canonical" href="{{ canon }}{{ page.slug }}">
+  {% for alt in page.alts %}<link rel="alternate" hreflang="{{ alt.0 }}" href="{{ canon }}{{ alt.1 }}">{% endfor %}
+  <link rel="alternate" hreflang="x-default" href="{{ canon }}{{ page.slug }}">
+  <script type="application/ld+json">{{ page.jsonld|safe }}</script>{% endwith %}
   <link rel="stylesheet" href="{% static 'marketing/css/fonts.css' %}">
   <link rel="stylesheet" href="{% static 'marketing/css/tokens.css' %}">
   <link rel="stylesheet" href="{% static 'marketing/css/site.css' %}">

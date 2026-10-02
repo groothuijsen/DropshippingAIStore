@@ -31,6 +31,8 @@ urlpatterns = [
     path("affiliates/", views.page_view, {"slug": "affiliates"}, name="affiliates"),
     path("changelog/", views.page_view, {"slug": "changelog"}, name="changelog"),
     path("blog/", views.blog_index, name="blog_index"),
+    path("sitemap.xml", views.sitemap_view, name="sitemap"),
+    path("robots.txt", views.robots_view, name="robots"),
     # /de/ intentionally absent until T-158 (native review gate)
 ]
 urlpatterns += [
