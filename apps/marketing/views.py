@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
+import markdown
 from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
-
-import markdown
 
 from .content import LANGUAGES, load_page
 from .schemas import validate_sections

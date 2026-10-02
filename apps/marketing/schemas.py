@@ -6,6 +6,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
+
 class CtaLink(BaseModel):
     label: str = Field(max_length=40)
     href: str = Field(max_length=200)  # @install / @early_access / anchor / path
