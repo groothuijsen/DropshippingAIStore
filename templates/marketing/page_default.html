@@ -2,21 +2,74 @@
 {% load i18n %}
 {% block content %}
 <main>
-  <h1>{{ page.title }}</h1>
   {% for section in page.sections %}
-    <section data-section="{{ section.type }}">
-      {% if section.type == "hero" %}
-        <h2>{{ section.headline }}</h2>
-        <p>{{ section.sub }}</p>
-      {% elif section.type == "features" %}
-        <ul>{% for item in section.items %}<li><strong>{{ item.title }}</strong> — {{ item.text }}</li>{% endfor %}</ul>
-      {% elif section.type == "faq" %}
-        <dl>{% for item in section.items %}<dt>{{ item.q }}</dt><dd>{{ item.a }}</dd>{% endfor %}</dl>
-      {% elif section.type == "steps" %}
-        <ol>{% for item in section.items %}<li>{{ item.title }} — {{ item.text }}</li>{% endfor %}</ol>
-      {% endif %}
-    </section>
+    {% if section.type == "hero" %}
+      <header class="hero shell">
+        {% if section.eyebrow %}<p class="micro">{{ section.eyebrow }}</p>{% endif %}
+        <h1>{{ section.headline }}</h1>
+        <p class="sub">{{ section.sub }}</p>
+        <div class="cta-row">
+          <a class="btn btn-p" href="{{ section.cta_primary.href }}">{{ section.cta_primary.label }}</a>
+          {% if section.cta_secondary %}<a class="btn btn-s" href="{{ section.cta_secondary.href }}">{{ section.cta_secondary.label }}</a>{% endif %}
+        </div>
+        <p class="micro">Built for EU Shopify stores · GPSR · GDPR · Omnibus pricing</p>
+      </header>
+    {% elif section.type == "features" %}
+      <section class="block shell">
+        <h2>{% trans "Everything the EU asks for — handled" %}</h2>
+        <p class="sec-sub">&nbsp;</p>
+        <div class="grid3">
+          {% for item in section.items %}
+            <div class="feat">{% if item.icon %}<div class="fi">{{ item.icon }}</div>{% endif %}
+              <h3>{{ item.title }}</h3><p>{{ item.text }}</p></div>
+          {% endfor %}
+        </div>
+      </section>
+    {% elif section.type == "steps" %}
+      <section class="block shell">
+        <h2>{% trans "How it works" %}</h2>
+        <p class="sec-sub">&nbsp;</p>
+        <ol class="steps">
+          {% for item in section.items %}<li><strong>{{ item.title }}</strong> — {{ item.text }}</li>{% endfor %}
+        </ol>
+      </section>
+    {% elif section.type == "faq" %}
+      <section class="block shell">
+        <h2>{% trans "Questions" %}</h2>
+        <p class="sec-sub">&nbsp;</p>
+        <dl class="faq">
+          {% for item in section.items %}<dt>{{ item.q }}</dt><dd>{{ item.a }}</dd>{% endfor %}
+        </dl>
+      </section>
+    {% elif section.type == "cta" %}
+      <section class="block shell">
+        <div class="cta-band">
+          <h2>{{ section.headline }}</h2>
+          {% if section.sub %}<p class="micro" style="margin:10px 0 24px">{{ section.sub }}</p>{% endif %}
+          <a class="btn btn-p" href="{{ section.cta_primary.href }}">{{ section.cta_primary.label }}</a>
+        </div>
+      </section>
+    {% elif section.type == "pricing_table" %}
+      {# data wiring happens in T-153 (plans.py); template shell ships now #}
+      <section class="block shell" id="pricing">
+        <h2>{% trans "Simple pricing" %}</h2>
+        <div class="price-grid"></div>
+      </section>
+    {% elif section.type == "comparison" %}
+      <section class="block shell">
+        <h2>{% trans "Mosaiq vs. the rest" %}</h2>
+        <p class="sec-sub">&nbsp;</p>
+        <table class="cmp">
+          <thead><tr><th></th><th>Mosaiq</th><th>{% trans "Others" %}</th></tr></thead>
+          <tbody>
+            {% for row in section.rows %}<tr><td><strong>{{ row.label }}</strong></td><td>{{ row.mosaiq }}</td><td>{{ row.others }}</td></tr>{% endfor %}
+          </tbody>
+        </table>
+        <p class="micro" style="text-align:center;margin-top:16px">{% trans "Last checked" %}: {{ section.last_checked }}</p>
+        {% if section.sources %}<p class="micro" style="text-align:center">{% trans "Sources" %}: {{ section.sources|join:", " }}</p>{% endif %}
+      </section>
+    {% endif %}
   {% endfor %}
-  {% if page.body %}<div>{{ page.body }}</div>{% endif %}
+  {% if page.body %}<section class="block shell"><div>{{ page.body }}</div></section>{% endif %}
 </main>
 {% endblock %}

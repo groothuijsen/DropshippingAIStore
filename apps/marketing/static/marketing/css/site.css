@@ -1,0 +1,46 @@
+/* Mosaiq marketing page styles — Studio Contrast. Uses tokens.css only. */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font); font-size: var(--t-body); line-height: 1.6; }
+.shell { max-width: var(--shell); margin: 0 auto; padding: 0 24px; }
+.acc { color: var(--acc); }
+.nav { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; }
+.logo { font-weight: 800; font-size: 1.3rem; letter-spacing: -.02em; }
+.nav-links { display: flex; gap: 28px; font-size: .95rem; }
+.nav-links a { color: var(--muted); text-decoration: none; }
+.btn { display: inline-block; padding: 14px 28px; border-radius: var(--rad); font-weight: 600; text-decoration: none; font-size: 1rem; }
+.btn-p { background: var(--acc); color: #fff; }
+.btn-s { border: 1px solid var(--line); color: var(--fg); }
+.hero { padding: 90px 0 70px; text-align: center; }
+.hero h1 { font-size: var(--t-h1); line-height: 1.1; letter-spacing: -.03em; font-weight: 800; max-width: 17ch; margin: 0 auto 20px; }
+.hero h1 em { font-style: normal; color: var(--acc); }
+.sub { color: var(--muted); max-width: 60ch; margin: 0 auto 36px; }
+.cta-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 18px; }
+.micro { font-size: .85rem; color: var(--muted); }
+.hero-card { margin: 64px auto 0; max-width: 560px; background: var(--card); border: 1px solid var(--line); border-radius: var(--rad2); padding: 26px 28px; text-align: left; }
+.hc-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px dashed var(--line); font-size: .98rem; }
+.hc-row:last-child { border: none; }
+.chip { font-size: .8rem; font-weight: 600; padding: 4px 12px; border-radius: 99px; background: rgba(232, 84, 47, .10); color: var(--acc); }
+section.block { padding: 76px 0; }
+h2 { font-size: var(--t-h2); letter-spacing: -.02em; text-align: center; margin-bottom: 12px; font-weight: 750; }
+.sec-sub { text-align: center; color: var(--muted); max-width: 56ch; margin: 0 auto 48px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+.feat { background: var(--card); border: 1px solid var(--line); border-radius: var(--rad2); padding: 30px 26px; }
+.feat h3 { font-size: 1.12rem; margin-bottom: 8px; font-weight: 700; }
+.feat p { color: var(--muted); font-size: .95rem; }
+.steps { max-width: 720px; margin: 0 auto; padding-left: 1.3rem; }
+.steps li { margin-bottom: 18px; }
+.faq { max-width: 720px; margin: 0 auto; }
+.faq dt { font-weight: 700; margin-top: 22px; }
+.faq dd { color: var(--muted); margin-top: 6px; }
+.cta-band { background: var(--fg); color: var(--bg); border-radius: var(--rad2); padding: 56px 32px; text-align: center; }
+.cta-band h2 { color: var(--bg); }
+.price-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; max-width: 760px; margin: 0 auto; }
+.plan { background: var(--card); border: 1px solid var(--line); border-radius: var(--rad2); padding: 34px 30px; text-align: center; }
+.plan.hi { border-color: var(--acc); }
+.plan .amt { font-size: 2.6rem; font-weight: 800; letter-spacing: -.02em; margin: 10px 0; }
+.plan .amt small { font-size: 1rem; color: var(--muted); font-weight: 500; }
+.cmp { width: 100%; border-collapse: collapse; max-width: 860px; margin: 0 auto; }
+.cmp th, .cmp td { border-bottom: 1px solid var(--line); padding: 14px 12px; text-align: left; }
+.cmp td:not(:first-child), .cmp th:not(:first-child) { text-align: center; }
+.footer { border-top: 1px solid var(--line); padding: 34px 0; color: var(--muted); font-size: .88rem; text-align: center; }
+@media (max-width: 768px) { .grid3, .price-grid { grid-template-columns: 1fr; } .nav-links { display: none; } }

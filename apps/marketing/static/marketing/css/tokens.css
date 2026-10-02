@@ -1,0 +1,11 @@
+/* Mosaiq design tokens — direction C "Studio Contrast" (T-151). OFL fonts self-hosted. */
+:root {
+  --bg: #FAFAF8; --fg: #141414; --muted: #6B6B66; --card: #FFFFFF;
+  --acc: #E8542F; --acc2: #C43F1D; --line: rgba(20, 20, 20, .10);
+  --rad: 10px; --rad2: 16px;
+  --font: 'Outfit', system-ui, sans-serif;
+  --t-body: clamp(1rem, .9rem + .4vw, 1.125rem);
+  --t-h1: clamp(2rem, 1.2rem + 4vw, 3.75rem);
+  --t-h2: clamp(1.5rem, 1rem + 2vw, 2.4rem);
+  --shell: 1200px;
+}

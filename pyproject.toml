@@ -48,6 +48,7 @@ dev-dependencies = [
     "mypy",
     "django-stubs",
     "pytest-cov>=7.1.0",
+    "pillow>=12.3.0",
 ]
 
 [tool.ruff]
