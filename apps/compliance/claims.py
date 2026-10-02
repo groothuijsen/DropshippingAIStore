@@ -143,6 +143,7 @@ VALID_RULE_IDS = {
     "EMPCO_LABEL",
     "UNSUPPORTED_FACT",
     "IP_REFERENCE",
+    "SHIPPING_CLAIM",
 }
 
 
@@ -158,10 +159,12 @@ def check_claims(
     field_path: str = "",
     niche: str = "",
     facts: list[str] | None = None,
+    delivery: dict[str, Any] | None = None,
 ) -> list[Finding]:
     """Check text against the deterministic blocklist.
 
-    Returns list of Findings.
+    `delivery` is the product's estimate context (F18-8):
+    {"max_days": int, "ship_from": str} or None when no estimate exists.
     """
     findings: list[Finding] = []
     if not text:
@@ -194,7 +197,83 @@ def check_claims(
                 )
                 break  # One finding per rule per text
 
+    # SHIPPING_CLAIM (12 §8, F18-8): fast-delivery phrases are block when
+    # the product's max_days > 3, warn when no estimate exists; "ships from
+    # EU" claims block unless ship_from is an EU member state.
+    findings.extend(
+        _check_shipping_claims(text, locale, delivery, section_index, field_path)
+    )
+
     return findings
+
+
+# EU member states (ISO 3166-1 alpha-2) — for the "ships from EU" claim.
+EU_COUNTRIES = {
+    "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR",
+    "HU", "IE", "IT", "LV", "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK",
+    "SI", "ES", "SE",
+}
+
+# locale → fast-delivery phrase patterns (12 §8).
+SHIPPING_CLAIM_PATTERNS: dict[str, list[str]] = {
+    "nl": ["snelle levering", "morgen in huis", "binnen 24 uur"],
+    "en": ["fast shipping", "next-day delivery", "ships in 24 hours"],
+    "de": ["schnelle lieferung", "morgen geliefert", "lieferung in 24 stunden"],
+}
+
+EU_SHIP_PATTERNS: dict[str, list[str]] = {
+    "nl": ["eu-magazijn", "vanuit europa", "uit eu"],
+    "en": ["eu warehouse", "ships from europe", "from the eu"],
+    "de": ["eu-lager", "versand aus europa", "aus der eu"],
+}
+
+
+def _check_shipping_claims(
+    text: str,
+    locale: str,
+    delivery: dict[str, Any] | None,
+    section_index: int,
+    field_path: str,
+) -> list[Finding]:
+    """Context-aware delivery claim check (F18-8)."""
+    max_days = (delivery or {}).get("max_days")
+    ship_from = (delivery or {}).get("ship_from") or ""
+
+    for pattern in SHIPPING_CLAIM_PATTERNS.get(locale, []):
+        if _build_pattern(pattern).search(text):
+            if max_days is None:
+                severity = "warn"
+            elif max_days > 3:
+                severity = "block"
+            else:
+                return []  # claim is truthful — no finding
+            return [
+                Finding(
+                    rule_id="SHIPPING_CLAIM",
+                    severity=severity,
+                    text=text,
+                    section_index=section_index,
+                    field_path=field_path,
+                    locale=locale,
+                )
+            ]
+
+    for pattern in EU_SHIP_PATTERNS.get(locale, []):
+        if _build_pattern(pattern).search(text):
+            if ship_from and ship_from.upper() in EU_COUNTRIES:
+                return []  # claim is true
+            return [
+                Finding(
+                    rule_id="SHIPPING_CLAIM",
+                    severity="block",
+                    text=text,
+                    section_index=section_index,
+                    field_path=field_path,
+                    locale=locale,
+                )
+            ]
+
+    return []
 
 
 def check_sections(
@@ -202,6 +281,7 @@ def check_sections(
     locale: str,
     niche: str = "",
     facts: list[str] | None = None,
+    delivery: dict[str, Any] | None = None,
 ) -> list[Finding]:
     """Check all text fields in sections against the blocklist."""
     findings: list[Finding] = []
@@ -220,6 +300,7 @@ def check_sections(
                         f"{section_type}.{key}",
                         niche,
                         facts,
+                        delivery,
                     )
                 )
             elif isinstance(value, list):
@@ -233,6 +314,7 @@ def check_sections(
                                 f"{section_type}.{key}[{item_idx}]",
                                 niche,
                                 facts,
+                                delivery,
                             )
                         )
                     elif isinstance(item, dict):
@@ -246,6 +328,7 @@ def check_sections(
                                         f"{section_type}.{key}[{item_idx}].{sub_key}",
                                         niche,
                                         facts,
+                                        delivery,
                                     )
                                 )
 

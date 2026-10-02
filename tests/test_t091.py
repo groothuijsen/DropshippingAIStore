@@ -18,16 +18,16 @@ class TestEvalset:
 
     def test_evalset_30_products(self):
         products = load_evalset()
-        assert len(products) == 30
+        assert len(products) >= 30  # 30 base + 5 long-delivery cases (T-142)
 
     def test_evalset_categories(self):
         products = load_evalset()
         wellness = [p for p in products if p["category"] == "wellness"]
         car = [p for p in products if p["category"] == "car_accessories"]
         pod = [p for p in products if p["category"] == "pod_merch"]
-        assert len(wellness) == 10
-        assert len(car) == 10
-        assert len(pod) == 10
+        assert len(wellness) >= 10
+        assert len(car) >= 10
+        assert len(pod) >= 10
 
     def test_evalset_languages(self):
         products = load_evalset()

@@ -194,3 +194,17 @@ def run_copy(job: GenerationJob, step: JobStep) -> dict[str, Any] | None:
     output["page_id"] = str(page.id)
 
     return output
+
+
+def delivery_guardrail(est) -> str:
+    """Copy-step delivery guardrail (12 §5, F18-9).
+
+    Returns the guardrail text naming the product's actual max_days, or
+    an empty string when no estimate exists.
+    """
+    if est is None:
+        return ""
+    return (
+        f"Do not promise faster delivery than {est.max_days} working days; "
+        "never say 'fast shipping' if max_days > 5."
+    )
