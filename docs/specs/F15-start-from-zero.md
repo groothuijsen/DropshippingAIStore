@@ -73,6 +73,15 @@ Second onboarding route: the merchant describes a niche and Mosaiq proposes a br
 5. **Product data for the prompt**: `products_by_ids.graphql` (nodes(ids:), priceRange.minVariantPrice) — fixture `tests/fixtures/shopify/products_by_ids.json` captured from the dev store.
 6. **Legacy webhook int IDs**: `imported_products` rows written before the T-114 str() guard hold numeric ids as ints; `_norm_gid` stringifies (live 500 found this; regression test added).
 
+### T-116 (2026-10-02)
+
+1. **One AI call generates ALL standard page types** of the structure (schema `StandardPages`), not one job per type — per-type child jobs are a T-117 build concern; content generation is batched for cost.
+2. **`about` is not in the 12 §3 section-rules table** (only faq/shipping/returns): assembled as rich_text intro (+ faq if the AI returned items); recorded here as the safest interpretation.
+3. **The returns page links to `/pages/withdrawal`** — the withdrawal page the legal app creates at go-live (07 §7); no route exists in this repo yet.
+4. **Fact blocks are localized at generation time** (nl/en/de translation map in `standard_pages.py`); sections are stored for the shop's first content locale only.
+5. **Digit guard** (F15-16): any digit in AI-written fields triggers ONE repair round; a second leak keeps the text with a `verify_numbers` warning instead of failing the flow (merchant visibility over hard failure).
+6. **Collection renames cascade to menu refs** (fix from the T-116 E2E): menu items whose `ref` equals the old collection title follow the rename, so confirm's ref validation stays satisfiable. Pre-fix blueprints with stale refs need a one-time data repair (dev store repaired during E2E).
+
 ### T-111 (2026-10-01)
 
 1. **T-111 `is_complete()` purposes** (12 §2.1 lists the four purposes but not their required fields):

@@ -47,6 +47,19 @@ ck = session.cookies.get("csrftoken", "")
 csrf = {"X-CSRFToken": ck, "Cookie": f"csrftoken={ck}"}
 
 if bp.status == BlueprintStatus.STRUCTURE:
+    # Data repair for the dev blueprint: menu refs still point at the
+    # pre-rename collection title (the cascade fix landed after that
+    # rename). Align refs with the current titles, like the cascade now
+    # does automatically.
+    collections = (bp.store_structure or {}).get("collections", [])
+    titles = [c.get("title", "") for c in collections]
+    coll_iter = iter(titles)
+    for menu_item in (bp.store_structure or {}).get("menu", []):
+        if menu_item.get("target") == "collection":
+            menu_item["ref"] = next(coll_iter, menu_item.get("ref"))
+    bp.save(update_fields=["store_structure", "updated_at"])
+    print("menu refs repaired:", [m.get("ref") for m in bp.store_structure["menu"] if m.get("target") == "collection"])
+
     # Re-confirm the edited tree live: sets building + enqueues page content.
     r_conf = session.post(
         f"{BASE}/app/start/?id_token={token}",

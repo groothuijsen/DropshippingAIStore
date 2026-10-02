@@ -1,5 +1,15 @@
 ## Unreleased
 
+### T-116 — Standard pages faq/shipping/returns (12 §3, F15-16, F18-10, 2026-10-02)
+
+- `PageType` += faq/shipping/returns; `StoreBlueprint.standard_pages` (migration `generator/0007`); `StandardPages`/`StandardPageContent`/`StandardFaqItem` schemas (tool `submit_standard_pages`).
+- `docs/prompts/standard_pages.md`: the AI writes intro + FAQ only; hard rule — no numbers, costs, addresses or time frames outside `facts_json`.
+- `apps/generator/standard_pages.py`: fact blocks from the merchant's models — shipping renders per-market days + costs from `DeliveryProfile` (no profile → "Delivery times missing" + `missing_facts`, F18-10); returns renders the 14-day withdrawal block (`/pages/withdrawal`) + address from `BusinessDetails` (D-15.4 — never invented); localized nl/en/de.
+- `generate_standard_pages` task: one copy call (temp 0.4), digit guard with ONE repair round then a `verify_numbers` warning (F15-16); assembled per structure page type.
+- `structure_confirm` enqueues the task; the building panel shows page content + missing-facts/verify warnings (HTMX poll until ready).
+- **Related fix**: renaming a collection now cascades to menu refs — the confirm validation caught a stale-ref state live during the T-116 E2E (pre-fix blueprints need a one-time repair; dev store repaired).
+- **Live E2E**: re-confirm → real AI shipping+returns content; no delivery profile on the dev shop → `missing_facts` warning shown in the panel. 1102/1102 tests; ruff clean. Commits `065e904`, `22870f3`.
+
 ### T-115 — Store structure proposal + editable tree (F15-8, 2026-10-02)
 
 - `StoreStructure`/`CollectionPlan`/`MenuItemPlan` schemas (12 §3); tool `submit_structure`, `model_key="copy"`, temperature 0.3 per prompt header.
