@@ -21,7 +21,10 @@ def validate_shopify_hmac(raw_body: bytes, hmac_header: str) -> bool:
         return False
 
     secret = settings.SHOPIFY_API_SECRET.encode("utf-8")
-    digest = hashlib.sha256(secret + raw_body).digest()
+    # HMAC-SHA256 keyed with the app secret over the raw body — NOT
+    # sha256(secret + body): live Shopify deliveries only validate with
+    # the keyed HMAC (self-signed tests had masked this since T-110).
+    digest = hmac.new(secret, raw_body, hashlib.sha256).digest()
     expected = base64.b64encode(digest).decode("utf-8")
 
     return hmac.compare_digest(expected, hmac_header)

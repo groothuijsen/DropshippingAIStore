@@ -2,6 +2,7 @@
 
 import base64
 import hashlib
+import hmac
 import json
 import os
 import time
@@ -37,7 +38,7 @@ body = {
     ],
 }
 raw = json.dumps(body).encode()
-digest = hashlib.sha256(settings.SHOPIFY_API_SECRET.encode() + raw).digest()
+digest = hmac.new(settings.SHOPIFY_API_SECRET.encode(), raw, hashlib.sha256).digest()
 sig = base64.b64encode(digest).decode()
 
 resp = requests.post(

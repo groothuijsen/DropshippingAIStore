@@ -2,6 +2,7 @@
 
 import base64
 import hashlib
+import hmac
 import json
 from unittest.mock import patch
 
@@ -20,7 +21,7 @@ class TestHmacValidation:
     def test_valid_hmac(self):
         secret = b"test-secret-32-chars-long-for-hmac!!!"
         body = b'{"shop_domain":"test.myshopify.com"}'
-        digest = hashlib.sha256(secret + body).digest()
+        digest = hmac.new(secret, body, hashlib.sha256).digest()
         expected = base64.b64encode(digest).decode("utf-8")
 
         with patch("apps.webhooks.hmac.settings") as mock_settings:
@@ -88,7 +89,7 @@ class TestWebhookReceipt:
 @pytest.mark.django_db
 class TestShopifyWebhookEndpoint:
     def _make_hmac(self, body: bytes, secret: str = "test-secret-32-chars-long-for-hmac!!!") -> str:
-        digest = hashlib.sha256(secret.encode() + body).digest()
+        digest = hmac.new(secret.encode(), body, hashlib.sha256).digest()
         return base64.b64encode(digest).decode("utf-8")
 
     def _post_webhook(self, body: dict, topic: str = "shop/update", webhook_id: str = "wh_123"):

@@ -19,7 +19,7 @@ from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
-from django.test import RequestFactory
+from django.test import RequestFactory, override_settings
 
 from apps.core.models import Shop
 from apps.core.views import oauth_callback
@@ -31,7 +31,7 @@ SECRET = "test-secret-32-chars-long-for-hmac!!!"
 
 
 def _make_hmac(body: bytes, secret: str = SECRET) -> str:
-    digest = hashlib.sha256(secret.encode() + body).digest()
+    digest = hmac_lib.new(secret.encode(), body, hashlib.sha256).digest()
     return base64.b64encode(digest).decode("utf-8")
 
 
@@ -206,3 +206,22 @@ class TestOAuthCallbackView:
         qs, hmac_value = _oauth_callback_query("oauth-test.myshopify.com", SECRET)
         response = oauth_callback(self._get(qs, hmac_value))
         assert response.status_code == 404
+
+
+def test_webhook_hmac_is_keyed_hmac_sha256():
+    """Regression: live Shopify signs with keyed HMAC-SHA256 over the raw
+    body — NOT sha256(secret + body). Self-signed tests with the wrong
+    formula masked this since T-110; every live delivery returned 401."""
+    import hashlib as hl
+    import hmac as hmaclib
+
+    from apps.webhooks.hmac import validate_shopify_hmac
+
+    body = b'{"id": "gid://shopify/Product/1", "title": "X"}'
+    secret = "shpat_test_secret"
+    expected = base64.b64encode(hmaclib.new(secret.encode(), body, hl.sha256).digest()).decode()
+    with override_settings(SHOPIFY_API_SECRET=secret):
+        assert validate_shopify_hmac(body, expected) is True
+        # The old wrong formula must NOT validate
+        wrong = base64.b64encode(hl.sha256(secret.encode() + body).digest()).decode()
+        assert validate_shopify_hmac(body, wrong) is False
