@@ -332,3 +332,18 @@ class TestStructureConfirm:
         _bp(shop, store_structure=structure)
         out = self._confirm(shop)
         assert out["status"] == 200
+
+
+class TestStructurePanelLegacyData:
+    def test_int_webhook_gid_does_not_crash(self, db, shop):
+        """Legacy webhook rows stored the product id as an int (pre T-114
+        fix); the structure panel must normalize, not crash."""
+        _bp(
+            shop,
+            store_structure=VALID_STRUCTURE,
+            imported_products=[{"gid": 111, "title": "Legacy", "vendor": "CJ", "created_at": "2026-10-02T07:00:00Z"}],
+            selected_product_gids=["gid://shopify/Product/111", G2],
+        )
+        token = _token(shop)
+        resp = Client().get(f"/app/start/?id_token={token}")
+        assert resp.status_code == 200

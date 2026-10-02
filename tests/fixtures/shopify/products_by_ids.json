@@ -1,0 +1,15 @@
+{
+  "nodes": [
+    {
+      "id": "gid://shopify/Product/10781946347814",
+      "title": "T114 Import Window Test Product",
+      "productType": "",
+      "tags": [],
+      "priceRange": {
+        "minVariantPrice": {
+          "amount": "0.0"
+        }
+      }
+    }
+  ]
+}

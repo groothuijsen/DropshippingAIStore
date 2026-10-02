@@ -1,8 +1,8 @@
 {
   "products": {
     "pageInfo": {
-      "hasNextPage": false,
-      "endCursor": "eyJsYXN0X2lkIjoxMDc4MTg0OTcxNDk4MiwibGFzdF92YWx1ZSI6IjEwNzgxODQ5NzE0OTgyIn0="
+      "hasNextPage": true,
+      "endCursor": "eyJsYXN0X2lkIjoxMDc4MTk0OTQ2MDc3NCwibGFzdF92YWx1ZSI6IjEwNzgxOTQ5NDYwNzc0In0="
     },
     "nodes": [
       {
@@ -13,6 +13,26 @@
         "vendor": "Mosaiq Dev",
         "tags": [],
         "status": "DRAFT",
+        "featuredMedia": null
+      },
+      {
+        "id": "gid://shopify/Product/10781946347814",
+        "title": "T114 Import Window Test Product",
+        "createdAt": "2026-10-02T06:56:06Z",
+        "handle": "t114-import-window-test-product",
+        "vendor": "Mosaiq POD",
+        "tags": [],
+        "status": "ACTIVE",
+        "featuredMedia": null
+      },
+      {
+        "id": "gid://shopify/Product/10781949460774",
+        "title": "T114 HMAC Fix Verification Product",
+        "createdAt": "2026-10-02T07:04:25Z",
+        "handle": "t114-hmac-fix-verification-product",
+        "vendor": "Mosaiq POD",
+        "tags": [],
+        "status": "ACTIVE",
         "featuredMedia": null
       }
     ]

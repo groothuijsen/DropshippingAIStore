@@ -458,9 +458,12 @@ def settings_api_version() -> str:
     return getattr(settings, "SHOPIFY_API_VERSION", "2026-07")
 
 
-def _norm_gid(gid: str) -> str:
-    """Webhooks deliver numeric IDs; the Admin API returns GIDs."""
-    gid = gid or ""
+def _norm_gid(gid) -> str:
+    """Webhooks deliver numeric IDs; the Admin API returns GIDs.
+
+    str() guard: legacy webhook rows may hold the id as an int.
+    """
+    gid = str(gid or "")
     return f"gid://shopify/Product/{gid}" if gid.isdigit() else gid
 
 
