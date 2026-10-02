@@ -30,7 +30,7 @@ class JobInput(BaseModel):
     product_gid: str | None = None
     manual: ManualProduct | None = None
     source_url: HttpUrl | None = None
-    page_type: Literal["pdp", "landing", "advertorial", "listicle", "home", "about"] | None = None
+    page_type: Literal["pdp", "landing", "advertorial", "listicle", "home", "about", "faq", "shipping", "returns"] | None = None
     content_locale: Locale
     niche_hint: Niche | None = None
     angle_id: str | None = None

@@ -22,6 +22,8 @@ from apps.generator.tasks import (
     generate_brand_proposal,
     generate_standard_pages,
     generate_store_structure,
+    retry_store_build_child,
+    run_store_build,
 )
 from apps.themes.brand_blocklist import is_blocked_brand
 
@@ -158,6 +160,18 @@ def start_wizard(request: HttpRequest) -> HttpResponse:
             )
             generate_store_structure.delay(str(bp.id))
             messages.success(request, f"{len(gids)} products selected.")
+            return redirect(back)
+
+    # T-117 store build actions (F15-10): start, retry parent, retry child
+    if request.method == "POST" and bp.status == BlueprintStatus.BUILDING:
+        build_action = request.POST.get("action", "")
+        if build_action in {"build_store", "retry_build"}:
+            run_store_build.delay(str(bp.id))
+            return redirect(back)
+        if build_action == "retry_child":
+            job_id = request.POST.get("job_id", "")
+            if job_id:
+                retry_store_build_child.delay(job_id)
             return redirect(back)
 
     if bp.status == BlueprintStatus.STRUCTURE and bp.store_structure:
@@ -327,6 +341,7 @@ def start_wizard(request: HttpRequest) -> HttpResponse:
             if bp.status == BlueprintStatus.IDEAS
             else {},
             **(_structure_panel_context(bp) if bp.status == BlueprintStatus.STRUCTURE else {}),
+            **(_build_panel_context(bp) if bp.status == BlueprintStatus.BUILDING else {}),
         },
     )
 
@@ -431,7 +446,7 @@ def start_panel(request: HttpRequest) -> HttpResponse:
         return render(request, "app/start_structure_panel.html", ctx)
 
     if bp.status == BlueprintStatus.BUILDING:
-        return render(request, "app/start_build_panel.html", {"bp": bp})
+        return render(request, "app/start_build_panel.html", _build_panel_context(bp))
     return render(
         request,
         "app/start_panel.html",
@@ -579,3 +594,17 @@ def _import_app_display(bp: StoreBlueprint) -> dict:
         "name": import_app_name(app),
         "link": import_app_link(app, (bp.description or "")[:60]),
     }
+
+
+def _build_panel_context(bp) -> dict:
+    """Steps + children for the build status screen (F15-17/T-117)."""
+    from apps.generator.models import GenerationJob
+
+    ctx: dict = {"bp": bp}
+    job = bp.build_job
+    if job is None:
+        return ctx
+    children = list(GenerationJob.objects.filter(parent=job).order_by("page_type", "created_at"))
+    steps = list(job.steps.all())
+    ctx.update({"build_job": job, "build_steps": steps, "build_children": children})
+    return ctx

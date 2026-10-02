@@ -15,7 +15,7 @@ from celery import shared_task
 from django.utils import timezone
 
 from .errors import AiBudgetExceeded, check_job_budget
-from .models import GenerationJob, JobStatus, JobStep, StepStatus
+from .models import BlueprintStatus, GenerationJob, JobStatus, JobStep, StepStatus
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +27,16 @@ STORE_STEP_ORDER: list[str] = ["import", "research"]
 
 
 def _reserve_usage(job: GenerationJob) -> bool:
-    """Reserve store_generations for this job. Returns False if limit reached."""
+    """Reserve store_generations for this job. Returns False if limit reached.
+
+    Store-build children (T-117) carry ``usage_reserved`` in their input:
+    their usage was reserved up-front by the parent's composite
+    reservation (12 §7) — skip to avoid double-reserving.
+    """
     from apps.billing.limits import reserve
+
+    if (job.input or {}).get("usage_reserved"):
+        return True
 
     result = reserve(job.shop, "store_generations", 1)
     if not result.allowed:
@@ -850,3 +858,172 @@ def generate_standard_pages(blueprint_id: str) -> None:
     bp.standard_pages = assembled
     bp.save(update_fields=["standard_pages", "updated_at"])
     logger.info("Standard pages generated for %s: %s", bp.id, list(assembled))
+
+
+# ── Store build — F15 wizard job (T-117, 12 §5) ────────────────────────────
+
+
+@shared_task(acks_late=True, max_retries=2)
+def run_store_build(blueprint_id: str) -> None:
+    """The parent `store_build` job: limits → collections → children → menu.
+
+    Idempotent (F15-15): the parent job, every collection and every child
+    are get_or_create'd on fixed keys; a retry resumes the same job and
+    re-runs only failed steps. A Shopify failure keeps the step `failed`
+    with `last_error` (12 §5).
+    """
+    from apps.generator.models import StoreBlueprint
+    from apps.generator.store_build import (
+        _mark_step,
+        convert_reservation,
+        create_children,
+        create_collections,
+        ensure_parent_steps,
+        get_or_create_store_job,
+        reserve_build_limits,
+    )
+    from apps.generator.tasks import run_store_build_child
+
+    try:
+        bp = StoreBlueprint.objects.get(id=blueprint_id)
+    except StoreBlueprint.DoesNotExist:
+        logger.warning("Store build: blueprint %s not found", blueprint_id)
+        return
+    if bp.status != BlueprintStatus.BUILDING:
+        return
+
+    if not bp.selected_product_gids:
+        job = get_or_create_store_job(bp.shop, bp)
+        bp.build_job = job
+        bp.save(update_fields=["build_job", "updated_at"])
+        job.status = JobStatus.FAILED
+        job.error_code = "BLUEPRINT_NO_PRODUCTS"
+        job.error_message = "Select at least one product before building the store."
+        job.save(update_fields=["status", "error_code", "error_message"])
+        return
+
+    job = get_or_create_store_job(bp.shop, bp)
+    if bp.build_job_id != job.id:
+        bp.build_job = job
+        bp.save(update_fields=["build_job", "updated_at"])
+    if job.status == JobStatus.SUCCEEDED:
+        return
+    ensure_parent_steps(job)
+    job.status = JobStatus.RUNNING
+    if not job.started_at:
+        job.started_at = timezone.now()
+    job.save(update_fields=["status", "started_at"])
+
+    from apps.generator.models import StepStatus
+
+    # Step 1 — limits (once; skipped on resume)
+    limits_step = job.steps.get(name="import")
+    if limits_step.status != StepStatus.SUCCEEDED:
+        _mark_step(limits_step, StepStatus.RUNNING)
+        try:
+            ok, amounts, message = reserve_build_limits(bp)
+        except Exception as exc:  # noqa: BLE001
+            _mark_step(limits_step, StepStatus.FAILED, error=str(exc))
+            job.status = JobStatus.FAILED
+            job.error_code = "UNKNOWN_ERROR"
+            job.error_message = str(exc)
+            job.finished_at = timezone.now()
+            job.save(update_fields=["status", "error_code", "error_message", "finished_at"])
+            return
+        if not ok:
+            _mark_step(limits_step, StepStatus.FAILED, error=message)
+            job.status = JobStatus.FAILED
+            job.error_code = "PLAN_LIMIT_REACHED"
+            job.error_message = message or "Plan limit reached. Please upgrade your plan."
+            job.finished_at = __import__("django.utils", fromlist=["timezone"]).timezone.now()
+            job.save(update_fields=["status", "error_code", "error_message", "finished_at"])
+            return
+        _mark_step(limits_step, StepStatus.SUCCEEDED, output=amounts)
+
+    # Step 2 — collections (unpublished)
+    collections_step = job.steps.get(name="research")
+    if collections_step.status != StepStatus.SUCCEEDED:
+        _mark_step(collections_step, StepStatus.RUNNING)
+        try:
+            from apps.generator.store_build import _get_client
+
+            created = create_collections(_get_client(bp.shop), bp)
+            _mark_step(collections_step, StepStatus.SUCCEEDED, output={"collections": created})
+        except Exception as exc:  # noqa: BLE001
+            _mark_step(collections_step, StepStatus.FAILED, error=str(exc))
+            job.status = JobStatus.FAILED
+            job.error_code = "SHOPIFY_ERROR"
+            job.error_message = str(exc)
+            job.finished_at = timezone.now()
+            job.save(update_fields=["status", "error_code", "error_message", "finished_at"])
+            convert_reservation(bp, consume_ok=False)
+            return
+
+    # Step 3 — child jobs
+    children_step = job.steps.get(name="copy")
+    if children_step.status != StepStatus.SUCCEEDED:
+        _mark_step(children_step, StepStatus.RUNNING)
+        children, skipped = create_children(bp, job)
+        _mark_step(
+            children_step,
+            StepStatus.SUCCEEDED,
+            output={
+                "children": {str(c.page_type): str(c.id) for c in children},
+                "skipped": skipped,
+            },
+        )
+        for child in children:
+            if child.status == JobStatus.QUEUED:
+                run_store_build_child.delay(str(child.id))
+
+    # Step 4 — menu: runs from advance_store_build once all children succeed.
+    # On a resume where children already finished, advance here directly.
+    from apps.generator.store_build import advance_store_build, children_state
+
+    state = children_state(job)
+    if state["total"] > 0 and state["failed"] == 0 and state["running"] == 0:
+        advance_store_build(job)
+        return
+    job.status = JobStatus.RUNNING
+    job.save(update_fields=["status"])
+
+
+@shared_task(acks_late=True, max_retries=3)
+def run_store_build_child(job_id: str) -> None:
+    """Run one child page job of a store build, then advance the parent."""
+    from apps.generator.store_build import advance_store_build, register_page_resources
+
+    result = execute_job(job_id)
+    try:
+        job = GenerationJob.objects.get(id=job_id)
+    except GenerationJob.DoesNotExist:
+        return
+    if job.status == JobStatus.SUCCEEDED:
+        blueprint_id = (job.input or {}).get("blueprint_id")
+        if blueprint_id:
+            register_page_resources(blueprint_id)
+    if job.parent_id:
+        try:
+            parent = GenerationJob.objects.get(id=job.parent_id)
+        except GenerationJob.DoesNotExist:
+            return
+        advance_store_build(parent)
+    logger.info("Store-build child %s finished: %s", job_id, result)
+
+
+@shared_task(acks_late=True, max_retries=0)
+def retry_store_build_child(job_id: str) -> None:
+    """Retry a failed child: reset it to queued and re-run."""
+    from apps.generator.models import StepStatus
+
+    try:
+        job = GenerationJob.objects.get(id=job_id)
+    except GenerationJob.DoesNotExist:
+        return
+    job.status = JobStatus.QUEUED
+    job.error_code = None
+    job.error_message = None
+    job.finished_at = None
+    job.save(update_fields=["status", "error_code", "error_message", "finished_at"])
+    job.steps.filter(status=StepStatus.FAILED).update(status=StepStatus.PENDING)
+    run_store_build_child.delay(str(job.id))

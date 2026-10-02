@@ -4,8 +4,21 @@
 
 {% if not bp.standard_pages %}
 <p class="mq-subtitle">{% trans "Generating page content…" %}</p>
-{% else %}
-<p class="mq-help">{% trans "Standard page content is ready. The store build (collections, pages, menu) runs in the next step." %}</p>
+
+{% elif not build_job %}
+<p class="mq-help">{% trans "The structure and page content are ready. Building creates your collections, pages and menu in Shopify — everything stays unpublished until you go live." %}</p>
+<p class="mq-help">
+  {% if bp.selected_product_gids|length > 1 %}
+  {% blocktrans with products=bp.selected_product_gids|length %}This build uses 1 store generation + 1 per extra product ({{ products }} products).{% endblocktrans %}
+  {% else %}
+  {% trans "This build uses 1 store generation." %}
+  {% endif %}
+</p>
+<form method="post" action="/app/start/?id_token={{ request.GET.id_token }}">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="build_store">
+  <button type="submit" class="mq-btn">{% trans "Build my store" %}</button>
+</form>
 <ul class="mq-structure-list">
   {% for page_type, page in bp.standard_pages.items %}
   <li>
@@ -28,4 +41,49 @@
   </li>
   {% endfor %}
 </ul>
+
+{% else %}
+<p class="mq-help">
+  {% blocktrans with status=build_job.status %}Build status: {{ status }}{% endblocktrans %}
+</p>
+
+<h3>{% trans "Steps" %}</h3>
+<ul class="mq-structure-list">
+  {% for step in build_steps %}
+  <li>
+    {% if step.status == "succeeded" %}✅{% elif step.status == "failed" %}❌{% elif step.status == "running" %}⏳{% else %}⬜{% endif %}
+    {{ step.name }}
+    {% if step.status == "failed" and step.output.last_error %}
+    <span class="mq-help">— {{ step.output.last_error|truncatechars:160 }}</span>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+
+<h3>{% trans "Pages and products" %}</h3>
+<ul class="mq-structure-list">
+  {% for child in build_children %}
+  <li>
+    {% if child.status == "succeeded" %}✅{% elif child.status == "failed" %}❌{% elif child.status == "running" %}⏳{% else %}⬜{% endif %}
+    {{ child.page_type }}
+    {% if child.status == "failed" %}
+    <span class="mq-help">— {{ child.error_message|truncatechars:160 }}</span>
+    <form method="post" action="/app/start/?id_token={{ request.GET.id_token }}" style="display:inline">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="retry_child">
+      <input type="hidden" name="job_id" value="{{ child.id }}">
+      <button type="submit" class="mq-btn mq-btn-small">{% trans "Retry" %}</button>
+    </form>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+
+{% if build_job.status == "failed" %}
+<form method="post" action="/app/start/?id_token={{ request.GET.id_token }}">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="retry_build">
+  <button type="submit" class="mq-btn">{% trans "Retry build" %}</button>
+</form>
+{% endif %}
 {% endif %}

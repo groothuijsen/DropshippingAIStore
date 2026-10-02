@@ -58,6 +58,33 @@ class PageStatus(models.TextChoices):
     ARCHIVED = "archived", "Archived"
 
 
+class ManagedResource(models.Model):
+    """Every Shopify resource the wizard creates, so undo can remove it (12 §2.3)."""
+
+    class Kind(models.TextChoices):
+        COLLECTION = "collection", "Collection"
+        MENU = "menu", "Menu"
+        PAGE = "page", "Page"
+
+    shop = models.ForeignKey("core.Shop", on_delete=models.CASCADE, related_name="managed_resources")
+    blueprint = models.ForeignKey("StoreBlueprint", on_delete=models.CASCADE, related_name="managed_resources")
+    kind = models.CharField(max_length=12, choices=Kind.choices)
+    gid = models.CharField(max_length=255)
+    # Menu items need their display title; the §2.3 table has handle only.
+    title = models.CharField(max_length=255, blank=True)
+    handle = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    removed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["shop", "gid"], name="unique_managed_resource_gid_per_shop"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.kind} {self.handle} ({self.gid})"
+
+
 class GenerationJob(models.Model):
     """A single generation job that runs through a fixed sequence of steps."""
 
@@ -321,6 +348,11 @@ class StoreBlueprint(models.Model):
     palette = models.JSONField(null=True, blank=True)
     fonts = models.JSONField(null=True, blank=True)
     store_structure = models.JSONField(null=True, blank=True)
+    # F15-10: the store_build parent job + limit reservation moment.
+    build_job = models.ForeignKey(
+        "GenerationJob", null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    store_limit_reserved_at = models.DateTimeField(null=True, blank=True)
     # Assembled standard pages per type (T-116): {page_type: {title,
     # sections, warnings}} — AI intro/faq + code-inserted fact blocks.
     standard_pages = models.JSONField(null=True, blank=True)

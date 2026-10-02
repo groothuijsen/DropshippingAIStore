@@ -34,7 +34,7 @@ METAOBJECT_FIELD_MAP = {
 }
 
 # Page types that need a Shopify page (not just metaobject)
-PAGE_TYPES_NEEDING_SHOPIFY_PAGE = {"landing", "advertorial", "listicle", "about"}
+PAGE_TYPES_NEEDING_SHOPIFY_PAGE = {"landing", "advertorial", "listicle", "about", "faq", "shipping", "returns"}
 
 
 def build_metaobject_fields(page: Page) -> dict[str, str]:
