@@ -76,7 +76,7 @@
   {% elif bp.status == "ideas" %}
   <div id="mq-ideas-panel"
        hx-get="/app/start/panel/?id_token={{ request.GET.id_token }}"
-       hx-trigger="every 3s"
+       hx-trigger="every 10s"
        hx-swap="innerHTML">
     {% include "app/start_ideas_panel.html" %}
   </div>

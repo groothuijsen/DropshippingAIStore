@@ -187,11 +187,49 @@ def handle_product_create(receipt: WebhookReceipt) -> None:
         return
 
     created = _snapshot_variant_prices(shop, receipt.body_json)
+    _record_imported_product(shop, receipt.body_json)
     logger.info(
         "Product create for %s: %d initial price rows created",
         receipt.shop_domain,
         created,
     )
+
+
+def _record_imported_product(shop, body: dict | None) -> None:
+    """Append the product to the wizard's imported_products (F15-7).
+
+    Fast signal for the import-waiting screen; the screen also runs a
+    fallback products query. Idempotent by product GID.
+    """
+    from apps.generator.models import BlueprintStatus, StoreBlueprint
+
+    if not body:
+        return
+    gid = body.get("id") or ""
+    if not gid:
+        return
+    bp = (
+        StoreBlueprint.objects.filter(shop=shop)
+        .order_by("-created_at")
+        .first()
+    )
+    if bp is None or bp.started_products_at is None:
+        return
+    if bp.status not in (BlueprintStatus.IDEAS, BlueprintStatus.STRUCTURE):
+        return
+    items = list(bp.imported_products or [])
+    if any(item.get("gid") == gid for item in items):
+        return
+    items.append(
+        {
+            "gid": gid,
+            "title": body.get("title") or "",
+            "vendor": body.get("vendor") or "",
+            "created_at": body.get("created_at") or "",
+        }
+    )
+    bp.imported_products = items
+    bp.save(update_fields=["imported_products", "updated_at"])
 
 
 def handle_product_update(receipt: WebhookReceipt) -> None:

@@ -10,6 +10,7 @@ from typing import Any
 
 PLAN_LIMITS: dict[str, dict[str, Any]] = {
     "starter": {
+        "products_per_build": 5,
         "store_generations": 3,
         "live_pages": 15,
         "ai_images": 30,
@@ -19,6 +20,7 @@ PLAN_LIMITS: dict[str, dict[str, Any]] = {
         "shared_templates": False,
     },
     "pro": {
+        "products_per_build": 20,
         "store_generations": 15,
         "live_pages": 60,
         "ai_images": 150,
@@ -28,6 +30,7 @@ PLAN_LIMITS: dict[str, dict[str, Any]] = {
         "shared_templates": False,
     },
     "agency": {
+        "products_per_build": 20,
         "store_generations": 50,
         "live_pages": None,  # unlimited
         "ai_images": 500,
