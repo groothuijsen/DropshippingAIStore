@@ -34,5 +34,17 @@
   },
   "compliance": {
     "ai_generated": "Dieser Inhalt wurde mit KI-Unterstützung erstellt und auf Genauigkeit geprüft."
+  },
+  "sections": {
+    "guarantee": "Unsere Garantie",
+    "comparison": "Vergleich",
+    "faq": "Häufig gestellte Fragen",
+    "feature": "Funktionen",
+    "how_it_works": "So funktioniert's",
+    "no": "Nein",
+    "problem": "Das Problem",
+    "solution": "Die Lösung",
+    "specs": "Spezifikationen",
+    "yes": "Ja"
   }
 }

@@ -3,18 +3,8 @@
 
 api_version = "2026-07"
 
-[extensions]
+[[extensions]]
 name = "Mosaiq"
 handle = "mosaiq-theme-extension"
-
-[[extensions.targeting]]
-target = "sections"
-input_query = "sections"
-
-  [[extensions.targeting.schema]]
-  name = "page_type"
-  type = "single_line_text_field"
-
-  [[extensions.targeting.schema]]
-  name = "metaobject_handle"
-  type = "single_line_text_field"
+uid = "a4b1aa3f-1cef-c462-6df7-ebf70ca53ee3148fd78b"
+type = "theme"

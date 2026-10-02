@@ -34,5 +34,17 @@
   },
   "compliance": {
     "ai_generated": "Deze inhoud is gegenereerd met AI-ondersteuning en gecontroleerd op nauwkeurigheid."
+  },
+  "sections": {
+    "guarantee": "Onze garantie",
+    "comparison": "Vergelijking",
+    "faq": "Veelgestelde vragen",
+    "feature": "Functies",
+    "how_it_works": "Hoe het werkt",
+    "no": "Nee",
+    "problem": "Het probleem",
+    "solution": "De oplossing",
+    "specs": "Specificaties",
+    "yes": "Ja"
   }
 }

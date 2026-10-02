@@ -1,3 +1,9 @@
+## 2026-10-02 — Theme extension deployed (app version mosaiq-3)
+
+- `shopify.app` toml migrated to the current `[[extensions]]` + `type = "theme"` format.
+- Validation fixes: `mq-tokens.liquid` schema with `target: "head"`, unclosed `if` in `mq-unit-factor.liquid`, all `sections.*` translation keys added (nl/en/de).
+- App version **mosaiq-3** released — the F18-6 cutoff block (`mq-price.liquid`) is now deployable to themes.
+
 ## 2026-10-02 — T-150: marketing site foundation (F19)
 
 - New `apps/marketing`: host-guarded routes (marketing host only; app host root redirect preserved), language-prefixed /nl/ ( /de/ waits for T-158), Markdown+YAML content loader, Pydantic section schemas, `check_marketing_content` CI command with claims verification and language parity.

@@ -35,4 +35,3 @@ subpath = "mosaiq"
 prefix = "apps"
 
 [build]
-include_config_on_deploy = true

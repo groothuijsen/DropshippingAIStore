@@ -21,11 +21,12 @@
     else
       assign divisor = nil
   endcase
-
-  if divisor and ref_qty > 0
+-%}
+{%- if divisor and ref_qty > 0 -%}
+  {%- liquid
     assign unit_price_cents_f = tier_total_cents | times: 1.0 | divided_by: ref_qty
     assign unit_price_cents = unit_price_cents_f | round
--%}
+  -%}
   <span class="mq-bundle-picker__unit-price">
     {{ 'price.unit_price' | t }}: {{ unit_price_cents | money }}
   </span>

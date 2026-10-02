@@ -34,5 +34,17 @@
   },
   "compliance": {
     "ai_generated": "This content was generated with AI assistance and reviewed for accuracy."
+  },
+  "sections": {
+    "guarantee": "Our Guarantee",
+    "comparison": "Comparison",
+    "faq": "Frequently Asked Questions",
+    "feature": "Features",
+    "how_it_works": "How it works",
+    "no": "No",
+    "problem": "The problem",
+    "solution": "The solution",
+    "specs": "Specifications",
+    "yes": "Yes"
   }
 }
