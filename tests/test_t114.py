@@ -3,10 +3,10 @@
 from unittest.mock import MagicMock, patch
 
 import jwt as pyjwt
-from pydantic import ValidationError
 import pytest
 from django.conf import settings
 from django.test import Client
+from pydantic import ValidationError
 
 from apps.ai.schemas import ProductIdea, ProductIdeas
 from apps.core.models import Shop
@@ -236,7 +236,7 @@ class TestStartImport:
         assert bp.started_products_at == first  # window stays stable
 
     def test_reclick_shows_started_state(self, db, shop):
-        bp = _bp(shop, product_ideas=GOOD_IDEAS)
+        _bp(shop, product_ideas=GOOD_IDEAS)
         self._post(shop)
         token = _token(shop)
         resp = Client().get(f"/app/start/?id_token={token}")
