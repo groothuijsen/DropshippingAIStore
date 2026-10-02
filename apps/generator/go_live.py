@@ -150,7 +150,7 @@ def go_live(page: Page) -> dict[str, Any]:
                     # NON_NULL in 2026-07: send the current field values back
                     # so the upsert never wipes content.
                     variables = {
-                        "handle": {"type": "mosaiq_page", "handle": _handle},
+                        "handle": {"type": METAOBJECT_TYPE, "handle": _handle},
                         "metaobject": {
                             "fields": _current_metaobject_fields(client, metaobject_gid),
                             "capabilities": {"publishable": {"status": "ACTIVE"}},
@@ -211,7 +211,7 @@ def archive_page(page: Page) -> dict[str, Any]:
                 try:
                     query = load_query("metaobject_upsert")
                     variables = {
-                        "handle": {"type": "mosaiq_page", "handle": _handle},
+                        "handle": {"type": METAOBJECT_TYPE, "handle": _handle},
                         "metaobject": {
                             "fields": _current_metaobject_fields(client, metaobject_gid),
                             "capabilities": {"publishable": {"status": "DRAFT"}},

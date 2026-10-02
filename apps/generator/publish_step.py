@@ -25,7 +25,11 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 # Metaobject type for Mosaiq pages
-METAOBJECT_TYPE = "mosaiq_page"
+# App-scoped metaobject type string, introspected live on the dev store
+# (definition "$app:page_content", API type app--<app_id>--page_content).
+# Same for every shop of this app; created idempotently by
+# installation.ensure_metaobject_definitions.
+METAOBJECT_TYPE = "app--430212644865--page_content"
 
 
 def _get_client(shop: Shop) -> ShopifyGraphQLClient:
