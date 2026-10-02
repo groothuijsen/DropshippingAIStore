@@ -15,7 +15,7 @@ Merchants set delivery estimates per source app (and per product where needed). 
 7. **30-day rule.** **Given** any market has `max_days > 30`, **then** go-live of that product's page is blocked with `DELIVERY_OVER_30_DAYS`.
 8. **Claims.** The claim rule `SHIPPING_CLAIM` (12 §8) runs in the deterministic check (07 §4) with the product's estimate. Test: "Snelle levering" on a product with NL 8–14 → block; with NL 1–2 → no finding; no estimate → warn. "Verzonden vanuit ons EU-magazijn" with ship_from CN → block.
 9. **Copy input.** The `copy` step receives the estimate and the guardrail from 12 §5. The evalset (10 §4) gets 5 cases with long delivery times; none may produce a fast-delivery claim.
-10. **Shipping page.** The `shipping` page type (F15) renders its delivery-time block from the profiles (per market, per source app) and its costs from `shipping_cost`; when no profile exists, the page cannot go live and lists "Delivery times missing".
+10. **Shipping page.** *(Delivered in T-116: `standard_pages.build_fact_sections` renders per-market days + costs from `DeliveryProfile`/`shipping_cost`; no profile → the page carries "Delivery times missing" + a `missing_facts` warning; the go-live block itself is enforced by the T-117 build.)* The `shipping` page type (F15) renders its delivery-time block from the profiles (per market, per source app) and its costs from `shipping_cost`; when no profile exists, the page cannot go live and lists "Delivery times missing".
 
 ## Assumptions made during build
 _(to be filled in by Hermes)_
