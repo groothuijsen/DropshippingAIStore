@@ -484,7 +484,7 @@ def generate_brand_proposal(blueprint_id: str) -> None:
         },
     )
     try:
-        proposal, _usage = call_ai(
+        proposal = call_ai(  # returns the validated model (not a tuple)
             shop=bp.shop,
             purpose="brand_proposal",
             model_key="copy",
@@ -492,6 +492,7 @@ def generate_brand_proposal(blueprint_id: str) -> None:
             user=user or "Generate a brand proposal.",
             schema=BrandProposal,
             tool_name="submit_brand",
+            temperature=0.4,  # niche_brand prompt header
         )
     except Exception as exc:
         logger.error("Brand proposal AI call failed for %s: %s", bp.id, exc)
