@@ -53,6 +53,17 @@ Second onboarding route: the merchant describes a niche and Mosaiq proposes a br
 6. **`call_ai` returns the validated model only** (not `(model, usage)`); the names task already relied on this, the brand task initially unpacked a tuple — live E2E caught it.
 7. **Presets carry a `description`** now (data addition to `STYLE_PRESETS`) because the niche_brand prompt variable `presets_json` asks for "the 6 presets with their description".
 
+### T-114 (2026-10-02)
+
+1. **Import-app deep links** (06 §4 app list has detection rules but no public URLs): CJ and Printify get search-style links (URL-encoded phrase appended); DSers/Zendrop/AutoDS/Printful link to their app surface; `manual`/`other` get no link (the continue button still works). URLs are merchant-facing links only — the app never requests them server-side.
+2. **`started_products_at` first-click-wins**: re-clicking "continue" keeps the original window so products imported before a re-click stay listed; the timestamp updates only when it was null.
+3. **`selected_product_gids` + `imported_products` added in the same migration wave** (§2.2 fields T-115 needs) — one migration instead of several.
+4. **Ideas/import screens are polled via HTMX**; the fallback products query runs server-side on every 10s poll while the page is open (F15-7), first 50 products, deduped by GID against webhook records.
+5. **Model/temperature**: `model_key="research"` (`LLM_MODEL_RESEARCH`) and temperature 0.6 per the product_ideas.md prompt header.
+6. **Webhook HMAC (critical, found 2026-10-02)**: the receiver validated `sha256(secret + body)` instead of HMAC-SHA256 keyed with the app secret over the raw body. Every test/E2E signer used the same wrong formula, so self-signed tests passed while every live Shopify delivery returned 401 and no receipt was ever stored (the T-131 PriceHistory gap and the missing F15-7 webhook signal were this one bug). Fixed in `apps/webhooks/hmac.py`; regression test asserts the keyed HMAC validates and the old formula does not. Lesson: never sign test webhooks with code copied from the validator — verify against a real delivery.
+7. **Webhook product IDs are plain numeric**, the Admin API returns GIDs — `_record_imported_product` prefixes digit IDs (`str()` guard: payloads may carry `id` as an int) and the panel merge normalizes both shapes.
+8. **Plan maximum** comes from `PLAN_LIMITS[*]["products_per_build"]` (12 §7: starter 5, pro 20, agency 20); the selection screen disables Next at 0 selected and the server rejects 0 or over-max (`BLUEPRINT_NO_PRODUCTS` / plan-max message).
+
 ### T-111 (2026-10-01)
 
 1. **T-111 `is_complete()` purposes** (12 §2.1 lists the four purposes but not their required fields):

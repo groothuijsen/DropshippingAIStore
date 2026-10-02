@@ -1,5 +1,12 @@
 ## Unreleased
 
+### T-114 — Product ideas + import-waiting screen + selection (F15-6/7, 2026-10-02)
+
+- **F15-6**: `ProductIdea`/`ProductIdeas` schemas (12 §3); `generate_product_ideas` task (`model_key="research"`, temperature 0.6); `apps/generator/import_apps.py` deep links (CJ/Printify search links); wizard ideas screen (HTMX, ideas + avoid + Open-app link) and `start_import` action setting `started_products_at` (first click keeps the window).
+- **F15-7**: `products_per_build` plan limits (starter 5 / pro 20 / agency 20, 12 §7); `products_list.graphql` nodes carry `createdAt`; `StoreBlueprint.imported_products` (migration `generator/0005`); the `products/create` webhook records new products on the wizard blueprint (idempotent, GID-normalized); import-waiting panel merges webhook records + a 10s fallback products query, shows vendor-based source detection and plan-max selection (1–20; Next disabled at 0, `BLUEPRINT_NO_PRODUCTS` server-side); selection advances the blueprint to `structure` (T-115's input).
+- **CRITICAL webhook HMAC fix**: the receiver validated `sha256(secret + body)` instead of HMAC-SHA256 keyed with the app secret over the raw body. Every test/E2E signer used the same wrong formula, so self-signed tests passed while **every live Shopify delivery since T-110 returned 401** and no receipt was ever stored (this was also the T-131 "PriceHistory 0 rows" gap). Fixed in `apps/webhooks/hmac.py` with a regression test; test signers corrected.
+- **Live E2E (dev store)**: 10 real AI ideas (Verzwaringsdeken €59–€119, Dutch) → import window → new product listed via the fallback query → selected → `status=structure`. After the HMAC fix: real `products/create` deliveries produce receipts and `imported_products` rows with full GIDs. 1065/1065 tests; ruff clean.
+
 ### T-113 — Brand step: niche_brand proposal + BrandKit prefill (2026-10-02)
 
 - **`BrandProposal` schema** (12 §3) + **`StoreBlueprint.brand_proposal`** (migration `generator/0003`) + **`BrandKit.tagline`** (migration `themes/0002`).
