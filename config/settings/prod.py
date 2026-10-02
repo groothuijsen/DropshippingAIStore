@@ -6,6 +6,19 @@ DEBUG = False
 
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS")  # noqa: F405
 
+# Static files: WhiteNoise serves them from the gunicorn process —
+# there is no nginx on CT 412, so /static/* 404'd until T-160.
+from .base import MIDDLEWARE as _BASE_MIDDLEWARE  # noqa: E402
+
+MIDDLEWARE = [
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    *_BASE_MIDDLEWARE,
+]
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
+}
+
 # Security
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SESSION_COOKIE_SECURE = True
