@@ -196,6 +196,8 @@ class OpenAIImageProvider:
                 # Pure text-to-image: JSON generations endpoint (the edits
                 # endpoint rejects non-multipart bodies — live lesson).
                 json_body = {k: v for k, v in data.items() if k != "input_fidelity"}
+                # JSON bodies need real types (the form API took strings)
+                json_body["n"] = int(json_body.get("n", 1))
                 response = httpx.post(
                     "https://api.openai.com/v1/images/generations",
                     headers={**headers, "Content-Type": "application/json"},
