@@ -1,1 +1,489 @@
-/* Mosaiq admin styles — placeholder for T-003 */
+/* ═══════════════════════════════════════════════════════════════════
+   Mosaiq admin — T-160
+   Direction C · Carbon Emerald (user pick 2026-10-02)
+
+   Near-black carbon surfaces, emerald accent, dense technical feel.
+   Semantic tokens in :root; all mq-* classes used by the templates.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* surfaces */
+  --mq-bg: #0e0f0f;
+  --mq-bg-elevated: #141616;
+  --mq-bg-input: rgba(255, 255, 255, 0.03);
+  --mq-bar: #121414;
+
+  /* lines */
+  --mq-border: #24282a;
+  --mq-border-strong: #31383a;
+
+  /* text */
+  --mq-fg: #e6eae8;
+  --mq-fg-muted: #949c99;
+  --mq-fg-faint: #6b7472;
+
+  /* accent — emerald */
+  --mq-accent: #10b981;
+  --mq-accent-hover: #0ea572;
+  --mq-accent-fg: #04120c; /* text on accent buttons */
+  --mq-accent-soft: rgba(16, 185, 129, 0.13);
+  --mq-accent-line: rgba(16, 185, 129, 0.4);
+
+  /* status */
+  --mq-ok: #10b981;
+  --mq-warn-fg: #fbbf24;
+  --mq-warn-bg: rgba(251, 191, 36, 0.1);
+  --mq-warn-line: rgba(251, 191, 36, 0.3);
+  --mq-error-fg: #f87171;
+  --mq-error-bg: rgba(248, 113, 113, 0.1);
+  --mq-error-line: rgba(248, 113, 113, 0.35);
+  --mq-run-glow: rgba(16, 185, 129, 0.25);
+
+  /* geometry */
+  --mq-radius: 12px;
+  --mq-radius-sm: 8px;
+
+  /* type */
+  --mq-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* ── Base ─────────────────────────────────────────────────────────── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { color-scheme: dark; }
+
+body {
+  font-family: var(--mq-font);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--mq-fg);
+  background: var(--mq-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 8px; }
+h2 { font-size: 16px; font-weight: 650; margin-bottom: 6px; }
+h3 { font-size: 14px; font-weight: 650; margin-bottom: 6px; }
+
+a { color: var(--mq-accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+:focus-visible {
+  outline: 2px solid var(--mq-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.92em;
+  background: var(--mq-bg-input);
+  border: 1px solid var(--mq-border);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+/* ── Layout containers ───────────────────────────────────────────── */
+.mq-delivery-settings,
+.mq-store-settings,
+.mq-price-advisor,
+.mq-onboarding,
+.mq-start-wizard,
+.mq-support {
+  max-width: 860px;
+  margin: 32px auto;
+  padding: 0 20px 48px;
+}
+
+.mq-subtitle {
+  color: var(--mq-fg-muted);
+  margin-bottom: 24px;
+  max-width: 65ch;
+}
+
+/* ── Panels ───────────────────────────────────────────────────────── */
+.mq-panel,
+.mq-profile-card,
+.mq-sync-app-panel,
+.mq-advice-panel,
+.mq-delivery-override,
+.mq-support__faq {
+  background: var(--mq-bg-elevated);
+  border: 1px solid var(--mq-border);
+  border-radius: var(--mq-radius);
+  padding: 20px 24px;
+  margin-bottom: 16px;
+}
+
+.mq-profile-card h2 {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--mq-accent);
+  margin-bottom: 12px;
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────── */
+.mq-btn,
+.mq-button,
+.mq-button-primary,
+.mq-button-secondary,
+.mq-button-danger,
+.btn,
+.btn-primary,
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: var(--mq-radius-sm);
+  border: 1px solid transparent;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s ease-out, border-color 0.15s ease-out, color 0.15s ease-out;
+  background: transparent;
+  color: var(--mq-fg);
+}
+.mq-btn:hover, .mq-button:hover, .btn:hover { text-decoration: none; }
+
+.mq-btn-primary,
+.mq-button-primary,
+.btn-primary {
+  background: var(--mq-accent);
+  color: var(--mq-accent-fg);
+  border-color: var(--mq-accent);
+}
+.mq-btn-primary:hover,
+.mq-button-primary:hover,
+.btn-primary:hover {
+  background: var(--mq-accent-hover);
+  border-color: var(--mq-accent-hover);
+  color: var(--mq-accent-fg);
+}
+
+.mq-btn-secondary,
+.mq-button-secondary,
+.btn-ghost {
+  border-color: var(--mq-border-strong);
+  color: var(--mq-fg);
+  background: transparent;
+}
+.mq-btn-secondary:hover,
+.mq-button-secondary:hover,
+.btn-ghost:hover {
+  border-color: var(--mq-accent-line);
+  color: var(--mq-fg);
+}
+
+.mq-button-danger {
+  border-color: var(--mq-error-line);
+  color: var(--mq-error-fg);
+  background: var(--mq-error-bg);
+}
+.mq-button-danger:hover { border-color: var(--mq-error-fg); color: var(--mq-error-fg); }
+
+.mq-btn-small {
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.mq-actions,
+.cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* ── Forms ────────────────────────────────────────────────────────── */
+.mq-form { display: grid; gap: 16px; }
+
+.mq-field { display: grid; gap: 6px; margin-bottom: 4px; }
+.mq-field label,
+.mq-fieldset > legend {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mq-fg-muted);
+}
+
+.mq-field input[type="text"],
+.mq-field input[type="email"],
+.mq-field input[type="url"],
+.mq-field input[type="number"],
+.mq-field input[type="search"],
+.mq-field select,
+.mq-field textarea,
+.mq-support__form input,
+.mq-support__form textarea,
+.mq-support__form select {
+  min-height: 44px;
+  width: 100%;
+  border-radius: var(--mq-radius-sm);
+  border: 1px solid var(--mq-border);
+  background: var(--mq-bg-input);
+  color: var(--mq-fg);
+  font: inherit;
+  padding: 0 12px;
+  transition: border-color 0.15s ease-out;
+}
+.mq-field textarea,
+.mq-support__form textarea {
+  padding: 10px 12px;
+  min-height: 96px;
+  resize: vertical;
+}
+.mq-field input:hover,
+.mq-field select:hover,
+.mq-field textarea:hover { border-color: var(--mq-border-strong); }
+.mq-field input:focus,
+.mq-field select:focus,
+.mq-field textarea:focus {
+  border-color: var(--mq-accent);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--mq-accent-soft);
+}
+.mq-field input::placeholder,
+.mq-field textarea::placeholder { color: var(--mq-fg-faint); }
+
+.mq-field-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.mq-field-checkbox,
+.mq-checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.mq-field-checkbox input[type="checkbox"],
+.mq-checkbox-group input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--mq-accent);
+  cursor: pointer;
+  flex: none;
+}
+
+.mq-fieldset {
+  border: 1px solid var(--mq-border);
+  border-radius: var(--mq-radius);
+  padding: 14px 16px;
+  margin-bottom: 8px;
+}
+
+.mq-inline-form { display: inline-flex; gap: 8px; align-items: center; }
+.mq-inline { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* ── Tables ───────────────────────────────────────────────────────── */
+.mq-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+}
+.mq-table th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mq-fg-muted);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--mq-border-strong);
+}
+.mq-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--mq-border);
+  vertical-align: middle;
+}
+.mq-table tr:last-child td { border-bottom: none; }
+.mq-table .item.domain_status,
+.mq-domain { font-size: 13px; color: var(--mq-fg-muted); }
+.mq-domain-likely_free { color: var(--mq-accent); font-weight: 650; }
+
+/* ── Messages / warnings ──────────────────────────────────────────── */
+.mq-messages { margin-bottom: 16px; display: grid; gap: 8px; }
+
+.mq-message {
+  border-radius: var(--mq-radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  border: 1px solid var(--mq-border);
+  background: var(--mq-bg-elevated);
+  color: var(--mq-fg);
+}
+.mq-message-success {
+  border-color: var(--mq-accent-line);
+  background: var(--mq-accent-soft);
+  color: var(--mq-accent);
+}
+.mq-message-warning,
+.mq-warning {
+  border-color: var(--mq-warn-line);
+  background: var(--mq-warn-bg);
+  color: var(--mq-warn-fg);
+}
+.mq-message-error,
+.mq-form-danger {
+  border-color: var(--mq-error-line);
+  background: var(--mq-error-bg);
+  color: var(--mq-error-fg);
+}
+.mq-omnibus {
+  border-color: var(--mq-warn-line);
+  background: var(--mq-warn-bg);
+  color: var(--mq-warn-fg);
+}
+
+/* ── Lists ────────────────────────────────────────────────────────── */
+.mq-name-list,
+.mq-idea-list,
+.mq-product-list,
+.mq-structure-list {
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.mq-name-list li,
+.mq-idea-list li,
+.mq-structure-list li {
+  border: 1px solid var(--mq-border);
+  border-radius: var(--mq-radius-sm);
+  padding: 12px 14px;
+  background: var(--mq-bg-elevated);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: baseline;
+}
+.mq-product-list li {
+  border: 1px solid var(--mq-border);
+  border-radius: var(--mq-radius-sm);
+  padding: 12px 14px;
+  background: var(--mq-bg-elevated);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+}
+
+/* ── Steps / build progress ───────────────────────────────────────── */
+.mq-steps,
+.steps {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.mq-step,
+.step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--mq-border);
+  border-radius: var(--mq-radius);
+  background: var(--mq-bg-elevated);
+  font-weight: 500;
+}
+.mq-step .dot,
+.step .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--mq-fg-faint);
+  flex: none;
+}
+.mq-step.ok .dot,
+.step.ok .dot { background: var(--mq-ok); }
+.mq-step.run .dot,
+.step.run .dot {
+  background: var(--mq-accent);
+  box-shadow: 0 0 0 4px var(--mq-run-glow);
+}
+.mq-step .tag,
+.step .tag {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--mq-fg-muted);
+}
+
+/* ── Price advisor ────────────────────────────────────────────────── */
+.mq-price-advisor .mq-current-price,
+.mq-price-advisor .price {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--mq-fg);
+}
+.mq-apply-form { margin-top: 12px; }
+
+/* ── Copyable values ──────────────────────────────────────────────── */
+.mq-copy-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  background: var(--mq-bg-input);
+  border: 1px solid var(--mq-border);
+  border-radius: var(--mq-radius-sm);
+  padding: 8px 12px;
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* ── Onboarding / wizard ──────────────────────────────────────────── */
+.mq-onboarding .onboarding-step,
+.mq-start-wizard .panel {
+  background: var(--mq-bg-elevated);
+  border: 1px solid var(--mq-border);
+  border-radius: var(--mq-radius);
+  padding: 24px;
+  margin-bottom: 16px;
+}
+.mq-support__status { color: var(--mq-fg-muted); font-size: 13px; margin-bottom: 12px; }
+
+/* ── Dashboard cards ──────────────────────────────────────────────── */
+.mq-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+.mq-card {
+  display: block;
+  padding: 20px;
+  background: var(--mq-bg-elevated);
+  border: 1px solid var(--mq-border);
+  border-radius: var(--mq-radius);
+  text-decoration: none;
+  color: var(--mq-fg);
+  transition: border-color 0.15s ease-out, transform 0.15s ease-out;
+}
+.mq-card:hover {
+  border-color: var(--mq-accent-line);
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+.mq-card .mq-card-icon {
+  font-size: 20px;
+  color: var(--mq-accent);
+  margin-bottom: 8px;
+  line-height: 1;
+}
+.mq-card .mq-card-title { font-weight: 650; }
+.mq-card .mq-card-desc { font-size: 13px; color: var(--mq-fg-muted); margin-top: 4px; }
+
+/* ── Scrollbar (dark polish) ──────────────────────────────────────── */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--mq-border-strong); border-radius: 6px; }
+::-webkit-scrollbar-track { background: transparent; }

@@ -2,37 +2,29 @@
 {% load i18n %}
 
 {% block content %}
-<div style="max-width: 800px; margin: 40px auto; padding: 20px;">
-    <h1 style="font-size: 24px; margin-bottom: 16px;">{% trans "Welcome to Mosaiq" %}</h1>
+<div class="mq-delivery-settings">
+    <h1>{% trans "Welcome to Mosaiq" %}</h1>
 
-    <div style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        <p style="color: #6d7175; margin-bottom: 16px;">
+    <div class="mq-panel">
+        <p class="mq-help">
             {% trans "Your Shopify store is connected." %}
             {% if shop_domain %}
                 <br><strong>{{ shop_domain }}</strong>
             {% endif %}
         </p>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 24px;">
-            <a href="/app/generate/" style="display: block; padding: 20px; background: #f4f6f8; border-radius: 8px; text-decoration: none; color: #202223; border: 1px solid #e1e3e5;">
-                <div style="font-size: 24px; margin-bottom: 8px;">⚡</div>
-                <div style="font-weight: 600;">{% trans "Generate" %}</div>
-                <div style="font-size: 13px; color: #6d7175; margin-top: 4px;">{% trans "Create AI-powered store pages" %}</div>
+        <div class="mq-cards">
+            <a href="/app/start/" class="mq-card">
+                <div class="mq-card-title">{% trans "Start from zero" %}</div>
+                <div class="mq-card-desc">{% trans "AI builds your store: pages, collections, menu" %}</div>
             </a>
-            <a href="/app/pages/" style="display: block; padding: 20px; background: #f4f6f8; border-radius: 8px; text-decoration: none; color: #202223; border: 1px solid #e1e3e5;">
-                <div style="font-size: 24px; margin-bottom: 8px;">📄</div>
-                <div style="font-weight: 600;">{% trans "Pages" %}</div>
-                <div style="font-size: 13px; color: #6d7175; margin-top: 4px;">{% trans "Manage your pages" %}</div>
+            <a href="/app/settings/delivery/" class="mq-card">
+                <div class="mq-card-title">{% trans "Delivery" %}</div>
+                <div class="mq-card-desc">{% trans "Lead times per source app" %}</div>
             </a>
-            <a href="/app/offers/" style="display: block; padding: 20px; background: #f4f6f8; border-radius: 8px; text-decoration: none; color: #202223; border: 1px solid #e1e3e5;">
-                <div style="font-size: 24px; margin-bottom: 8px;">🎁</div>
-                <div style="font-weight: 600;">{% trans "Offers" %}</div>
-                <div style="font-size: 13px; color: #6d7175; margin-top: 4px;">{% trans "Bundles and discounts" %}</div>
-            </a>
-            <a href="/app/settings/" style="display: block; padding: 20px; background: #f4f6f8; border-radius: 8px; text-decoration: none; color: #202223; border: 1px solid #e1e3e5;">
-                <div style="font-size: 24px; margin-bottom: 8px;">⚙️</div>
-                <div style="font-weight: 600;">{% trans "Settings" %}</div>
-                <div style="font-size: 13px; color: #6d7175; margin-top: 4px;">{% trans "Brand, store, billing" %}</div>
+            <a href="/app/settings/store/" class="mq-card">
+                <div class="mq-card-title">{% trans "Settings" %}</div>
+                <div class="mq-card-desc">{% trans "Brand, store, billing" %}</div>
             </a>
         </div>
     </div>
