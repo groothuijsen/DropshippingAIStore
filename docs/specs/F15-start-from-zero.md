@@ -31,6 +31,7 @@ Second onboarding route: the merchant describes a niche and Mosaiq proposes a br
 - Undo removes only `ManagedResource` items of this blueprint.
 
 ## Assumptions made during build
+10. **PDP pipeline verified against the real API only in T-161 (2026-10-02)**: copy/images/compliance/layout/publish had never run end-to-end against live Shopify/Anthropic/OpenAI — the T-117 "success" was execute_job marking None-returning steps as succeeded. Contract steps now raise (`STEP_NO_OUTPUT`/`CopyInputMissing`/`PageNotFound`); image generation runs via OpenAI `gpt-image-1.5` on the VPS (Vertex needs GCP creds, not present). Images are stored as data-URL placeholders until the Shopify Files upload ticket (05 §4.4).
 
 ### T-112 (2026-10-02)
 

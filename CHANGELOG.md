@@ -1,3 +1,12 @@
+## 2026-10-02 — T-161/T-162: GPSR form + phase close-out + live pipeline hardening
+
+- **T-161 GPSR form** (`/app/products/<gid>/gpsr/`): per-product GPSR entry stored in `$app:mosaiq.gpsr`; publish/go-live load it (empty metafield blocks the publish); build panel links blocked PDPs to the form.
+- **T-162**: F18-6 cut-off notice in `mq-price.liquid` (nl/en/de, suppression rule); home metaobjects registered as ManagedResources + `metaobjectDelete` in Undo.
+- **Live-E2E fix chain (PDP pipeline never ran against the real API)**: contract steps raise instead of fake-succeeding (`STEP_NO_OUTPUT`, `CopyInputMissing`, `PageNotFound`); copy step dumps the validated payload before section checks; images/compliance checkpoint shape fixed; AI repair messages replay the original tool_use (id preserved); OpenAI image provider uses the JSON generations endpoint (integer `n`, supported sizes, `IMAGE_MODEL_FALLBACK`); `Page.compliance_findings` added (migration 0010); `google-genai` declared.
+- **Verified live**: GPSR form → metafield (API read) → PDP publish gate complete=True → compliance 100 → layout → publish → metaobject `284940402982` + ManagedResource; home metaobject MR repaired.
+- mypy: config error fixed (`explicit_package_bases`) — runs end-to-end, 271 strict errors remain as burn-down.
+- 1163/1163 tests.
+
 ## Unreleased
 
 ### T-160 — UI styling: WhiteNoise + Carbon Emerald theme (2026-10-02)
