@@ -106,6 +106,27 @@ def start_wizard(request: HttpRequest) -> HttpResponse:
                 messages.success(request, f"Brand name '{item['name']}' saved.")
                 return redirect("/app/onboarding/brand/?id_token=" + request.GET.get("id_token", ""))
 
+        if bp.status == BlueprintStatus.IDEAS and action == "start_import":
+            from django.utils import timezone
+
+            # F15-6/§2.2: first click wins — the import window stays stable
+            # even if the merchant re-opens the app later (T-115 lists
+            # products created after this moment).
+            if bp.started_products_at is None:
+                bp.started_products_at = timezone.now()
+                bp.save(update_fields=["started_products_at", "updated_at"])
+                messages.success(
+                    request,
+                    "Import your products — newly created products appear in the next step.",
+                )
+            return redirect(back)
+
+    if bp.status == BlueprintStatus.IDEAS and bp.product_ideas is None:
+        from apps.generator.tasks import generate_product_ideas
+
+        # Idempotent: the task no-ops when ideas already exist.
+        generate_product_ideas.delay(str(bp.id))
+
     return render(
         request,
         "app/start_wizard.html",
@@ -121,6 +142,7 @@ def start_wizard(request: HttpRequest) -> HttpResponse:
             "price_levels": PRICE_LEVELS,
             "max_regenerate": MAX_REGENERATE,
             "tmview_url": TMVIEW_URL,
+            "import_app_display": _import_app_display(bp),
         },
     )
 
@@ -201,13 +223,22 @@ def _save_brief(bp: StoreBlueprint, request: HttpRequest) -> list[str]:
 
 
 def start_panel(request: HttpRequest) -> HttpResponse:
-    """HTMX fragment for the names panel (polled every 3s while generating)."""
+    """HTMX fragment for the names or product-ideas panel (polled every 3s)."""
     shop = _get_shop(request)
     if shop is None:
         return _unauthorized()
     bp = StoreBlueprint.objects.filter(shop=shop).order_by("-created_at").first()
     if bp is None:
         return _unauthorized()
+    if bp.status == BlueprintStatus.IDEAS:
+        return render(
+            request,
+            "app/start_ideas_panel.html",
+            {
+                "bp": bp,
+                "import_app_display": _import_app_display(bp),
+            },
+        )
     return render(
         request,
         "app/start_panel.html",
@@ -217,3 +248,14 @@ def start_panel(request: HttpRequest) -> HttpResponse:
             "max_regenerate": MAX_REGENERATE,
         },
     )
+
+
+def _import_app_display(bp: StoreBlueprint) -> dict:
+    """App name + deep link for the product-ideas screen (F15-6)."""
+    from apps.generator.import_apps import import_app_link, import_app_name
+
+    app = bp.import_app or "manual"
+    return {
+        "name": import_app_name(app),
+        "link": import_app_link(app, (bp.description or "")[:60]),
+    }

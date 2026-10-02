@@ -74,9 +74,11 @@
   </div>
 
   {% elif bp.status == "ideas" %}
-  <div class="mq-panel">
-    <h2>{% trans "Product ideas" %}</h2>
-    <p class="mq-subtitle">{% trans "Your brand is saved. Product ideas arrive with the next wizard step." %}</p>
+  <div id="mq-ideas-panel"
+       hx-get="/app/start/panel/?id_token={{ request.GET.id_token }}"
+       hx-trigger="every 3s"
+       hx-swap="innerHTML">
+    {% include "app/start_ideas_panel.html" %}
   </div>
 
   {% elif bp.status == "brand" %}

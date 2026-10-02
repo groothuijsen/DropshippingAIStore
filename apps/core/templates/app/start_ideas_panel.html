@@ -1,0 +1,51 @@
+{% load i18n %}
+
+{% if bp.product_ideas %}
+<h2>{% trans "Product ideas" %}</h2>
+<p class="mq-help">{% trans "Suggestions only — you choose what to import." %}</p>
+<ul class="mq-idea-list">
+  {% for idea in bp.product_ideas.ideas %}
+  <li>
+    <strong>{{ idea.title }}</strong>
+    <span class="mq-domain">{{ idea.target_price_band }}</span>
+    <p class="mq-help">{{ idea.why }}</p>
+    <p class="mq-help">{% trans "Search:" %} {{ idea.search_phrases|join:" · " }}</p>
+    {% if idea.eu_notes %}
+    <p class="mq-help">{% trans "EU:" %} {{ idea.eu_notes|join:" · " }}</p>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+
+{% if bp.product_ideas.avoid %}
+<div class="mq-panel">
+  <h3>{% trans "Avoid in the EU" %}</h3>
+  <ul>
+    {% for item in bp.product_ideas.avoid %}
+    <li>{{ item }}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% if import_app_display.link %}
+<form method="post" action="/app/start/?id_token={{ request.GET.id_token }}" class="mq-form">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="start_import">
+  <a class="mq-button" href="{{ import_app_display.link }}" target="_blank" rel="noopener">{% trans "Open" %} {{ import_app_display.name }}</a>
+  <button type="submit" class="mq-button mq-button-secondary">{% trans "I have imported my products — continue" %}</button>
+</form>
+{% else %}
+<form method="post" action="/app/start/?id_token={{ request.GET.id_token }}" class="mq-form">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="start_import">
+  <button type="submit" class="mq-button">{% trans "I have imported my products — continue" %}</button>
+</form>
+{% endif %}
+
+{% if bp.started_products_at %}
+<p class="mq-subtitle">{% blocktrans with ts=bp.started_products_at %}Import window opened {{ ts }} — newly created products appear in the next step.{% endblocktrans %}</p>
+{% endif %}
+{% else %}
+<p class="mq-subtitle">{% trans "Generating product ideas…" %}</p>
+{% endif %}

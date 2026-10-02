@@ -223,6 +223,10 @@ def _handle_brand_step(request: HttpRequest, shop: Shop) -> HttpResponse | None:
                     ]
                 )
             sync_brand_tokens.delay(shop.id)  # F05-5 design tokens
+            if bp is not None:
+                from apps.generator.tasks import generate_product_ideas
+
+                generate_product_ideas.delay(str(bp.id))  # F15-6
             qs = request.GET.urlencode()
             target = "/app/start/"
             if qs:

@@ -318,6 +318,8 @@ class StoreBlueprint(models.Model):
     palette = models.JSONField(null=True, blank=True)
     fonts = models.JSONField(null=True, blank=True)
     store_structure = models.JSONField(null=True, blank=True)
+    started_products_at = models.DateTimeField(null=True, blank=True)
+    selected_product_gids = models.JSONField(default=list, blank=True)
     product_ideas = models.JSONField(null=True, blank=True)
 
     completed_steps = models.JSONField(default=list, blank=True)

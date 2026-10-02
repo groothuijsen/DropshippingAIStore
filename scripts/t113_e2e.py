@@ -13,7 +13,7 @@ import jwt  # noqa: E402
 from django.conf import settings  # noqa: E402
 
 from apps.core.models import Shop  # noqa: E402
-from apps.generator.models import BlueprintStatus, StoreBlueprint  # noqa: E402
+from apps.generator.models import StoreBlueprint  # noqa: E402
 from apps.themes.models import BrandKit  # noqa: E402
 
 BASE = "http://172.16.0.213:8000"

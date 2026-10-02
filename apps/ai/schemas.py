@@ -306,6 +306,19 @@ class FieldRewrite(BaseModel):
 # ── Step 6 and 7 ──────────────────────────────────────────────────────────
 
 
+class ProductIdea(BaseModel):
+    title: str = Field(max_length=80)
+    why: str = Field(max_length=200)
+    search_phrases: list[str] = Field(min_length=2, max_length=4)
+    target_price_band: str = Field(max_length=30)  # e.g. "€25–35 incl. VAT"
+    eu_notes: list[str] = Field(max_length=4)
+
+
+class ProductIdeas(BaseModel):  # tool submit_product_ideas (F15-6)
+    ideas: list[ProductIdea] = Field(min_length=5, max_length=10)
+    avoid: list[str] = Field(max_length=6)
+
+
 class RewriteResult(BaseModel):
     """Result of a field rewrite (F07 criterion 3)."""
 

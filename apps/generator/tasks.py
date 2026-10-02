@@ -514,3 +514,67 @@ def generate_brand_proposal(blueprint_id: str) -> None:
     bp.brand_proposal = data
     bp.save(update_fields=["brand_proposal", "updated_at"])
     logger.info("Stored brand proposal for blueprint %s", bp.id)
+
+
+# ── Store-builder wizard: product ideas (F15-6, T-114) ────────────────────
+
+
+@shared_task(acks_late=True, max_retries=2)
+def generate_product_ideas(blueprint_id: str) -> None:
+    """One product_ideas call → ProductIdeas (5–10 ideas + avoid list)."""
+    import json
+
+    from apps.ai.anthropic_client import call_ai
+    from apps.ai.prompts import render_prompt
+    from apps.ai.schemas import ProductIdeas
+    from apps.generator.import_apps import import_app_name
+    from apps.generator.models import StoreBlueprint
+
+    try:
+        bp = StoreBlueprint.objects.get(id=blueprint_id)
+    except StoreBlueprint.DoesNotExist:
+        logger.warning("Product ideas: blueprint %s not found", blueprint_id)
+        return
+    if bp.status != "ideas" or bp.product_ideas is not None:
+        return
+
+    app_name = import_app_name(bp.import_app)
+    system, user = render_prompt(
+        "product_ideas",
+        {
+            "brand_name": bp.brand_name,
+            "import_app_name": app_name,
+            "brief_json": json.dumps(
+                {
+                    "description": bp.description,
+                    "markets": bp.markets,
+                    "content_locales": bp.content_locales,
+                    "audience": bp.audience,
+                    "price_level": bp.price_level,
+                },
+                ensure_ascii=False,
+            ),
+            "markets": ", ".join(bp.markets or []),
+            "ui_locale_name": {"nl": "Dutch", "en": "English", "de": "German"}.get(
+                (bp.content_locales or ["en"])[0], "English"
+            ),
+        },
+    )
+    try:
+        result = call_ai(
+            shop=bp.shop,
+            purpose="product_ideas",
+            model_key="research",  # prompt header: LLM_MODEL_RESEARCH
+            system=system,
+            user=user or "Generate product ideas.",
+            schema=ProductIdeas,
+            tool_name="submit_product_ideas",
+            temperature=0.6,  # prompt header
+        )
+    except Exception as exc:
+        logger.error("Product ideas AI call failed for %s: %s", bp.id, exc)
+        return
+
+    bp.product_ideas = result.model_dump()
+    bp.save(update_fields=["product_ideas", "updated_at"])
+    logger.info("Stored product ideas for blueprint %s", bp.id)
