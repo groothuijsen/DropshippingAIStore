@@ -47,6 +47,9 @@ class PageType(models.TextChoices):
     LISTICLE = "listicle", "Listicle"
     HOME = "home", "Home"
     ABOUT = "about", "About"
+    FAQ = "faq", "FAQ"
+    SHIPPING = "shipping", "Shipping"
+    RETURNS = "returns", "Returns"
 
 
 class PageStatus(models.TextChoices):
@@ -318,6 +321,9 @@ class StoreBlueprint(models.Model):
     palette = models.JSONField(null=True, blank=True)
     fonts = models.JSONField(null=True, blank=True)
     store_structure = models.JSONField(null=True, blank=True)
+    # Assembled standard pages per type (T-116): {page_type: {title,
+    # sections, warnings}} — AI intro/faq + code-inserted fact blocks.
+    standard_pages = models.JSONField(null=True, blank=True)
     started_products_at = models.DateTimeField(null=True, blank=True)
     imported_products = models.JSONField(default=list, blank=True)
     selected_product_gids = models.JSONField(default=list, blank=True)

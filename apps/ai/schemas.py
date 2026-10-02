@@ -381,3 +381,22 @@ class StoreStructure(BaseModel):  # tool submit_structure
     collections: list[CollectionPlan] = Field(min_length=1, max_length=6)
     menu: list[MenuItemPlan] = Field(min_length=3, max_length=8)
     pages: list[Literal["about", "faq", "shipping", "returns"]] = Field(min_length=2, max_length=4)
+
+
+# ── Standard pages: faq / shipping / returns (12 §3, T-116) ──────────────
+
+
+class StandardFaqItem(BaseModel):
+    question: str = Field(max_length=160)
+    answer: str = Field(max_length=600)
+
+
+class StandardPageContent(BaseModel):
+    page_type: Literal["about", "faq", "shipping", "returns"]
+    title: str = Field(max_length=120)
+    intro: str = Field(max_length=800)
+    faq_items: list[StandardFaqItem] = Field(max_length=12)
+
+
+class StandardPages(BaseModel):  # tool submit_standard_pages
+    pages: list[StandardPageContent] = Field(min_length=1, max_length=4)

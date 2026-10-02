@@ -1,0 +1,31 @@
+{% load i18n %}
+
+<h2>{% trans "Store build" %}</h2>
+
+{% if not bp.standard_pages %}
+<p class="mq-subtitle">{% trans "Generating page content…" %}</p>
+{% else %}
+<p class="mq-help">{% trans "Standard page content is ready. The store build (collections, pages, menu) runs in the next step." %}</p>
+<ul class="mq-structure-list">
+  {% for page_type, page in bp.standard_pages.items %}
+  <li>
+    <strong>{{ page.title }}</strong> <span class="mq-domain">{{ page_type }}</span>
+    {% if page.warnings %}
+    <ul>
+      {% for w in page.warnings %}
+      <li class="mq-help">
+        {% if w == "verify_numbers" %}
+        {% trans "The AI text contains numbers — verify them against your settings before publishing." %}
+        {% elif w|slice:":14" == "missing_facts:" %}
+        {% blocktrans with fields=w|slice:"14:" %}Missing facts: {{ fields }} — complete your settings; these pages cannot go live yet.{% endblocktrans %}
+        {% else %}
+        {{ w }}
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}

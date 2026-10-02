@@ -18,7 +18,11 @@ if TYPE_CHECKING:
 
 from apps.ai.schemas import NicheBrief
 from apps.generator.models import BlueprintStatus, StoreBlueprint
-from apps.generator.tasks import generate_brand_proposal, generate_store_structure
+from apps.generator.tasks import (
+    generate_brand_proposal,
+    generate_standard_pages,
+    generate_store_structure,
+)
 from apps.themes.brand_blocklist import is_blocked_brand
 
 logger = logging.getLogger(__name__)
@@ -284,6 +288,7 @@ def start_wizard(request: HttpRequest) -> HttpResponse:
                 bp.completed_steps = sorted({*(bp.completed_steps or []), "structure"})
                 bp.status = BlueprintStatus.BUILDING
                 bp.save()
+                generate_standard_pages.delay(str(bp.id))
                 messages.success(request, "Store structure confirmed.")
                 return redirect("/app/start/?id_token=" + request.GET.get("id_token", ""))
 
@@ -415,6 +420,9 @@ def start_panel(request: HttpRequest) -> HttpResponse:
         ctx = {"bp": bp}
         ctx.update(_structure_panel_context(bp))
         return render(request, "app/start_structure_panel.html", ctx)
+
+    if bp.status == BlueprintStatus.BUILDING:
+        return render(request, "app/start_build_panel.html", {"bp": bp})
     return render(
         request,
         "app/start_panel.html",

@@ -718,3 +718,135 @@ def generate_store_structure(blueprint_id: str) -> None:
             "of your product selection. Please try again."
         )
     )
+
+
+# ── Standard pages: faq / shipping / returns (T-116, 12 §3, F15-16) ───────
+
+
+def _standard_pages_facts(shop) -> dict:
+    """Facts for the standard_pages prompt — filled fields only (D-15.4)."""
+    delivery = []
+    for profile in shop.delivery_profiles.all().order_by("source_app"):
+        delivery.append(
+            {
+                "source_app": profile.source_app,
+                "ship_from": profile.ship_from_country,
+                "processing_days": [profile.processing_days_min, profile.processing_days_max],
+                "transit_days": profile.transit_days,
+                "shipping_cost": profile.shipping_cost,
+            }
+        )
+    business: dict = {}
+    try:
+        details = shop.business_details
+    except Exception:
+        details = None
+    if details is not None:
+        for field in (
+            "legal_name",
+            "trade_name",
+            "street",
+            "postal_code",
+            "city",
+            "country_code",
+            "email",
+            "phone",
+            "return_address",
+        ):
+            value = getattr(details, field, "")
+            if value:
+                business[field] = value
+    return {"delivery": delivery, "business": business}
+
+
+@shared_task(acks_late=True, max_retries=2)
+def generate_standard_pages(blueprint_id: str) -> None:
+    """One standard_pages call → per-type page content (12 §3).
+
+    The AI writes intro + FAQ only; fact blocks (delivery times, costs,
+    return address) are inserted by ``standard_pages.build_fact_sections``
+    from the merchant's models — never invented (D-15.4, F15-16).
+    """
+    import json
+
+    from apps.ai.anthropic_client import call_ai
+    from apps.ai.prompts import render_prompt
+    from apps.ai.schemas import StandardPages
+    from apps.generator.models import StoreBlueprint
+    from apps.generator.standard_pages import ai_text_has_numbers, assemble_standard_pages
+
+    try:
+        bp = StoreBlueprint.objects.get(id=blueprint_id)
+    except StoreBlueprint.DoesNotExist:
+        logger.warning("Standard pages: blueprint %s not found", blueprint_id)
+        return
+    if bp.status != "building" or bp.standard_pages is not None:
+        return
+
+    page_types = list((bp.store_structure or {}).get("pages", [])) or ["faq", "shipping", "returns"]
+    facts = _standard_pages_facts(bp.shop)
+    locale = (bp.content_locales or ["en"])[0]
+    locale_name = {"nl": "Dutch", "en": "English", "de": "German"}.get(locale, "English")
+
+    system, user = render_prompt(
+        "standard_pages",
+        {
+            "brand_name": bp.brand_name or "",
+            "brief_json": json.dumps(
+                {
+                    "description": bp.description,
+                    "markets": bp.markets,
+                    "audience": bp.audience,
+                    "price_level": bp.price_level,
+                },
+                ensure_ascii=False,
+            ),
+            "page_types_json": json.dumps(page_types),
+            "facts_json": json.dumps(facts, ensure_ascii=False),
+            "content_locale_name": locale_name,
+        },
+    )
+
+    repair_note = ""
+    ai_pages: list[dict] = []
+    for attempt in range(2):  # one repair round for leaked numbers (F15-16)
+        prompt_user = user or "Generate the standard pages."
+        if repair_note:
+            prompt_user = f"{prompt_user}\n\n{repair_note}"
+        try:
+            result = call_ai(
+                shop=bp.shop,
+                purpose="standard_pages",
+                model_key="copy",
+                system=system,
+                user=prompt_user,
+                schema=StandardPages,
+                tool_name="submit_standard_pages",
+                temperature=0.4,
+            )
+        except Exception as exc:
+            logger.error(
+                "Standard pages AI call failed for %s (attempt %s): %s", bp.id, attempt + 1, exc
+            )
+            return
+        ai_pages = [p.model_dump() for p in result.pages]
+        if not ai_text_has_numbers(ai_pages):
+            break
+        repair_note = (
+            "Your previous answer contained digits. The merchant's facts are "
+            "the ONLY source of numbers: never state delivery times, costs, "
+            "days or addresses yourself. Return the full answer again."
+        )
+    else:
+        for page in ai_pages:
+            page.setdefault("warnings_source", "verify_numbers")
+
+    assembled = assemble_standard_pages(bp.shop, page_types, ai_pages, locale)
+    for page_type, entry in assembled.items():
+        ai = next((p for p in ai_pages if p.get("page_type") == page_type), {})
+        if ai.get("warnings_source") == "verify_numbers":
+            entry["warnings"] = [*entry.get("warnings", []), "verify_numbers"]
+
+    bp.standard_pages = assembled
+    bp.save(update_fields=["standard_pages", "updated_at"])
+    logger.info("Standard pages generated for %s: %s", bp.id, list(assembled))
