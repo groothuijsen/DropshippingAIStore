@@ -1,5 +1,12 @@
 ## Unreleased
 
+### T-111 — BusinessDetails, settings screen, legal template filling (2026-10-01)
+
+- **`core.BusinessDetails`** (OneToOne Shop, 12 §2.1): legal/trade name, address, country, email, phone, company reg no, VAT id (prefix-checked against country in clean()), return address (same-as-main flag or JSON). `is_complete(purpose)` returns missing field names for `legal`/`contact`/`impressum`/`returns`; assumptions recorded in F15 spec.
+- **`fill_legal_details()`** in `compliance.legal`: replaces the `[Adres]`-style placeholders (nl/en/de) from BusinessDetails; missing facts leave the placeholder visible (D-15.4: never invent business facts). Wired into `get_legal_pages()` for withdrawal, impressum and GPSR/contact.
+- **`/app/settings/business/`**: GET/POST form for all fields with full_clean validation + AuditLog entry (`business_details_saved`); template with i18n labels.
+- Migration 0004 applied on VPS; gunicorn + worker restarted; route verified live. 907/907 tests; ruff clean.
+
 ### T-110 complete — scope re-grant, webhook, receiver + callback fixes (2026-10-01)
 
 - **Scope re-grant executed on dev store** (user-approved OAuth authorize): all 3 new scopes granted + verified live via accessScopes; access token refreshed → publications/publishable/menu operations now work with the stored token.

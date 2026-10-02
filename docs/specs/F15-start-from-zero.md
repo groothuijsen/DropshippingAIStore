@@ -32,3 +32,11 @@ Second onboarding route: the merchant describes a niche and Mosaiq proposes a br
 
 ## Assumptions made during build
 _(to be filled in by Hermes)_
+
+1. **T-111 `is_complete()` purposes** (12 §2.1 lists the four purposes but not their required fields):
+   - `legal` → legal_name, street, postal_code, city, country_code, email (the facts the withdrawal model form shows).
+   - `contact` → legal_name, email (the GPSR contact page needs who to contact; a street is shown only when present — never invented).
+   - `impressum` → `legal` + company_reg_no (07: required for the German Impressum).
+   - `returns` → legal_name, street, postal_code, city, country_code; when `return_address_same` is False additionally a non-empty `return_address` JSON.
+2. **VAT ID check**: "format check per country prefix only" implemented as `vat_id` starting with `country_code` (case-insensitive) in `clean()`; no per-country structure validation (no regex zoo) — the lawyer pass (T-090) may tighten this.
+3. **Template placeholder policy**: placeholders whose facts are missing stay in the rendered page (visible draft state) rather than being blanked; `fill_legal_details` fills an address placeholder only when street AND postal_code AND city are all present.
