@@ -27,8 +27,10 @@ from apps.generator.models import JobStep, StepStatus  # noqa: E402
 stuck_ids = JobStep.objects.filter(
     job__parent=job, status=StepStatus.FAILED
 ).values_list("job_id", flat=True)
+from django.db.models import Q  # noqa: E402
+
 failed = GenerationJob.objects.filter(parent=job).filter(
-    __import__("django").db.models.Q(status=JobStatus.FAILED) | __import__("django").db.models.Q(id__in=stuck_ids)
+    Q(status__in=[JobStatus.FAILED, JobStatus.NEEDS_INPUT]) | Q(id__in=stuck_ids)
 )
 print("failed/stuck children:", list(failed.values_list("page_type", flat=True)))
 for child in failed:

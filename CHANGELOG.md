@@ -7,7 +7,14 @@
 - Tasks: `run_store_build` (4-step parent, resume on failed steps, `last_error` kept, `PLAN_LIMIT_REACHED`/`BLUEPRINT_NO_PRODUCTS` error codes), `run_store_build_child`, `retry_store_build_child`, `advance_store_build` (a failed child keeps the parent running; the menu runs only when ALL children succeed).
 - Build status screen: "Build my store" button with plan-usage note before start; afterwards steps (Done/Running/Error) + per-child status with Retry buttons; `build_store`/`retry_build`/`retry_child` POST actions.
 - Supporting: `PAGE_TYPES_NEEDING_SHOPIFY_PAGE` += faq/shipping/returns; `JobInput.page_type` literal extended; `_reserve_usage` honors `usage_reserved`.
-- Tests: `tests/test_t117.py` (22). 1124/1124 suite; ruff clean. Commit `ece5249`.
+- **Live E2E (dev store, 2026-10-02): build GREEN** — collection `live-geverifieerd` (unpublished) + home/shipping/returns Shopify pages + `mosaiq-main` menu; parent succeeded. The run exposed a chain of pipeline code that had never executed against the real API, all fixed in `5014345`, `cf41bc9`, `8d1688f`, `cdb9e61`, `63bcea8`, the metaobject commits, `062a7fb`, `f86f00c`:
+  - research/copy/import steps: `render_prompt` tuple passed as `system=` (400) + dead `model_key` values ("claude"/"sonnet" are not in MODELS);
+  - `get_pending_steps` auto-created the product pipeline for standard-page children (now pre-created as SKIPPED; retry keeps them skipped);
+  - GPSR gate ran for non-product pages; `error_code` varchar(60) overflow masked failures;
+  - `metaobjectUpsert` query still used the pre-2026-07 shape — realigned via live introspection (deviation fixture `metaobject_upsert_shape.json`); metaobject type string corrected to `app--430212644865--page_content`; layout now writes the definition's `sections` JSON shape;
+  - auto-angle selection for PDP children (no angle screen in F15); needs_input children now block the menu step.
+- PDP child: import + research + auto-angle verified live; its publish step surfaces `GPSR_INCOMPLETE` until the merchant fills the GPSR form (07 §4, by design).
+- Tests: `tests/test_t117.py` (26). 1129/1129 suite; ruff clean. Commits `ece5249`..`f86f00c`.
 
 ### T-116 — Standard pages faq/shipping/returns (12 §3, F15-16, F18-10, 2026-10-02)
 
