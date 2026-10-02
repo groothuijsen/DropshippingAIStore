@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 from apps.ai.schemas import NicheBrief
 from apps.generator.models import BlueprintStatus, StoreBlueprint
-from apps.generator.tasks import generate_brand_proposal
+from apps.generator.tasks import generate_brand_proposal, generate_store_structure
 from apps.themes.brand_blocklist import is_blocked_brand
 
 logger = logging.getLogger(__name__)
@@ -152,8 +152,140 @@ def start_wizard(request: HttpRequest) -> HttpResponse:
                     "updated_at",
                 ]
             )
+            generate_store_structure.delay(str(bp.id))
             messages.success(request, f"{len(gids)} products selected.")
             return redirect(back)
+
+    if bp.status == BlueprintStatus.STRUCTURE and bp.store_structure:
+        from django.contrib import messages
+
+        action = request.POST.get("action", "")
+        structure = bp.store_structure
+
+        def _save_structure() -> None:
+            bp.store_structure = structure
+            bp.save()
+
+        def _list_for(item_type: str) -> list:
+            return structure.get("collections" if item_type == "collection" else "menu", [])
+
+        if action == "structure_rename":
+            item_type = request.POST.get("item_type", "")
+            field = request.POST.get("field", "")
+            value = (request.POST.get("value") or "").strip()
+            try:
+                idx = int(request.POST.get("index", "-1"))
+            except ValueError:
+                idx = -1
+            items = _list_for(item_type)
+            max_len = (
+                60
+                if item_type == "collection" and field == "title"
+                else 300
+                if item_type == "collection"
+                else 40
+            )
+            if 0 <= idx < len(items) and field in {"title", "description"} and value:
+                items[idx][field] = value[:max_len]
+                _save_structure()
+        elif action == "structure_move":
+            item_type = request.POST.get("item_type", "")
+            direction = request.POST.get("dir", "")
+            try:
+                idx = int(request.POST.get("index", "-1"))
+            except ValueError:
+                idx = -1
+            items = _list_for(item_type)
+            target = idx - 1 if direction == "up" else idx + 1
+            if 0 <= idx < len(items) and 0 <= target < len(items):
+                items[idx], items[target] = items[target], items[idx]
+                _save_structure()
+        elif action == "structure_delete":
+            item_type = request.POST.get("item_type", "")
+            try:
+                idx = int(request.POST.get("index", "-1"))
+            except ValueError:
+                idx = -1
+            if item_type == "page":
+                pages = structure.get("pages", [])
+                if 0 <= idx < len(pages) and len(pages) > 2:
+                    pages.pop(idx)
+                    _save_structure()
+                else:
+                    messages.error(request, "A store needs at least 2 pages.")
+            else:
+                items = _list_for(item_type)
+                minimum = 1 if item_type == "collection" else 3
+                label = "collection" if item_type == "collection" else "menu item"
+                if 0 <= idx < len(items) and len(items) > minimum:
+                    items.pop(idx)
+                    _save_structure()
+                else:
+                    messages.error(request, f"A store needs at least {minimum} {label}s.")
+        elif action == "structure_add_collection":
+            title = (request.POST.get("title") or "").strip()
+            description = (request.POST.get("description") or "").strip()
+            gids = request.POST.getlist("product_gid")
+            selection = set(bp.selected_product_gids or [])
+            if not title:
+                messages.error(request, "The collection needs a title.")
+            elif len(structure.get("collections", [])) >= 6:
+                messages.error(request, "A store can have at most 6 collections.")
+            elif not gids or any(g not in selection for g in gids):
+                messages.error(request, "Pick at least one product from your selection.")
+            else:
+                structure["collections"].append(
+                    {"title": title[:60], "description": description[:300], "product_gids": gids[:20]}
+                )
+                _save_structure()
+        elif action == "structure_add_page":
+            page_type = request.POST.get("page_type", "")
+            allowed = {"about", "faq", "shipping", "returns"}
+            if page_type not in allowed:
+                messages.error(request, "Unknown page type.")
+            elif page_type in structure.get("pages", []):
+                messages.error(request, "That page is already in the structure.")
+            elif len(structure.get("pages", [])) >= 4:
+                messages.error(request, "A store can have at most 4 standard pages.")
+            else:
+                structure["pages"].append(page_type)
+                _save_structure()
+        elif action == "structure_retry":
+            bp.structure_error = ""
+            bp.save(update_fields=["structure_error", "updated_at"])
+            generate_store_structure.delay(str(bp.id))
+            return redirect("/app/start/?id_token=" + request.GET.get("id_token", ""))
+        elif action == "structure_confirm":
+            selection = set(bp.selected_product_gids or [])
+            covered = {g for c in structure.get("collections", []) for g in c.get("product_gids", [])}
+            missing_products = selection - covered
+            pages = structure.get("pages", [])
+            collection_titles = {c.get("title", "") for c in structure.get("collections", [])}
+            unresolved = [
+                m.get("title", "?")
+                for m in structure.get("menu", [])
+                if m.get("target") == "collection" and m.get("ref") not in collection_titles
+            ]
+            problems = []
+            if missing_products:
+                problems.append("Every selected product must sit in at least one collection.")
+            if "shipping" not in pages or "returns" not in pages:
+                problems.append("The shipping and returns pages are required.")
+            if unresolved:
+                problems.append("Menu items point at missing collections: " + ", ".join(unresolved))
+            if not 3 <= len(structure.get("menu", [])) <= 8:
+                problems.append("A menu needs 3 to 8 items.")
+            if problems:
+                for problem in problems:
+                    messages.error(request, problem)
+            else:
+                bp.store_structure = structure
+                bp.structure_error = ""
+                bp.completed_steps = sorted({*(bp.completed_steps or []), "structure"})
+                bp.status = BlueprintStatus.BUILDING
+                bp.save()
+                messages.success(request, "Store structure confirmed.")
+                return redirect("/app/start/?id_token=" + request.GET.get("id_token", ""))
 
     if bp.status == BlueprintStatus.IDEAS and bp.product_ideas is None:
         from apps.generator.tasks import generate_product_ideas
@@ -180,6 +312,7 @@ def start_wizard(request: HttpRequest) -> HttpResponse:
             "import_products": _import_products_context(shop, bp)
             if bp.status == BlueprintStatus.IDEAS
             else {},
+            **(_structure_panel_context(bp) if bp.status == BlueprintStatus.STRUCTURE else {}),
         },
     )
 
@@ -277,6 +410,11 @@ def start_panel(request: HttpRequest) -> HttpResponse:
                 "import_products": _import_products_context(shop, bp),
             },
         )
+
+    if bp.status == BlueprintStatus.STRUCTURE:
+        ctx = {"bp": bp}
+        ctx.update(_structure_panel_context(bp))
+        return render(request, "app/start_structure_panel.html", ctx)
     return render(
         request,
         "app/start_panel.html",
@@ -320,6 +458,29 @@ def settings_api_version() -> str:
     return getattr(settings, "SHOPIFY_API_VERSION", "2026-07")
 
 
+def _norm_gid(gid: str) -> str:
+    """Webhooks deliver numeric IDs; the Admin API returns GIDs."""
+    gid = gid or ""
+    return f"gid://shopify/Product/{gid}" if gid.isdigit() else gid
+
+
+def _structure_panel_context(bp: StoreBlueprint) -> dict:
+    """Context for the structure panel: selected products + addable pages."""
+    selected = {_norm_gid(g) for g in (bp.selected_product_gids or [])}
+    products = []
+    known = set()
+    for item in bp.imported_products or []:
+        gid = _norm_gid(item.get("gid", ""))
+        if gid in selected:
+            products.append({"gid": gid, "title": item.get("title") or gid})
+            known.add(gid)
+    for gid in sorted(selected - known):
+        products.append({"gid": gid, "title": gid})
+    existing = set((bp.store_structure or {}).get("pages", []))
+    available = [t for t in ("about", "faq", "shipping", "returns") if t not in existing]
+    return {"import_products_for_structure": products, "available_pages": available}
+
+
 def _import_products_context(shop: Shop, bp: StoreBlueprint) -> dict:
     """Merged product list for the import-waiting screen (F15-7).
 
@@ -332,10 +493,6 @@ def _import_products_context(shop: Shop, bp: StoreBlueprint) -> dict:
     from apps.sources.rules import detect_source
 
     window = bp.started_products_at
-    def _norm_gid(gid: str) -> str:
-        gid = gid or ""
-        return f"gid://shopify/Product/{gid}" if gid.isdigit() else gid
-
     merged: dict[str, dict] = {}
     for item in bp.imported_products or []:
         gid = _norm_gid(item.get("gid", ""))

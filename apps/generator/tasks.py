@@ -578,3 +578,143 @@ def generate_product_ideas(blueprint_id: str) -> None:
     bp.product_ideas = result.model_dump()
     bp.save(update_fields=["product_ideas", "updated_at"])
     logger.info("Stored product ideas for blueprint %s", bp.id)
+
+
+# ── Store-builder wizard: store structure (F15-8, T-115) ──────────────────
+
+STRUCTURE_REPAIR_NOTE = (
+    "Some collection.product_gids are not part of the merchant's product "
+    "selection. Use ONLY these GIDs: {gids}. Return the full structure again."
+)
+
+
+def _fetch_products_by_ids(shop, gids: list[str]) -> list[dict]:
+    """Fetch selected products for the structure prompt (gid, title, type, tags, price)."""
+    from apps.core.crypto import decrypt_token
+    from apps.core.shopify_client import ShopifyGraphQLClient, load_query
+
+    if not gids:
+        return []
+    token = decrypt_token(shop.access_token_encrypted)
+    client = ShopifyGraphQLClient(shop.domain, token, "2026-07")
+    data = client.execute(load_query("products_by_ids"), {"ids": gids})
+    rows: list[dict] = []
+    for node in data.get("nodes") or []:
+        if not node:
+            continue
+        rows.append(
+            {
+                "gid": node.get("id", ""),
+                "title": node.get("title", ""),
+                "productType": node.get("productType", ""),
+                "tags": node.get("tags", ""),
+                "price": (node.get("priceRange") or {}).get("minVariantPrice", {}).get("amount", ""),
+            }
+        )
+    return rows
+
+
+@shared_task(acks_late=True, max_retries=2)
+def generate_store_structure(blueprint_id: str) -> None:
+    """One store_structure call → StoreStructure (12 §3).
+
+    Every collection.product_gids entry must be in the merchant's
+    selection (F15-8): one repair round, then a merchant-facing failure
+    message in ``structure_error``.
+    """
+    import json
+
+    from apps.ai.anthropic_client import call_ai
+    from apps.ai.prompts import render_prompt
+    from apps.ai.schemas import StoreStructure
+    from apps.generator.models import StoreBlueprint
+
+    try:
+        bp = StoreBlueprint.objects.get(id=blueprint_id)
+    except StoreBlueprint.DoesNotExist:
+        logger.warning("Store structure: blueprint %s not found", blueprint_id)
+        return
+    if bp.status != "structure" or bp.store_structure is not None:
+        return  # not in the structure state, or already proposed
+
+    selection = list(bp.selected_product_gids or [])
+    if not selection:
+        StoreBlueprint.objects.filter(id=bp.id).update(
+            structure_error="No products selected — go back and select the products to organise."
+        )
+        return
+
+    try:
+        products = _fetch_products_by_ids(bp.shop, selection)
+    except Exception as exc:
+        logger.error("Store structure: product fetch failed for %s: %s", bp.id, exc)
+        StoreBlueprint.objects.filter(id=bp.id).update(
+            structure_error="Could not load your selected products. Try again."
+        )
+        return
+
+    variables = {
+        "brief_json": json.dumps(
+            {
+                "description": bp.description,
+                "markets": bp.markets,
+                "audience": bp.audience,
+                "price_level": bp.price_level,
+            },
+            ensure_ascii=False,
+        ),
+        "brand_name": bp.brand_name or "",
+        "products_json": json.dumps(products, ensure_ascii=False),
+        "content_locale_name": {"nl": "Dutch", "en": "English", "de": "German"}.get(
+            (bp.content_locales or ["en"])[0], "English"
+        ),
+    }
+    system, user = render_prompt("store_structure", variables)
+
+    selection_set = set(selection)
+    repair_note = ""
+    for attempt in range(2):  # one repair round (F15-8)
+        prompt_user = user or "Generate the store structure."
+        if repair_note:
+            prompt_user = f"{prompt_user}\n\n{repair_note}"
+        try:
+            structure = call_ai(
+                shop=bp.shop,
+                purpose="store_structure",
+                model_key="copy",
+                system=system,
+                user=prompt_user,
+                schema=StoreStructure,
+                tool_name="submit_structure",
+                temperature=0.3,  # store_structure prompt header
+            )
+        except Exception as exc:
+            logger.error(
+                "Store structure AI call failed for %s (attempt %s): %s", bp.id, attempt + 1, exc
+            )
+            StoreBlueprint.objects.filter(id=bp.id).update(
+                structure_error="Could not generate a store structure. Please try again."
+            )
+            return
+
+        invalid = sorted(
+            {
+                gid
+                for coll in structure.collections
+                for gid in coll.product_gids
+                if gid not in selection_set
+            }
+        )
+        if not invalid:
+            StoreBlueprint.objects.filter(id=bp.id).update(
+                store_structure=structure.model_dump(), structure_error=""
+            )
+            return
+        repair_note = STRUCTURE_REPAIR_NOTE.format(gids=", ".join(selection))
+
+    StoreBlueprint.objects.filter(id=bp.id).update(
+        structure_error=(
+            "The generated structure references products that are not part "
+            "of your product selection. Please try again."
+        )
+    )

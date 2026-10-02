@@ -1,0 +1,145 @@
+{% load i18n %}
+
+<h2>{% trans "Store structure" %}</h2>
+
+{% if bp.structure_error %}
+<div class="mq-panel">
+  <p><strong>{% trans "The structure could not be generated:" %}</strong> {{ bp.structure_error }}</p>
+  <form method="post" action="/app/start/?id_token={{ request.GET.id_token }}">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="structure_retry">
+    <button type="submit" class="mq-button mq-button-secondary">{% trans "Try again" %}</button>
+  </form>
+</div>
+{% endif %}
+
+{% if not bp.store_structure %}
+  {% if bp.structure_error %}
+  <p class="mq-subtitle">{% trans "Fix the issue above or try again." %}</p>
+  {% else %}
+  <p class="mq-subtitle">{% trans "Generating store structure…" %}</p>
+  {% endif %}
+{% else %}
+<p class="mq-help">{% trans "Review the proposal: rename, reorder, add or remove items before building." %}</p>
+
+<h3>{% trans "Collections" %}</h3>
+<ul class="mq-structure-list">
+  {% for c in bp.store_structure.collections %}
+  <li>
+    <form method="post" action="/app/start/?id_token={{ request.GET.id_token }}" class="mq-inline-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="structure_rename">
+      <input type="hidden" name="item_type" value="collection">
+      <input type="hidden" name="index" value="{{ forloop.counter0 }}">
+      <input type="hidden" name="field" value="title">
+      <input type="text" name="value" value="{{ c.title }}" maxlength="60">
+      <input type="text" name="description" value="{{ c.description }}" maxlength="300" hidden>
+      <button type="submit" class="mq-button mq-button-secondary">{% trans "Rename" %}</button>
+    </form>
+    <form method="post" action="/app/start/?id_token={{ request.GET.id_token }}" class="mq-inline-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="structure_rename">
+      <input type="hidden" name="item_type" value="collection">
+      <input type="hidden" name="index" value="{{ forloop.counter0 }}">
+      <input type="hidden" name="field" value="description">
+      <input type="text" name="value" value="{{ c.description }}" maxlength="300">
+      <button type="submit" class="mq-button mq-button-secondary">{% trans "Save description" %}</button>
+    </form>
+    <p class="mq-help">{% trans "Products:" %} {{ c.product_gids|length }}</p>
+    <form method="post" action="/app/start/?id_token={{ request.GET.id_token }}" class="mq-inline-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="structure_move">
+      <input type="hidden" name="item_type" value="collection">
+      <input type="hidden" name="index" value="{{ forloop.counter0 }}">
+      <button type="submit" name="dir" value="up" class="mq-button mq-button-secondary">↑</button>
+      <button type="submit" name="dir" value="down" class="mq-button mq-button-secondary">↓</button>
+    </form>
+    <form method="post" action="/app/start/?id_token={{ request.GET.id_token }}">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="structure_delete">
+      <input type="hidden" name="item_type" value="collection">
+      <input type="hidden" name="index" value="{{ forloop.counter0 }}">
+      <button type="submit" class="mq-button mq-button-secondary">{% trans "Remove" %}</button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+
+<form method="post" action="/app/start/?id_token={{ request.GET.id_token }}" class="mq-form">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="structure_add_collection">
+  <h4>{% trans "Add collection" %}</h4>
+  <input type="text" name="title" maxlength="60" placeholder="{% trans 'Title' %}" required>
+  <input type="text" name="description" maxlength="300" placeholder="{% trans 'Description' %}">
+  <p class="mq-help">{% trans "Products from your selection:" %}</p>
+  {% for item in import_products_for_structure %}
+  <label class="mq-inline"><input type="checkbox" name="product_gid" value="{{ item.gid }}"> {{ item.title }}</label>
+  {% endfor %}
+  <button type="submit" class="mq-button mq-button-secondary">{% trans "Add collection" %}</button>
+</form>
+
+<h3>{% trans "Menu" %}</h3>
+<ul class="mq-structure-list">
+  {% for m in bp.store_structure.menu %}
+  <li>
+    <form method="post" action="/app/start/?id_token={{ request.GET.id_token }}" class="mq-inline-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="structure_rename">
+      <input type="hidden" name="item_type" value="menu">
+      <input type="hidden" name="index" value="{{ forloop.counter0 }}">
+      <input type="hidden" name="field" value="title">
+      <input type="text" name="value" value="{{ m.title }}" maxlength="40">
+      <button type="submit" class="mq-button mq-button-secondary">{% trans "Rename" %}</button>
+      <span class="mq-help">({{ m.target }}{% if m.ref %} · {{ m.ref }}{% endif %})</span>
+    </form>
+    <form method="post" action="/app/start/?id_token={{ request.GET.id_token }}" class="mq-inline-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="structure_move">
+      <input type="hidden" name="item_type" value="menu">
+      <input type="hidden" name="index" value="{{ forloop.counter0 }}">
+      <button type="submit" name="dir" value="up" class="mq-button mq-button-secondary">↑</button>
+      <button type="submit" name="dir" value="down" class="mq-button mq-button-secondary">↓</button>
+    </form>
+    <form method="post" action="/app/start/?id_token={{ request.GET.id_token }}">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="structure_delete">
+      <input type="hidden" name="item_type" value="menu">
+      <input type="hidden" name="index" value="{{ forloop.counter0 }}">
+      <button type="submit" class="mq-button mq-button-secondary">{% trans "Remove" %}</button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+
+<h3>{% trans "Pages" %}</h3>
+<ul class="mq-structure-list">
+  {% for page in bp.store_structure.pages %}
+  <li>
+    {{ page }}
+    <form method="post" action="/app/start/?id_token={{ request.GET.id_token }}" class="mq-inline-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="structure_delete">
+      <input type="hidden" name="item_type" value="page">
+      <input type="hidden" name="index" value="{{ forloop.counter0 }}">
+      <button type="submit" class="mq-button mq-button-secondary">{% trans "Remove" %}</button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+<form method="post" action="/app/start/?id_token={{ request.GET.id_token }}" class="mq-inline-form">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="structure_add_page">
+  <select name="page_type">
+    {% for t in available_pages %}
+    <option value="{{ t }}">{{ t }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="mq-button mq-button-secondary">{% trans "Add page" %}</button>
+</form>
+
+<form method="post" action="/app/start/?id_token={{ request.GET.id_token }}">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="structure_confirm">
+  <button type="submit" class="mq-button">{% trans "Confirm structure — build the store" %}</button>
+</form>
+{% endif %}

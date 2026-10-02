@@ -321,6 +321,10 @@ class StoreBlueprint(models.Model):
     started_products_at = models.DateTimeField(null=True, blank=True)
     imported_products = models.JSONField(default=list, blank=True)
     selected_product_gids = models.JSONField(default=list, blank=True)
+    # StoreStructure (12 §3) + edits, and the merchant-facing message when
+    # the structure proposal fails (T-115).
+    store_structure = models.JSONField(null=True, blank=True)
+    structure_error = models.TextField(blank=True, default="")
     product_ideas = models.JSONField(null=True, blank=True)
 
     completed_steps = models.JSONField(default=list, blank=True)

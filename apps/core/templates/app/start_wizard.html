@@ -87,6 +87,20 @@
     <p>{% blocktrans %}Your brand name is {{ bp.brand_name }}. Continue in the onboarding brand step.{% endblocktrans %}</p>
     <a class="mq-button" href="/app/onboarding/brand/?id_token={{ request.GET.id_token }}">{% trans "Continue" %}</a>
   </div>
+  {% elif bp.status == "structure" %}
+    {% if bp.store_structure %}
+      {% include "app/start_structure_panel.html" %}
+    {% else %}
+    <div id="mq-structure-panel"
+         hx-get="/app/start/panel/?id_token={{ request.GET.id_token }}"
+         hx-trigger="every 5s"
+         hx-swap="innerHTML">
+      {% include "app/start_structure_panel.html" %}
+    </div>
+    {% endif %}
+  {% elif bp.status == "building" %}
+    <h2>{% trans "Store build" %}</h2>
+    <p class="mq-subtitle">{% trans "Structure confirmed — the store build starts in the next step." %}</p>
   {% endif %}
 </div>
 {% endblock %}

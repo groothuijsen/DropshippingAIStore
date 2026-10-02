@@ -360,3 +360,24 @@ class NameIdea(BaseModel):
 
 class NameSuggestions(BaseModel):  # tool submit_names
     names: list[NameIdea] = Field(min_length=8, max_length=8)
+
+
+# ── Store structure (12 §3, T-115/F15-8) ──────────────────────────────────
+
+
+class CollectionPlan(BaseModel):
+    title: str = Field(max_length=60)
+    description: str = Field(max_length=300)
+    product_gids: list[str] = Field(min_length=1, max_length=20)  # subset of selection
+
+
+class MenuItemPlan(BaseModel):
+    title: str = Field(max_length=40)
+    target: Literal["frontpage", "collection", "page", "catalog"]
+    ref: str | None = None  # collection title or page_type; GID resolved at build time
+
+
+class StoreStructure(BaseModel):  # tool submit_structure
+    collections: list[CollectionPlan] = Field(min_length=1, max_length=6)
+    menu: list[MenuItemPlan] = Field(min_length=3, max_length=8)
+    pages: list[Literal["about", "faq", "shipping", "returns"]] = Field(min_length=2, max_length=4)
