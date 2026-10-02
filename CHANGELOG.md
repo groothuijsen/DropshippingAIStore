@@ -1,5 +1,14 @@
 ## Unreleased
 
+### T-113 — Brand step: niche_brand proposal + BrandKit prefill (2026-10-02)
+
+- **`BrandProposal` schema** (12 §3) + **`StoreBlueprint.brand_proposal`** (migration `generator/0003`) + **`BrandKit.tagline`** (migration `themes/0002`).
+- **`generate_brand_proposal` task** (Celery, F15-5): one `niche_brand` call (`model_key="copy"`, tool `submit_brand`, temperature 0.4 per prompt header) → proposal stored with F05 corrections — invalid font keys fall back to inherit (`theme`/empty), failing text-on-background contrast corrected via `validate_palette`'s suggestion (never stored as-is). No-ops when a proposal exists or the blueprint isn't in the brand state.
+- **Flow**: name pick (T-112) now enqueues the brand task; the brand step (route zero) polls via HTMX while the proposal is missing, then opens the **existing BrandKit form pre-filled** (name readonly, tone/preset/palette/fonts/tagline from the proposal). Saving writes the BrandKit + tagline, stores palette/fonts on the blueprint, advances status to `ideas`, and enqueues **`sync_brand_tokens`** — the F05-5 design-token sync that was defined but never called by any save path (`themes/tasks.py`, sets `tokens_synced_at`).
+- **Wizard**: ideas placeholder until T-114; presets data now carries per-preset descriptions for the prompt.
+- **Live E2E (dev store)**: real AI proposal (warm/soft/lora + Dutch tagline "Maak van je avond een rustig moment") → pre-filled form verified → save → BrandKit + `bp.status=ideas` + **`tokens_synced_at` set** (real `metafieldsSet` on the dev store installation). 1038/1038 tests; ruff clean.
+
+
 ### T-112 — StoreBlueprint, route choice, brief + names step (2026-10-02)
 
 - **`generator.StoreBlueprint`** (migration 0002, 12 §2.2): status state machine (brief → names → brand → …), brief fields, `name_suggestions`, `regenerate_count`, `brand_name`/`brand_slug`, later-step fields, `advance()`. **`Shop.onboarding_route`** (migration 0005): existing/zero.

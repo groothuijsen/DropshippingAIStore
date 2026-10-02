@@ -43,6 +43,16 @@ Second onboarding route: the merchant describes a niche and Mosaiq proposes a br
 7. **RDAP = rdap.org per spec**; .com only; live-verified (404 free / 200 taken). Q21 answered in open-questions.md.
 8. **AI model**: `model_key="copy"` (→ `LLM_MODEL_COPY`, currently `claude-sonnet-5-5`) per the niche_names.md prompt header. That model rejects forced `tool_choice` and `temperature` (400) — `AnthropicClient._make_request` drops the offending param and retries once; schema validation unchanged. Client also falls back to `settings.ANTHROPIC_API_KEY` because the systemd units do not load `.env` into the process environment.
 
+### T-113 (2026-10-02)
+
+1. **`BrandKit.tagline`** added (migration themes/0002): F15-5 requires the form to show the tagline and saving to persist it; BrandKit is the brand-config home. Design tokens stay exactly as F05-5 defines them (tagline not added to tokens).
+2. **Proposal corrections** (prompt: "The code re-checks contrast and font keys"): invalid font keys fall back to `""` (inherit theme font); a failing text-on-background contrast is corrected with `validate_palette`'s darker-text suggestion — a proposal is never stored or saved with a failing contrast.
+3. **Task idempotency**: `generate_brand_proposal` no-ops when `brand_proposal` is already set or the status isn't `brand`; the brand-step GET may double-enqueue safely.
+4. **After brand save the wizard shows an ideas placeholder** (status `ideas`); the real product-ideas screen is T-114. Onboarding itself is not advanced — sources/theme/withdrawal still run after the wizard per F15-1.
+5. **`sync_brand_tokens`** was previously defined but never called by any save path — F15-5's "writes the BrandKit and design tokens exactly as F05-5" required wiring it (Celery task, decrypts the stored token).
+6. **`call_ai` returns the validated model only** (not `(model, usage)`); the names task already relied on this, the brand task initially unpacked a tuple — live E2E caught it.
+7. **Presets carry a `description`** now (data addition to `STYLE_PRESETS`) because the niche_brand prompt variable `presets_json` asks for "the 6 presets with their description".
+
 ### T-111 (2026-10-01)
 
 1. **T-111 `is_complete()` purposes** (12 §2.1 lists the four purposes but not their required fields):
