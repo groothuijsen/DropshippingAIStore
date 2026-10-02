@@ -109,7 +109,11 @@ def publish_store(bp) -> dict:
         if reasons:
             result["blocked_pages"].append({"page_type": page.page_type, "reasons": reasons})
             continue
-        go_live(page)
+        try:
+            go_live(page)
+        except (ValueError, RuntimeError) as exc:
+            result["blocked_pages"].append({"page_type": page.page_type, "reasons": [str(exc)]})
+            continue
         page.refresh_from_db()
         result["published_pages"][page.page_type] = {
             "status": page.status,

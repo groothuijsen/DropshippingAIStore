@@ -171,16 +171,22 @@ def go_live(page: Page) -> dict[str, Any]:
         if page.page_type in PAGE_TYPES_NEEDING_SHOPIFY_PAGE and page.shopify_page_gid:
             try:
                 query = load_query("page_publish")
+                # API 2026-07: pageUpdate(id: ID!, page: PageUpdateInput!)
+                # — id is a top-level argument (introspected live).
                 variables = {
-                    "page": {
-                        "id": page.shopify_page_gid,
-                        "isPublished": True,
-                    }
+                    "id": page.shopify_page_gid,
+                    "page": {"isPublished": True},
                 }
-                client.execute(query, variables)
+                data = client.execute(query, variables)
+                errs = (data.get("pageUpdate") or {}).get("userErrors") or []
+                if errs:
+                    raise RuntimeError(f"pageUpdate failed: {errs[0].get('message')}")
                 logger.info("Shopify page %s published", page.shopify_page_gid)
             except Exception as exc:
-                logger.warning("Failed to publish Shopify page: %s", exc)
+                # A page that could not be published must not be marked
+                # live (F07-5 requires all three steps); abort so the
+                # caller lists it as blocked (T-118 live lesson).
+                raise RuntimeError(f"Shopify page publish failed: {exc}") from exc
 
         # 3. Update Page model
         page.status = "live"

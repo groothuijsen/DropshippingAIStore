@@ -1,0 +1,20 @@
+{
+  "_comment": "API 2026-07 introspection captured live against mosaiq-pod.myshopify.com on 2026-10-02 (scripts/introspect_page.py). pageUpdate requires id as a TOP-LEVEL argument (like menuUpdate); PageUpdateInput keeps isPublished. The old query declared only $page \u2014 live publish silently failed (isPublished stayed false) until this record drove the fix.",
+  "operation": "page_update",
+  "introspection": {
+    "mutation_args": {
+      "id": "ID! (top-level)",
+      "page": "PageUpdateInput!"
+    },
+    "page_update_input_fields": [
+      "handle",
+      "body",
+      "isPublished",
+      "publishDate",
+      "templateSuffix",
+      "metafields",
+      "title",
+      "redirectNewHandle"
+    ]
+  }
+}

@@ -1,13 +1,14 @@
-mutation pageUpdate($id: ID!, $page: PageUpdateInput!) {
-  pageUpdate(id: $id, page: $page) {
-    page {
-      id
-      handle
+mutation PageUpdate($id: ID!, $page: PageUpdateInput!) {
+    pageUpdate(id: $id, page: $page) {
+        page {
+            id
+            handle
+            title
+            isPublished
+        }
+        userErrors {
+            field
+            message
+        }
     }
-    userErrors {
-      field
-      message
-      code
-    }
-  }
 }
