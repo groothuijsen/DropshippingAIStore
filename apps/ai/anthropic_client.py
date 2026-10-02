@@ -77,7 +77,15 @@ class AnthropicClient:
     """Client for Anthropic Messages API with tool use and schema validation."""
 
     def __init__(self, api_key: str | None = None, timeout: float = 120.0):
-        self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY", "")
+        # systemd units do not load .env into the process environment, so fall
+        # back to Django settings (base.py reads .env via environ.read_env).
+        from django.conf import settings
+
+        self.api_key = (
+            api_key
+            or os.environ.get("ANTHROPIC_API_KEY", "")
+            or getattr(settings, "ANTHROPIC_API_KEY", "")
+        )
         self.timeout = timeout
         self._client = httpx.Client(
             timeout=httpx.Timeout(timeout=timeout, connect=5.0),
