@@ -330,6 +330,12 @@ marked.
 
 ### v1.1 webhook registration + receiver (T-110, live-verified)
 
+- **`products/update` registered live 2026-10-02** (T-131 E2E): the topic was
+  declared in `shopify.app.toml` but only `products/create` had been
+  registered via the API. Same mutation shape as T-110; fixture
+  `webhook_subscription_create_products_update.json`. Receiver →
+  `PriceHistory` snapshot verified end-to-end (direct signed test).
+
 - **`webhookSubscriptionCreate(topic: WebhookSubscriptionTopic!, webhookSubscription: WebhookSubscriptionInput!)`** —
   deviations found by live introspection + create on the dev store
   (fixtures `webhook_subscription_create_shape.json`,

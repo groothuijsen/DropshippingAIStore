@@ -43,3 +43,6 @@ _(filled by Hermes, T-130, 2026-10-02)_
 3. **Defaults on screen**: cost/shipping/ad_cost are free-form inputs (defaults from `inventoryItem.unitCost` need the `inventory_item_cost` GraphQL query — wired in T-131 with Apply).
 4. **Markets note**: non-base-currency markets show advice only + the explicit "Shopify Markets price lists are out of scope" note (F17-7).
 5. **GB**: `vat_rate_for("GB")` returns None → screen shows "VAT rules for GB not covered"; no price computed.
+6. **(T-131) Apply targets all variants** of the product at the same rounded price (POD products are single-variant in practice); the bulk mutation receives every variant id with `price` only.
+7. **(T-131) Current-price fetch is best effort**: if the Admin API read fails the screen still renders advice, but the Apply form is only shown when a `PriceAdvice` row exists for the calculation (which requires a successful calc POST — price-independent).
+8. **(T-131) Omnibus snapshot relies on the `products/update` webhook** (12 §8, "no extra code"). The subscription was declared in `shopify.app.toml` but had never been registered live — registered 2026-10-02 during E2E; receiver → `PriceHistory` verified with a direct signed webhook test.

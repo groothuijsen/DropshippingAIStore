@@ -1,0 +1,19 @@
+{
+ "_comment": "Real response from webhookSubscriptionCreate (products/update) on dev store mosaiq-pod.myshopify.com, API 2026-07, 2026-10-02 (T-131 E2E). NOT hand-written. Args verified by live introspection: topic + webhookSubscription{uri,format}.",
+ "operation": "webhookSubscriptionCreate",
+ "variables": {
+  "topic": "PRODUCTS_UPDATE",
+  "webhookSubscription": {
+   "uri": "https://shop.mosaiq.marketing/webhooks/shopify/",
+   "format": "JSON"
+  }
+ },
+ "response": {
+  "webhookSubscription": {
+   "id": "gid://shopify/WebhookSubscription/2138635043110",
+   "topic": "PRODUCTS_UPDATE",
+   "uri": "https://shop.mosaiq.marketing/webhooks/shopify/"
+  },
+  "userErrors": []
+ }
+}

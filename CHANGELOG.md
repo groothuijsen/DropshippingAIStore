@@ -1,5 +1,14 @@
 ## Unreleased
 
+### T-131 — Apply price + guard + audit (2026-10-02)
+
+- **`compliance.PriceAdvice`** model (migration 0005): inputs/advice JSON per calculation, `applied_at` + `applied_price` when the merchant applies; also normalizes `PricingSettings.markets` default to a named function (Django cannot serialize lambdas).
+- **Apply flow (F17-4)**: `/app/products/<gid>/pricing/apply/` — ownership check (only `ProductSource.created_by_mosaiq`), `assert_writable(shop, gid, {"price"})` guard, `productVariantsBulkUpdate` (price only, all variants), `ShopifyUserError` handled, `PriceAdvice.applied_at` + `AuditLog(action="price_advisor_applied")`.
+- **Sync-app products (F17-5)**: refused BEFORE any HTTP call; screen shows "Set this price in <app> (price rules)" + copyable advised price.
+- **Advisor screen completed**: current price + difference (F17-3 remainder) and the Omnibus warning from 12 §8 when the advised price exceeds the current price (F17-6) — both deferred from T-130.
+- **Live E2E (dev store)**: fresh product created via `productSet`; calc rendered €24.95 + Omnibus warning; apply wrote the price (live Admin API read: 24.95); AuditLog payload verified; `products/update` webhook was declared in `shopify.app.toml` but NOT live-registered — registered it (fixture `webhook_subscription_create_products_update.json`, args verified by introspection: `topic` + `webhookSubscription{uri,format}`); direct signed webhook test → receipt + `PriceHistory` row (24.95, source=webhook) — Omnibus chain verified end-to-end.
+- 987/987 tests; ruff clean; migration 0005 applied on VPS; services restarted; healthz 200.
+
 ### T-111 — BusinessDetails, settings screen, legal template filling (2026-10-01)
 
 - **`core.BusinessDetails`** (OneToOne Shop, 12 §2.1): legal/trade name, address, country, email, phone, company reg no, VAT id (prefix-checked against country in clean()), return address (same-as-main flag or JSON). `is_complete(purpose)` returns missing field names for `legal`/`contact`/`impressum`/`returns`; assumptions recorded in F15 spec.
