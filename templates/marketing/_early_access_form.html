@@ -1,0 +1,11 @@
+<section class="block shell" id="early-access-form"><div class="ea-form">
+<h2>{% if lang == "nl" %}Vroege toegang aanvragen{% else %}Request early access{% endif %}</h2>
+{% if form_message == "sent" %}<p class="freshness freshness-review">{% if lang == "nl" %}Check je inbox om je e-mailadres te bevestigen.{% else %}Check your inbox to confirm your email address.{% endif %}</p>
+{% else %}<form method="post">{% csrf_token %}
+<div class="ea-field"><label>{{ form.email.label_tag }}</label>{{ form.email }}</div>
+<div class="ea-field"><label>{{ form.shop_domain.label_tag }}</label>{{ form.shop_domain }}</div>
+<div class="ea-field ea-check">{{ form.consent }} <span>{{ form.consent.label }}</span></div>
+{{ form.website }}
+{% if form.errors %}<p class="freshness freshness-review">{% if lang == "nl" %}Controleer de gemarkeerde velden.{% else %}Please check the highlighted fields.{% endif %}</p>{% endif %}
+<button class="btn btn-p" type="submit">{% if lang == "nl" %}Aanmelden{% else %}Sign up{% endif %}</button>
+</form>{% endif %}</div></section>

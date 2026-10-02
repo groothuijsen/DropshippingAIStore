@@ -63,7 +63,7 @@
               <ul class="plan-limits">
                 {% for label, value in plan.limits %}<li>{{ label }}: {{ value }}</li>{% endfor %}
               </ul>
-              <a class="btn btn-p" href="{% if lang == 'nl' %}/nl/vroege-toegang/{% else %}/early-access/{% endif %}">{% trans "Start 7-day trial" %}</a>
+              <a class="btn btn-p" href="{% if lang == 'nl' %}{{ install_href }}{% else %}{{ install_href }}{% endif %}">{% trans "Start 7-day trial" %}</a>
             </div>
           {% endfor %}
         </div>
@@ -92,6 +92,7 @@
         {% endif %}
       </section>
     {% endif %}
+    {% if page.slug|slice:':6' == '/early' or page.slug|slice:':4' == '/nl/' %}{% if 'early' in page.slug or 'vroege' in page.slug %}{% include 'marketing/_early_access_form.html' %}{% endif %}{% endif %}
   {% endfor %}
   {% if page.body_html %}<section class="block shell"><div class="prose">{{ page.body_html|safe }}</div></section>{% endif %}
 </main>

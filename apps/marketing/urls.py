@@ -25,7 +25,8 @@ urlpatterns = [
     path("pricing/", views.page_view, {"slug": "pricing"}, name="pricing"),
     path("eu-compliance/", views.page_view, {"slug": "eu-compliance"}, name="eu_compliance"),
     path("start-from-zero/", views.page_view, {"slug": "start-from-zero"}, name="start_from_zero"),
-    path("early-access/", views.page_view, {"slug": "early-access"}, name="early_access"),
+    path("early-access/", views.early_access_view, {"slug": "early-access"}, name="early_access"),
+    path("early-access/confirm/", views.early_access_confirm, name="early_access_confirm"),
     path("compare/", views.page_view, {"slug": "compare"}, name="compare"),
     path("agencies/", views.page_view, {"slug": "agencies"}, name="agencies"),
     path("affiliates/", views.page_view, {"slug": "affiliates"}, name="affiliates"),
@@ -37,6 +38,7 @@ urlpatterns = [
     # /de/ intentionally absent until T-158 (native review gate)
 ]
 urlpatterns += [
-    path(f"nl/{route}", views.page_view, {"slug": stem}, name=name)
+    path(f"nl/{route}", views.early_access_view if stem == "early-access" else views.page_view, {"slug": stem}, name=name)
     for route, stem, name in _NL
 ]
+urlpatterns += [path("nl/vroege-toegang/confirm/", views.early_access_confirm, name="nl_early_access_confirm")]
