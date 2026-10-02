@@ -1,0 +1,20 @@
+{
+  "products": {
+    "pageInfo": {
+      "hasNextPage": false,
+      "endCursor": "eyJsYXN0X2lkIjoxMDc4MTg0OTcxNDk4MiwibGFzdF92YWx1ZSI6IjEwNzgxODQ5NzE0OTgyIn0="
+    },
+    "nodes": [
+      {
+        "id": "gid://shopify/Product/10781849714982",
+        "title": "T131 E2E Test Product",
+        "createdAt": "2026-10-02T04:44:19Z",
+        "handle": "t131-e2e-test-product",
+        "vendor": "Mosaiq Dev",
+        "tags": [],
+        "status": "DRAFT",
+        "featuredMedia": null
+      }
+    ]
+  }
+}
