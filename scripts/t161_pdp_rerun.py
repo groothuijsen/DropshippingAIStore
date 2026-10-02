@@ -46,7 +46,7 @@ elif not angles:
     print("NO ANGLES in research output:", str(research.output)[:200] if research else None)
 
 # Reset copy..publish to pending so the fixed pipeline runs for real
-for name in ("copy", "images", "compliance_check", "layout", "publish"):
+for name in ("images", "compliance_check", "layout", "publish"):  # copy already succeeded with real output
     st = job.steps.filter(name=name).first()
     if st:
         st.status = StepStatus.PENDING
