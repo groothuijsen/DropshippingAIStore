@@ -294,6 +294,26 @@ class TestStructureEdits:
         bp.refresh_from_db()
         assert bp.store_structure["pages"] == ["shipping", "returns", "about"]
 
+    def test_rename_collection_cascades_to_menu_refs(self, db, shop):
+        """Menu items referencing a collection follow its rename, so the
+        confirm step's ref validation keeps passing (T-116 E2E lesson)."""
+        bp = self._bp_with(shop)
+        _post(
+            shop,
+            {
+                "action": "structure_rename",
+                "item_type": "collection",
+                "index": "0",
+                "field": "title",
+                "value": "Nieuwe Naam",
+            },
+        )
+        bp.refresh_from_db()
+        refs = [m["ref"] for m in bp.store_structure["menu"] if m.get("target") == "collection"]
+        assert "Nieuwe Naam" in refs
+        assert "Slaapmaskers" not in refs
+
+
 
 class TestStructureConfirm:
     def _confirm(self, shop: Shop) -> dict:

@@ -190,7 +190,16 @@ def start_wizard(request: HttpRequest) -> HttpResponse:
                 else 40
             )
             if 0 <= idx < len(items) and field in {"title", "description"} and value:
-                items[idx][field] = value[:max_len]
+                new_value = value[:max_len]
+                if item_type == "collection" and field == "title":
+                    # Keep menu refs consistent: items pointing at the old
+                    # collection title follow the rename (F15-8 confirm
+                    # validates refs against collection titles).
+                    old_title = items[idx]["title"]
+                    for menu_item in structure.get("menu", []):
+                        if menu_item.get("target") == "collection" and menu_item.get("ref") == old_title:
+                            menu_item["ref"] = new_value
+                items[idx][field] = new_value
                 _save_structure()
         elif action == "structure_move":
             item_type = request.POST.get("item_type", "")
