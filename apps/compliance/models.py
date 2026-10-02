@@ -198,6 +198,11 @@ class DeliveryOverride(models.Model):
         return json.dumps(self.shipping_cost) if self.shipping_cost else ""
 
 
+def _default_markets() -> list[str]:
+    """Default markets for PricingSettings (Django can't serialize lambdas)."""
+    return ["NL"]
+
+
 class PricingSettings(models.Model):
     """Price advisor defaults per shop (F17-2, 12 §2.6)."""
 
@@ -211,7 +216,7 @@ class PricingSettings(models.Model):
         choices=[("95", ".95"), ("99", ".99"), ("00", ".00")],
         default="95",
     )
-    markets = models.JSONField(default=lambda: ["NL"], blank=True)
+    markets = models.JSONField(default=_default_markets, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -236,3 +241,24 @@ class PricingSettings(models.Model):
     @property
     def target_margin_pct_display(self) -> str:
         return str(self.target_margin_pct * 100)
+
+
+class PriceAdvice(models.Model):
+    """One price-advisor calculation, optionally applied (F17-4)."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    shop = models.ForeignKey("core.Shop", on_delete=models.CASCADE, related_name="price_advices")
+    product_gid = models.CharField(max_length=255)
+    market = models.CharField(max_length=80)
+    inputs = models.JSONField(default=dict)
+    advice = models.JSONField(default=dict)
+    applied_at = models.DateTimeField(null=True, blank=True)
+    applied_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["shop", "product_gid"])]
+
+    def __str__(self):
+        return f"PriceAdvice {self.product_gid} {self.market} applied={self.applied_at is not None}"

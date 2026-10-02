@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+from decimal import Decimal, InvalidOperation
 from urllib.parse import quote
 
 from django.conf import settings
@@ -268,11 +269,36 @@ def price_advisor(request: HttpRequest, product_gid: str) -> HttpResponse:
     if shop is None:
         return JsonResponse({"error": "Shop not found"}, status=404)
 
+    from apps.sources.models import ProductSource
+
     ps, _ = PricingSettings.objects.get_or_create(shop=shop)
     advice = None
     market = ""
     cost = shipping = ad_cost = ""
     margin_pct = returns_pct = ""
+
+    # Ownership (F17-5): only Mosaiq-created products may have price applied
+    src = ProductSource.objects.filter(shop=shop, product_gid=product_gid).first()
+    writable = bool(src and src.created_by_mosaiq)
+    app_label = src.get_source_display() if src else None
+
+    # Current price (F17-3 remainder) — best effort, never blocks the screen
+    current_price = None
+    try:
+        from apps.compliance.tasks import _get_client
+        from apps.core.shopify_client import load_query
+
+        client = _get_client(shop)
+        pdata = client.execute(load_query("product_variants_by_product"), {"id": product_gid})
+        nodes = pdata.get("product", {}).get("variants", {}).get("nodes", [])
+        if nodes and nodes[0].get("price") is not None:
+            current_price = Decimal(nodes[0]["price"])
+    except Exception:
+        current_price = None
+
+    advice_id = None
+    omnibus_warning = False
+    price_diff = None
 
     if request.method == "POST":
         market = request.POST.get("market", "NL").strip().upper()
@@ -287,8 +313,6 @@ def price_advisor(request: HttpRequest, product_gid: str) -> HttpResponse:
             advice = {"error": GB_NOT_COVERED_MESSAGE}
         else:
             try:
-                from decimal import Decimal, InvalidOperation
-
                 m_pct = Decimal(margin_pct) / 100 if margin_pct else ps.target_margin_pct
                 r_pct = Decimal(returns_pct) / 100 if returns_pct else ps.returns_allowance_pct
                 result = advise(
@@ -303,6 +327,35 @@ def price_advisor(request: HttpRequest, product_gid: str) -> HttpResponse:
                     price_ending=int(ps.price_ending),
                 )
                 advice = {"result": result, "market": market, "vat": vat}
+                if result.error is None:
+                    from apps.compliance.models import PriceAdvice
+
+                    row = PriceAdvice.objects.create(
+                        shop=shop,
+                        product_gid=product_gid,
+                        market=market,
+                        inputs={
+                            "cost": cost,
+                            "shipping": shipping,
+                            "ad_cost": ad_cost,
+                            "margin_pct": margin_pct,
+                            "returns_pct": returns_pct,
+                        },
+                        advice={
+                            "break_even": str(result.break_even_price),
+                            "consumer": str(result.consumer_price),
+                            "rounded": str(result.rounded_price),
+                            "actual_margin": str(
+                                (result.actual_margin * 100).quantize(Decimal("0.1"))
+                            )
+                            if result.actual_margin is not None
+                            else None,
+                        },
+                    )
+                    advice_id = str(row.id)
+                    if current_price is not None and result.rounded_price is not None:
+                        price_diff = result.rounded_price - current_price
+                        omnibus_warning = price_diff > 0
             except (InvalidOperation, ValueError):
                 advice = {"error": "Invalid number in cost fields."}
 
@@ -323,5 +376,115 @@ def price_advisor(request: HttpRequest, product_gid: str) -> HttpResponse:
             "ad_cost": ad_cost,
             "margin_pct": margin_pct,
             "returns_pct": returns_pct,
+            "writable": writable,
+            "app_label": app_label,
+            "current_price": current_price,
+            "advice_id": advice_id,
+            "omnibus_warning": omnibus_warning,
+            "price_diff": price_diff,
         },
     )
+
+
+def price_apply(request: HttpRequest, product_gid: str) -> HttpResponse:
+    """Apply an advice price to a writable product (F17-4).
+
+    POST /app/products/<gid>/pricing/apply/ — asserts writability, writes the
+    rounded price with productVariantsBulkUpdate (price only), stores
+    PriceAdvice.applied_at, and logs to AuditLog. Sync-app products are refused
+    before any HTTP call (F17-5).
+    """
+    from django.shortcuts import redirect
+    from django.utils import timezone
+
+    from apps.compliance.models import PriceAdvice
+    from apps.core.models import AuditLog
+    from apps.sources.guards import LockedFieldError, assert_writable
+
+    shop = _get_shop(request)
+    if shop is None:
+        return JsonResponse({"error": "Shop not found"}, status=404)
+
+    qs = request.GET.urlencode()
+    back = f"/app/products/{product_gid}/pricing/"
+    if qs:
+        back = f"{back}?{qs}"
+
+    if request.method != "POST":
+        return redirect(back)
+
+    advice_id = request.POST.get("advice_id", "")
+    try:
+        advice_row = PriceAdvice.objects.get(id=advice_id, shop=shop)
+    except Exception:
+        messages.error(request, "Price advice not found.")
+        return redirect(back)
+
+    from apps.sources.models import ProductSource
+
+    src = ProductSource.objects.filter(shop=shop, product_gid=product_gid).first()
+    if not (src and src.created_by_mosaiq):
+        label = src.get_source_display() if src else None
+        if label:
+            messages.error(request, f"Set this price in {label} (price rules).")
+        else:
+            messages.error(
+                request,
+                "This product is managed by a sync app — set the price there.",
+            )
+        return redirect(back)
+
+    try:
+        assert_writable(shop, product_gid, {"price"})
+    except LockedFieldError as exc:
+        messages.error(request, str(exc))
+        return redirect(back)
+
+    price_str = str(advice_row.advice.get("rounded", ""))
+    if not price_str:
+        messages.error(request, "No rounded price in this advice.")
+        return redirect(back)
+
+    try:
+        from apps.compliance.tasks import _get_client
+        from apps.core.shopify_client import load_query
+
+        client = _get_client(shop)
+        pdata = client.execute(load_query("product_variants_by_product"), {"id": product_gid})
+        nodes = pdata.get("product", {}).get("variants", {}).get("nodes", [])
+        if not nodes:
+            messages.error(request, "No variants found for this product.")
+            return redirect(back)
+        client.execute(
+            load_query("product_variants_bulk_update"),
+            {
+                "productId": product_gid,
+                "variants": [
+                    {"id": n["id"], "price": price_str}
+                    for n in nodes
+                    if n.get("id")
+                ],
+            },
+        )
+    except Exception as exc:
+        messages.error(request, f"Could not apply price: {exc}")
+        return redirect(back)
+
+    advice_row.applied_at = timezone.now()
+    advice_row.applied_price = Decimal(price_str)
+    advice_row.save(update_fields=["applied_at", "applied_price"])
+
+    AuditLog.objects.create(
+        shop=shop,
+        actor="merchant",
+        action="price_advisor_applied",
+        payload={
+            "product_gid": product_gid,
+            "market": advice_row.market,
+            "price": price_str,
+            "advice_id": str(advice_row.id),
+            "variant_count": len(nodes),
+        },
+    )
+    messages.success(request, f"Price {price_str} applied to {len(nodes)} variant(s).")
+    return redirect(back)

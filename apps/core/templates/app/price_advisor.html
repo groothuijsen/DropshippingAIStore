@@ -69,6 +69,19 @@
       <p class="mq-message mq-message-error">{{ advice.result.error }}</p>
     {% else %}
       <h2>{% trans "Advice for" %} {{ advice.market }}</h2>
+      {% if current_price is not None %}
+      <p class="mq-current-price">
+        {% trans "Current price" %}: € {{ current_price }}
+        {% if price_diff is not None %}
+          ({% if price_diff > 0 %}+{% endif %}{{ price_diff }} €)
+        {% endif %}
+      </p>
+      {% endif %}
+      {% if omnibus_warning %}
+      <div class="mq-warning mq-omnibus">
+        {% trans "If you raise the price now and discount it later, the strikethrough price must be the lowest price of the 30 days before the discount (07 §1)." %}
+      </div>
+      {% endif %}
       <table class="mq-table">
         <tr><td>{% trans "Break-even price" %}</td><td>€ {{ advice.result.break_even_price }}</td></tr>
         <tr><td>{% trans "Consumer price (excl. rounding)" %}</td><td>€ {{ advice.result.consumer_price }}</td></tr>
@@ -79,6 +92,23 @@
         {% blocktrans with vat=advice.vat %}VAT rate {{ vat }} (standard rate, reduced rates not handled).{% endblocktrans %}
         {% trans "Prices for markets other than the base currency are advice only — Shopify Markets price lists are out of scope." %}
       </p>
+
+      {% if writable %}
+        {% if advice_id %}
+        <form method="post" action="/app/products/{{ product_gid }}/pricing/apply/?id_token={{ request.GET.id_token }}" class="mq-form mq-apply-form">
+          {% csrf_token %}
+          <input type="hidden" name="advice_id" value="{{ advice_id }}">
+          <button type="submit" class="mq-button">{% trans "Apply price" %}</button>
+        </form>
+        {% endif %}
+      {% else %}
+        <div class="mq-panel mq-sync-app-panel">
+          <p>{% blocktrans %}Set this price in {{ app_label }} (price rules){% endblocktrans %}</p>
+          {% if advice.result.rounded_price %}
+          <p class="mq-copy-value">€ {{ advice.result.rounded_price }}</p>
+          {% endif %}
+        </div>
+      {% endif %}
     {% endif %}
   </div>
   {% endif %}
