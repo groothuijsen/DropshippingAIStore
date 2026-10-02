@@ -1,0 +1,21 @@
+{
+  "_comment": "Real response from webhookSubscriptionCreate (products/create) on dev store mosaiq-pod.myshopify.com, API 2026-07, 2026-10-01 (T-110). NOT hand-written (AGENTS.md \u00a75). Deviations: input field is 'uri' not 'address'; WebhookSubscription.uri not endpoint.url (endpoint is a union: WebhookHttpEndpoint etc.).",
+  "operation": "webhookSubscriptionCreate",
+  "variables": {
+    "topic": "PRODUCTS_CREATE",
+    "input": {
+      "uri": "https://shop.mosaiq.marketing/webhooks/shopify/",
+      "format": "JSON"
+    }
+  },
+  "response": {
+    "webhookSubscriptionCreate": {
+      "webhookSubscription": {
+        "id": "gid://shopify/WebhookSubscription/2138490568998",
+        "topic": "PRODUCTS_CREATE",
+        "uri": "https://shop.mosaiq.marketing/webhooks/shopify/"
+      },
+      "userErrors": []
+    }
+  }
+}

@@ -13,29 +13,34 @@
       {
         "title": "Test Collection",
         "type": "COLLECTION",
-        "resourceId": "gid://shopify/Collection/1"
+        "resourceId": "gid://shopify/Collection/681639018790"
       }
     ]
   },
   "response": {
-    "errors": [
-      {
-        "message": "Access denied for menuCreate field. Required access: `write_online_store_navigation` access scope.",
-        "locations": [
+    "menuCreate": {
+      "menu": {
+        "id": "gid://shopify/Menu/328413970726",
+        "title": "Mosaiq",
+        "handle": "mosaiq-main-1",
+        "items": [
           {
-            "line": 2,
-            "column": 3
+            "id": "gid://shopify/MenuItem/825525076262",
+            "type": "FRONTPAGE",
+            "resourceId": null,
+            "title": "Home",
+            "url": "/"
+          },
+          {
+            "id": "gid://shopify/MenuItem/825525109030",
+            "type": "COLLECTION",
+            "resourceId": "gid://shopify/Collection/681639018790",
+            "title": "Test Collection",
+            "url": "/collections/t110-test-collection"
           }
-        ],
-        "extensions": {
-          "code": "ACCESS_DENIED",
-          "documentation": "https://shopify.dev/api/usage/access-scopes",
-          "requiredAccess": "`write_online_store_navigation` access scope."
-        },
-        "path": [
-          "menuCreate"
         ]
-      }
-    ]
+      },
+      "userErrors": []
+    }
   }
 }

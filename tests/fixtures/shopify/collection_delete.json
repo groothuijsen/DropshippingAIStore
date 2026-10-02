@@ -3,12 +3,12 @@
   "operation": "collection_delete",
   "variables": {
     "input": {
-      "id": "gid://shopify/Collection/681635873062"
+      "id": "gid://shopify/Collection/681639018790"
     }
   },
   "response": {
     "collectionDelete": {
-      "deletedCollectionId": "gid://shopify/Collection/681635873062",
+      "deletedCollectionId": "gid://shopify/Collection/681639018790",
       "userErrors": []
     }
   }

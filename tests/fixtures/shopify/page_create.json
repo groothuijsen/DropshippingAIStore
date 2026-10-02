@@ -5,13 +5,13 @@
     "page": {
       "title": "T110 Test Page",
       "handle": "t110-test-page",
-      "body": "<p>Fixture capture page.</p>"
+      "body": "<p>Temporary page for T-110 fixture capture.</p>"
     }
   },
   "response": {
     "pageCreate": {
       "page": {
-        "id": "gid://shopify/Page/170096591142",
+        "id": "gid://shopify/Page/170099835174",
         "handle": "t110-test-page"
       },
       "userErrors": []

@@ -1,12 +1,14 @@
 {
   "_comment": "Real response captured against dev store mosaiq-pod.myshopify.com, API 2026-07, by scripts capture_t110.py (T-110). NOT hand-written (AGENTS.md \u00a75).",
-  "operation": "page_delete",
+  "operation": "productDelete",
   "variables": {
-    "id": "gid://shopify/Page/170099835174"
+    "input": {
+      "id": "gid://shopify/Product/10781538812198"
+    }
   },
   "response": {
-    "pageDelete": {
-      "deletedPageId": "gid://shopify/Page/170099835174",
+    "productDelete": {
+      "deletedProductId": "gid://shopify/Product/10781538812198",
       "userErrors": []
     }
   }

@@ -1,0 +1,89 @@
+{
+  "_comment": "Introspection of webhookSubscriptionCreate + WebhookSubscriptionInput, API 2026-07, captured 2026-10-01 (T-110).",
+  "mutation_args": [
+    {
+      "name": "topic",
+      "type": {
+        "name": null,
+        "kind": "NON_NULL",
+        "ofType": {
+          "name": "WebhookSubscriptionTopic"
+        }
+      }
+    },
+    {
+      "name": "webhookSubscription",
+      "type": {
+        "name": null,
+        "kind": "NON_NULL",
+        "ofType": {
+          "name": "WebhookSubscriptionInput"
+        }
+      }
+    }
+  ],
+  "input_fields": [
+    {
+      "name": "format",
+      "type": {
+        "name": "WebhookSubscriptionFormat",
+        "kind": "ENUM",
+        "ofType": null
+      }
+    },
+    {
+      "name": "includeFields",
+      "type": {
+        "name": null,
+        "kind": "LIST",
+        "ofType": {
+          "name": null
+        }
+      }
+    },
+    {
+      "name": "filter",
+      "type": {
+        "name": "String",
+        "kind": "SCALAR",
+        "ofType": null
+      }
+    },
+    {
+      "name": "metafieldNamespaces",
+      "type": {
+        "name": null,
+        "kind": "LIST",
+        "ofType": {
+          "name": null
+        }
+      }
+    },
+    {
+      "name": "metafields",
+      "type": {
+        "name": null,
+        "kind": "LIST",
+        "ofType": {
+          "name": null
+        }
+      }
+    },
+    {
+      "name": "name",
+      "type": {
+        "name": "String",
+        "kind": "SCALAR",
+        "ofType": null
+      }
+    },
+    {
+      "name": "uri",
+      "type": {
+        "name": "String",
+        "kind": "SCALAR",
+        "ofType": null
+      }
+    }
+  ]
+}

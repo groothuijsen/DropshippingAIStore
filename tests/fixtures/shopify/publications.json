@@ -3,24 +3,21 @@
   "operation": "publications",
   "variables": {},
   "response": {
-    "errors": [
-      {
-        "message": "Access denied for publications field. Required access: `read_publications` access scope.",
-        "locations": [
-          {
-            "line": 2,
-            "column": 3
-          }
-        ],
-        "extensions": {
-          "code": "ACCESS_DENIED",
-          "documentation": "https://shopify.dev/api/usage/access-scopes",
-          "requiredAccess": "`read_publications` access scope."
+    "publications": {
+      "nodes": [
+        {
+          "id": "gid://shopify/Publication/336222552358",
+          "name": "Online Store"
         },
-        "path": [
-          "publications"
-        ]
-      }
-    ]
+        {
+          "id": "gid://shopify/Publication/336222585126",
+          "name": "Point of Sale"
+        },
+        {
+          "id": "gid://shopify/Publication/336222617894",
+          "name": "Shop"
+        }
+      ]
+    }
   }
 }

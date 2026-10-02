@@ -16,7 +16,7 @@
               "matchType": "ANY",
               "selections": [
                 {
-                  "productId": "gid://shopify/Product/10781482090790"
+                  "productId": "gid://shopify/Product/10781538812198"
                 }
               ]
             }
@@ -28,7 +28,7 @@
   "response": {
     "collectionCreate": {
       "collection": {
-        "id": "gid://shopify/Collection/681635873062",
+        "id": "gid://shopify/Collection/681639018790",
         "title": "T110 Test Collection",
         "handle": "t110-test-collection",
         "descriptionHtml": "<p>Fixture capture collection.</p>",

@@ -1,9 +1,9 @@
 {
   "_comment": "Real response captured against dev store mosaiq-pod.myshopify.com, API 2026-07, by scripts capture_t110.py (T-110). NOT hand-written (AGENTS.md \u00a75).",
-  "operation": "menu_create",
+  "operation": "menu_update",
   "variables": {
-    "title": "Mosaiq",
-    "handle": "mosaiq-main",
+    "id": "gid://shopify/Menu/328413937958",
+    "title": "Mosaiq Updated",
     "items": [
       {
         "title": "Home",
@@ -11,32 +11,32 @@
         "url": "/"
       },
       {
-        "title": "Test Collection",
-        "type": "COLLECTION",
-        "resourceId": "gid://shopify/Collection/681639018790"
+        "title": "All",
+        "type": "CATALOG",
+        "url": "/collections/all"
       }
     ]
   },
   "response": {
-    "menuCreate": {
+    "menuUpdate": {
       "menu": {
         "id": "gid://shopify/Menu/328413937958",
-        "title": "Mosaiq",
+        "title": "Mosaiq Updated",
         "handle": "mosaiq-main",
         "items": [
           {
-            "id": "gid://shopify/MenuItem/825525010726",
+            "id": "gid://shopify/MenuItem/825525141798",
             "type": "FRONTPAGE",
             "resourceId": null,
             "title": "Home",
             "url": "/"
           },
           {
-            "id": "gid://shopify/MenuItem/825525043494",
-            "type": "COLLECTION",
-            "resourceId": "gid://shopify/Collection/681639018790",
-            "title": "Test Collection",
-            "url": "/collections/t110-test-collection"
+            "id": "gid://shopify/MenuItem/825525174566",
+            "type": "CATALOG",
+            "resourceId": null,
+            "title": "All",
+            "url": "/collections/all"
           }
         ]
       },
