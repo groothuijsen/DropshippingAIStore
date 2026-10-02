@@ -1,0 +1,63 @@
+{% extends "app/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Delivery Settings" %}{% endblock %}
+
+{% block content %}
+<div class="mq-delivery-settings">
+  <h1>{% trans "Delivery Settings" %}</h1>
+  <p class="mq-subtitle">{% trans "Delivery estimates per source app. Used on product pages, the shipping page and in AI copy." %}</p>
+
+  {% if messages %}
+  <div class="mq-messages">
+    {% for message in messages %}
+    <div class="mq-message mq-message-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% for row in rows %}
+  <div class="mq-profile-card" data-source-app="{{ row.app }}">
+    <h2>{{ row.app }}</h2>
+    <form method="post" class="mq-form">
+      {% csrf_token %}
+      <input type="hidden" name="source_app" value="{{ row.app }}">
+
+      <div class="mq-field">
+        <label for="ship_from_{{ row.app }}">{% trans "Ship-from country (ISO 2)" %}</label>
+        <input type="text" id="ship_from_{{ row.app }}" name="ship_from_country" maxlength="2"
+               value="{{ row.ship_from_country }}" placeholder="CN">
+      </div>
+
+      <div class="mq-field-row">
+        <div class="mq-field">
+          <label for="proc_min_{{ row.app }}">{% trans "Processing days min" %}</label>
+          <input type="number" id="proc_min_{{ row.app }}" name="processing_days_min" min="0" max="15"
+                 value="{{ row.processing_days_min }}">
+        </div>
+        <div class="mq-field">
+          <label for="proc_max_{{ row.app }}">{% trans "Processing days max" %}</label>
+          <input type="number" id="proc_max_{{ row.app }}" name="processing_days_max" min="0" max="15"
+                 value="{{ row.processing_days_max }}">
+        </div>
+      </div>
+
+      <div class="mq-field">
+        <label for="transit_{{ row.app }}">{% trans "Transit days per market (JSON)" %}</label>
+        <textarea id="transit_{{ row.app }}" name="transit_days" rows="3"
+                  placeholder='{"NL": [6, 10], "DE": [7, 11]}'>{{ row.transit_days }}</textarea>
+        <p class="mq-help">{% trans 'Per market: {"NL": [6, 10]} — min and max working days.' %}</p>
+      </div>
+
+      <div class="mq-field">
+        <label for="cost_{{ row.app }}">{% trans "Shipping cost per market (JSON, optional)" %}</label>
+        <textarea id="cost_{{ row.app }}" name="shipping_cost" rows="2"
+                  placeholder='{"NL": {"amount": "4.95", "free_from": "40.00"}}'>{{ row.shipping_cost }}</textarea>
+      </div>
+
+      <button type="submit" class="mq-button">{% trans "Save profile" %}</button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

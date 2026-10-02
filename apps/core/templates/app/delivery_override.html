@@ -1,0 +1,73 @@
+{% extends "app/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Delivery Override" %}{% endblock %}
+
+{% block content %}
+<div class="mq-delivery-override">
+  <h1>{% trans "Delivery Override" %}</h1>
+  <p class="mq-subtitle">{% trans "Per-product delivery settings. Empty fields fall back to the source-app profile." %}</p>
+  <p class="mq-help"><code>{{ product_gid }}</code></p>
+
+  {% if messages %}
+  <div class="mq-messages">
+    {% for message in messages %}
+    <div class="mq-message mq-message-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <form method="post" class="mq-form">
+    {% csrf_token %}
+
+    <div class="mq-field">
+      <label for="ship_from_country">{% trans "Ship-from country (ISO 2)" %}</label>
+      <input type="text" id="ship_from_country" name="ship_from_country" maxlength="2"
+             value="{{ override.ship_from_country|default:'' }}" placeholder="CN">
+    </div>
+
+    <div class="mq-field-row">
+      <div class="mq-field">
+        <label for="processing_days_min">{% trans "Processing days min" %}</label>
+        <input type="number" id="processing_days_min" name="processing_days_min" min="0" max="15"
+               value="{{ override.processing_days_min|default:'' }}">
+      </div>
+      <div class="mq-field">
+        <label for="processing_days_max">{% trans "Processing days max" %}</label>
+        <input type="number" id="processing_days_max" name="processing_days_max" min="0" max="15"
+               value="{{ override.processing_days_max|default:'' }}">
+      </div>
+    </div>
+
+    <div class="mq-field">
+      <label for="transit_days">{% trans "Transit days per market (JSON)" %}</label>
+      <textarea id="transit_days" name="transit_days" rows="3"
+                placeholder='{"NL": [3, 5]}'>{% if override.transit_days %}{{ override.transit_days_json }}{% endif %}</textarea>
+      <p class="mq-help">{% trans 'Per market: {"NL": [3, 5]} — min and max working days.' %}</p>
+    </div>
+
+    <div class="mq-field">
+      <label for="shipping_cost">{% trans "Shipping cost per market (JSON, optional)" %}</label>
+      <textarea id="shipping_cost" name="shipping_cost" rows="2"
+                placeholder='{"NL": {"amount": "4.95", "free_from": "40.00"}}'>{% if override.shipping_cost %}{{ override.shipping_cost_json }}{% endif %}</textarea>
+    </div>
+
+    <div class="mq-actions">
+      <button type="submit" class="mq-button">{% trans "Save override" %}</button>
+    </div>
+  </form>
+
+  <form method="post" class="mq-form mq-form-danger" style="margin-top: 2rem;">
+    {% csrf_token %}
+    <input type="hidden" name="ship_from_country" value="">
+    <input type="hidden" name="processing_days_min" value="">
+    <input type="hidden" name="processing_days_max" value="">
+    <input type="hidden" name="transit_days" value="">
+    <input type="hidden" name="shipping_cost" value="">
+    <button type="submit" class="mq-button mq-button-danger"
+            onclick="return confirm('{% trans "Remove this override and fall back to the profile?" %}')">
+      {% trans "Remove override" %}
+    </button>
+  </form>
+</div>
+{% endblock %}

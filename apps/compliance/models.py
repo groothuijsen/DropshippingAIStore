@@ -3,6 +3,7 @@
 See docs/02-data-model.md, docs/07-compliance.md.
 """
 
+import json
 import uuid
 
 from django.db import models
@@ -185,3 +186,11 @@ class DeliveryOverride(models.Model):
 
     def __str__(self) -> str:
         return f"DeliveryOverride {self.product_gid} @ {self.shop.domain}"
+
+    @property
+    def transit_days_json(self) -> str:
+        return json.dumps(self.transit_days) if self.transit_days else ""
+
+    @property
+    def shipping_cost_json(self) -> str:
+        return json.dumps(self.shipping_cost) if self.shipping_cost else ""
