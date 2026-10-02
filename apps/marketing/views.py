@@ -171,7 +171,7 @@ _PIXEL = bytes.fromhex('47494638396101000100800000000000ffffff21f90401000000002c
 
 @require_GET
 def beacon_view(request: HttpRequest) -> HttpResponse:
-    if _guard(request) == 'deny':
+    if _guard(request) != "en":
         raise Http404
     path = request.GET.get('p', '')[:300]
     if path.startswith('/'):
