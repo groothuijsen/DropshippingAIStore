@@ -93,7 +93,7 @@
         {% endif %}
       </section>
     {% endif %}
-    {% if page.slug|slice:':6' == '/early' or page.slug|slice:':4' == '/nl/' %}{% if 'early' in page.slug or 'vroege' in page.slug %}{% include 'marketing/_early_access_form.html' %}{% endif %}{% endif %}
+    {% if forloop.first %}{% if 'early' in page.slug or 'vroege' in page.slug %}{% include 'marketing/_early_access_form.html' %}{% endif %}{% endif %}
   {% endfor %}
   {% if page.body_html %}<section class="block shell"><div class="prose">{{ page.body_html|safe }}</div></section>{% endif %}
 </main>

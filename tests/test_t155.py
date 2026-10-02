@@ -86,3 +86,30 @@ class TestInstallSwitch:
         settings.MARKETING_APP_HANDLE = "mosaiq"
         html = Client().get("/pricing/", **M).content.decode()
         assert "apps.shopify.com/mosaiq/install" in html
+
+
+class TestEarlyAccessUX:
+    def test_form_renders_exactly_once(self):
+        html = Client().get("/early-access/", **M).content.decode()
+        assert html.count("<form method=\"post\"") == 1
+        assert html.count('id="early-access-form"') == 1
+
+    def test_nl_form_once(self):
+        html = Client().get("/nl/vroege-toegang/", **M).content.decode()
+        assert html.count("<form method=\"post\"") == 1
+
+    def test_invite_ctas_point_to_form_not_mailto(self):
+        for path in ("/early-access/", "/nl/vroege-toegang/"):
+            html = Client().get(path, **M).content.decode()
+            assert "#early-access-form" in html, path
+            assert "mailto:hello@mosaiq.marketing?subject=Early" not in html, path
+
+    def test_logo_links_home(self):
+        html = Client().get("/", **M).content.decode()
+        assert 'class="logo" href="/"' in html
+        html_nl = Client().get("/nl/", **M).content.decode()
+        assert 'class="logo" href="/nl/"' in html_nl
+
+    def test_mobile_menu_css_keeps_links(self):
+        html = Client().get("/", **M).content.decode()
+        assert "nav-links" in html  # links remain in DOM; CSS re-shows them on mobile

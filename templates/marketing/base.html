@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="{% static 'marketing/css/site.css' %}">
 </head>
 <body>
-<nav class="nav shell"><div class="logo">Mosaiq<span class="acc">.app</span></div>
+<nav class="nav shell"><a class="logo" href="{% if lang == 'nl' %}/nl/{% else %}/{% endif %}" aria-label="Mosaiq home">Mosaiq<span class="acc">.app</span></a>
 <div class="nav-links"><a href="{% url 'marketing:features' %}">Features</a><a href="{% url 'marketing:pricing' %}">Pricing</a><a href="{% url 'marketing:eu_compliance' %}">EU compliance</a></div>
 <a class="btn btn-p" href="{% url 'marketing:early_access' %}">{% trans "Get early access" %}</a></nav>
 {% block content %}{% endblock %}

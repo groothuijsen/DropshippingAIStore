@@ -8,7 +8,7 @@ sections:
     eyebrow: "Early access"
     headline: "Be one of the first stores on Mosaiq"
     sub: "We're onboarding a small group of EU merchants before the App Store launch. Founding members hear from us first."
-    cta_primary: { label: "Request an invite", href: "mailto:hello@mosaiq.marketing?subject=Early%20access" }
+    cta_primary: { label: "Request an invite", href: "#early-access-form" }
   - type: features
     title: "What early access gets you"
     items:
@@ -18,7 +18,7 @@ sections:
   - type: cta
     headline: "Ready when you are"
     sub: "Prefer email? Write to hello@mosaiq.marketing."
-    cta_primary: { label: "Request an invite", href: "mailto:hello@mosaiq.marketing?subject=Early%20access" }
+    cta_primary: { label: "Request an invite", href: "#early-access-form" }
 ---
 The early-access form (email, shop domain, language, double opt-in) ships with T-155. Until then, requests go by email.
 
