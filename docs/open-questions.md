@@ -41,7 +41,7 @@ Researched on 30 September 2026. Answered questions remain listed so that it is 
 | Q18 | Exact shape of `CollectionCreateSourceTargetInput` (manual products in `sources`) in API 2026-07 | T-117 | Hermes (fixture) | answered 2026-10-01: `sources: [{source: {title (required), inclusion: {matchType, selections: [{productId, variantIds}]}}}]` — selections under inclusion, live-verified, fixture `collection_create.json` |
 | Q19 | Does `menuCreate` fail when a menu with the same handle exists, or auto-suffix the handle? | T-117 | Hermes (fixture) | answered 2026-10-01: auto-suffix — duplicate handle `mosaiq-main` created a NEW menu `mosaiq-main-1`, no error. Fixture `menu_create_duplicate_handle.json`. |
 | Q20 | Can the theme editor be deep-linked to the header section of the active theme for menu selection (Dawn, Horizon)? | T-118 | Hermes | open |
-| Q21 | Is a domain check via RDAP from the production server acceptable without rate-limit issues? | T-112 | Hermes | open |
+| Q21 | Is a domain check via RDAP from the production server acceptable without rate-limit issues? | T-112 | Hermes | **answered 2026-10-02**: yes. Volume is tiny — 8 .com lookups per generation, max 4 generations per blueprint (~32 requests), 0.5 s spacing, 5 s timeout, failures yield `unknown` (never an error). Verified live from CT 412: rdap.org answers 404 free / 200 taken. |
 
 ## v1.2 (from 13 §8)
 

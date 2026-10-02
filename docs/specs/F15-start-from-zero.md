@@ -31,7 +31,19 @@ Second onboarding route: the merchant describes a niche and Mosaiq proposes a br
 - Undo removes only `ManagedResource` items of this blueprint.
 
 ## Assumptions made during build
-_(to be filled in by Hermes)_
+
+### T-112 (2026-10-02)
+
+1. **Onboarding flow wiring**: the onboarding views existed but had no URL registration and no templates — T-112 added `/app/onboarding/` routes and minimal functional templates for all six steps so the brand step (F15-1) is reachable. Step screens are intentionally plain; polish can come later.
+2. **`_get_shop` fix**: onboarding read `request.shop_id`, which `SessionTokenMiddleware` never sets (it sets `shop_domain`) — every onboarding request returned 401. Now resolves by domain like every other app view.
+3. **Names panel polling**: HTMX (`hx-trigger="every 3s"` against `/app/start/panel/`) using the vendored `static/vendor/htmx.esm.js` that `auth.js` already loads; no meta-refresh fallback (the wizard only renders inside the admin iframe where auth.js runs).
+4. **Empty `audience` is schema-valid** (docs/12 §3 `Field(max_length=200)` has no min) — accepted as-is.
+5. **Second names call asks for the missing count** but the schema returns 8 per call; the task merges, dedupes and keeps the first 8 passing names.
+6. **Brand-blocklist matching**: brands ≤3 chars match exactly, longer as substrings; generic-claim terms (≥3 chars) and geographic origins match as substrings (`EcoGlow`, `SwissSleep` rejected).
+7. **RDAP = rdap.org per spec**; .com only; live-verified (404 free / 200 taken). Q21 answered in open-questions.md.
+8. **AI model**: `model_key="copy"` (→ `LLM_MODEL_COPY`, currently `claude-sonnet-5-5`) per the niche_names.md prompt header. That model rejects forced `tool_choice` and `temperature` (400) — `AnthropicClient._make_request` drops the offending param and retries once; schema validation unchanged. Client also falls back to `settings.ANTHROPIC_API_KEY` because the systemd units do not load `.env` into the process environment.
+
+### T-111 (2026-10-01)
 
 1. **T-111 `is_complete()` purposes** (12 §2.1 lists the four purposes but not their required fields):
    - `legal` → legal_name, street, postal_code, city, country_code, email (the facts the withdrawal model form shows).

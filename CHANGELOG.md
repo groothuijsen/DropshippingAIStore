@@ -1,5 +1,18 @@
 ## Unreleased
 
+### T-112 — StoreBlueprint, route choice, brief + names step (2026-10-02)
+
+- **`generator.StoreBlueprint`** (migration 0002, 12 §2.2): status state machine (brief → names → brand → …), brief fields, `name_suggestions`, `regenerate_count`, `brand_name`/`brand_slug`, later-step fields, `advance()`. **`Shop.onboarding_route`** (migration 0005): existing/zero.
+- **F15-1 route choice**: onboarding brand step offers "existing brand" vs "start from zero"; zero creates a blueprint (status `brief`) and redirects to `/app/start/`; existing stores the route and waits for the BrandKit form before advancing.
+- **Onboarding made reachable**: added the missing `core/onboarding/` templates (base + 6 steps) and `/app/onboarding/` URL wiring. Fixed `_get_shop` (read `request.shop_id`, which the middleware never sets → permanent 401).
+- **F15-3 brief screen** (`/app/start/`): validated against the `NicheBrief` schema; nothing reaches the AI until valid.
+- **F15-4 names step**: `generate_name_suggestions` task renders `niche_names.md` → `NameSuggestions` (exactly 8) → blocklist filter with one repeat call → RDAP .com check (`likely_free`/`taken`/`unknown`, 0.5 s spacing; Q21 answered: acceptable). HTMX-polled names panel; regenerate max 3; own name gets the same blocklist check.
+- **`themes/brand_blocklist.py`**: geographic origins + ~180 brands + generic-claim substrings from `claims.BLOCKLIST`; rejects EcoGlow/Nike/SwissSleep.
+- **AI schemas** per 12 §3: `Market`, `PriceLevel`, `NicheBrief`, `NameIdea`, `NameSuggestions`.
+- **Client fixes from live E2E**: `AnthropicClient` settings fallback for the API key (systemd units don't load `.env`); names task uses `model_key="copy"`; `_make_request` drops `tool_choice`/`temperature` on 400 (claude-sonnet-5-5 rejects both) and retries once.
+- **Live E2E (dev store)**: route choice → brief → 8 REAL AI names → RDAP statuses correct → panel + disclaimer + TMview → own name picked → `brand_name`/`slug`/status `brand` stored. 1020/1020 tests; ruff clean.
+
+
 ### T-131 — Apply price + guard + audit (2026-10-02)
 
 - **`compliance.PriceAdvice`** model (migration 0005): inputs/advice JSON per calculation, `applied_at` + `applied_price` when the merchant applies; also normalizes `PricingSettings.markets` default to a named function (Django cannot serialize lambdas).
