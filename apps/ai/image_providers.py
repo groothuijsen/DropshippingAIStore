@@ -127,6 +127,12 @@ class OpenAIImageProvider:
     def __init__(self, api_key: str):
         self._api_key = api_key
 
+    @staticmethod
+    def model_name() -> str:
+        from django.conf import settings
+
+        return getattr(settings, "IMAGE_MODEL_FALLBACK", None) or OpenAIImageProvider.MODEL
+
     def generate(
         self,
         prompt: str,
@@ -171,13 +177,31 @@ class OpenAIImageProvider:
                         )
                     )
 
-            response = httpx.post(
-                "https://api.openai.com/v1/images/edits",
-                headers=headers,
-                data=data,
-                files=files if files else None,
-                timeout=60.0,
-            )
+            # The gpt-image family only accepts 1024x1024 / 1536x1024 /
+            # 1024x1536 — map the 2K preset to the landscape size.
+            api_size = size if size in ("1024x1024", "1536x1024", "1024x1536") else "1536x1024"
+            data["size"] = api_size
+            data["model"] = self.model_name()
+
+            if files:
+                # Reference images require the multipart edits endpoint.
+                response = httpx.post(
+                    "https://api.openai.com/v1/images/edits",
+                    headers=headers,
+                    data=data,
+                    files=files,
+                    timeout=120.0,
+                )
+            else:
+                # Pure text-to-image: JSON generations endpoint (the edits
+                # endpoint rejects non-multipart bodies — live lesson).
+                json_body = {k: v for k, v in data.items() if k != "input_fidelity"}
+                response = httpx.post(
+                    "https://api.openai.com/v1/images/generations",
+                    headers={**headers, "Content-Type": "application/json"},
+                    json=json_body,
+                    timeout=120.0,
+                )
 
             if response.status_code != 200:
                 return ImageGenerationResult(
