@@ -96,10 +96,14 @@ class TestLayoutStep:
             images={"hero": "gid://shopify/MediaImage/1"},
         )
         fields = build_metaobject_fields(page)
-        assert "hero_headline" in fields
-        assert json.loads(fields["hero_headline"]) == "Test"
-        assert "seo_title" in fields
-        assert json.loads(fields["seo_title"]) == "SEO Title"
+        # Real $app:page_content definition shape (03 §5.1, verified live)
+        assert json.loads(fields["page_type"]) == "pdp"
+        assert json.loads(fields["locale"]) == "nl"
+        payload = json.loads(fields["sections"])
+        assert payload["sections"][0]["headline"] == "Test"
+        assert payload["seo_title"] == "SEO Title"
+        assert payload["seo_description"] == "SEO Desc"
+        assert json.loads(fields["image_hero"]) == "gid://shopify/MediaImage/1"
 
     def test_build_metaobject_fields_cta(self):
         page = Page(
@@ -115,8 +119,9 @@ class TestLayoutStep:
             },
         )
         fields = build_metaobject_fields(page)
-        assert "cta_headline" in fields
-        assert json.loads(fields["cta_headline"]) == "Buy now"
+        payload = json.loads(fields["sections"])
+        assert payload["sections"][0]["headline"] == "Buy now"
+        assert payload["sections"][0]["button_label"] == "Go"
 
     def test_get_template_suffix_not_ready(self):
         shop = MagicMock(mosaiq_templates_ready=False)

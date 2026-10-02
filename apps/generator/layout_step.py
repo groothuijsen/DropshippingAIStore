@@ -38,42 +38,36 @@ PAGE_TYPES_NEEDING_SHOPIFY_PAGE = {"landing", "advertorial", "listicle", "about"
 
 
 def build_metaobject_fields(page: Page) -> dict[str, str]:
-    """Convert Page.sections + images into metaobject fields.
+    """Convert Page data into the $app:page_content metaobject fields.
 
-    Returns dict of field_key -> JSON string.
+    The definition (03 §5.1, created by installation.ensure_
+    metaobject_definitions) has a fixed field set: page_type, locale,
+    sections (json — the full sections payload incl. seo fields),
+    image_* file references, ai_image_disclosure, version. Verified
+    against the live definition on the dev store during the T-117 E2E
+    ("Field definition ... does not exist" exposed the old per-section
+    field map, which never matched the real definition).
     """
     locale = page.content_locale
-    sections_data = page.sections.get(locale, {})
-    sections = sections_data.get("sections", [])
+    sections_data = page.sections.get(locale, {}) if isinstance(page.sections, dict) else {}
+    sections = sections_data.get("sections", []) if isinstance(sections_data, dict) else []
     images = page.images or {}
 
-    fields: dict[str, str] = {}
+    payload = dict(sections_data) if isinstance(sections_data, dict) else {}
+    payload["sections"] = sections
 
-    for section in sections:
-        section_type = section.get("type", "")
-        field_map = METAOBJECT_FIELD_MAP.get(section_type, {})
+    fields: dict[str, str] = {
+        "page_type": json.dumps(page.page_type),
+        "locale": json.dumps(locale),
+        "sections": json.dumps(payload, ensure_ascii=False),
+        "version": json.dumps(page.version or 1),
+    }
 
-        for field_key, section_key in field_map.items():
-            if field_key == "hero_image":
-                # Image field: get from page.images by slot
-                image_gid = images.get("hero", "")
-                fields[field_key] = json.dumps(image_gid)
-            elif section_key is None:
-                # Whole section dict (minus "type")
-                value = {k: v for k, v in section.items() if k != "type"}
-                fields[field_key] = json.dumps(value)
-            elif section_key in section:
-                fields[field_key] = json.dumps(section[section_key])
-
-        # Image fields per section
-        if section_type == "hero" and "hero" in images:
-            fields["hero_image"] = json.dumps(images["hero"])
-
-    # SEO fields
-    if sections_data.get("seo_title"):
-        fields["seo_title"] = json.dumps(sections_data["seo_title"])
-    if sections_data.get("seo_description"):
-        fields["seo_description"] = json.dumps(sections_data["seo_description"])
+    hero_gid = images.get("hero", "")
+    if hero_gid:
+        fields["image_hero"] = json.dumps(hero_gid)
+    if page.ai_image_disclosure:
+        fields["ai_image_disclosure"] = json.dumps(bool(page.ai_image_disclosure))
 
     return fields
 
