@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, Any
 
 from apps.compliance.gpsr import GpsrInfo, check_gpsr_for_publish
 from apps.core.shopify_client import ShopifyGraphQLClient
+from apps.generator.publish_step import METAOBJECT_TYPE
 
 if TYPE_CHECKING:
     from apps.core.models import Shop
