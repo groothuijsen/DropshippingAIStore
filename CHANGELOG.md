@@ -1,3 +1,10 @@
+## 2026-10-02 — T-120: plain-language page edits (F16 backend)
+
+- `EditOp`/`PageEditResult` schemas; `PageEdit` model (gen/0011); `AiCallPurpose.EDIT`.
+- Deterministic validation + apply engine (`apps/generator/edit_ops.py`): locked fields, per-page-type section rules, version guard, claim-check re-run, version bump.
+- `generate_page_edit` Celery task (limit → one AI call → validate); `UsageCounter.page_edits` + plan limits 50/250/1000 with reset date; consumed on apply, invalid edits do not count.
+- 1197/1197 tests. T-121 (editor UI) next.
+
 ## 2026-10-02 — T-161/T-162: GPSR form + phase close-out + live pipeline hardening
 
 - **T-161 GPSR form** (`/app/products/<gid>/gpsr/`): per-product GPSR entry stored in `$app:mosaiq.gpsr`; publish/go-live load it (empty metafield blocks the publish); build panel links blocked PDPs to the form.

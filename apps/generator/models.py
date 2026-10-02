@@ -190,6 +190,7 @@ class AiCallPurpose(models.TextChoices):
     REWRITE = "rewrite", "Rewrite"
     TRANSLATE = "translate", "Translate"
     SHOT_PLAN = "shot_plan", "Shot plan"
+    EDIT = "edit", "Page edit"
 
 
 class AiProvider(models.TextChoices):
@@ -389,3 +390,38 @@ class StoreBlueprint(models.Model):
         self.completed_steps = done
         self.status = step
         self.save(update_fields=["completed_steps", "status", "updated_at"])
+
+
+class PageEdit(models.Model):
+    """Log of plain-language page edits (F16, 12 §2.5)."""
+
+    class Status(models.TextChoices):
+        PROPOSED = "proposed", "Proposed"
+        APPLIED = "applied", "Applied"
+        REJECTED = "rejected", "Rejected"
+        FAILED = "failed", "Failed"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    page = models.ForeignKey(Page, on_delete=models.CASCADE, related_name="edits")
+    locale = models.CharField(max_length=5)
+    instruction = models.TextField()
+    scope_section_index = models.SmallIntegerField(
+        null=True, blank=True, help_text="null = whole page"
+    )
+    operations = models.JSONField(default=list)
+    summary = models.CharField(max_length=200, blank=True)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PROPOSED)
+    error_code = models.CharField(max_length=60, blank=True)
+    base_version = models.PositiveIntegerField()
+    ai_call = models.ForeignKey(
+        "AiCall", null=True, blank=True, on_delete=models.SET_NULL, related_name="page_edits"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["page", "status"])]
+
+    def __str__(self) -> str:
+        return f"edit {self.status} on {self.page_id} ({self.locale})"

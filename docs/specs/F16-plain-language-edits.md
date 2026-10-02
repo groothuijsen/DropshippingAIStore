@@ -17,4 +17,8 @@ The merchant types an instruction ("make the hero more premium", "add a FAQ abou
 9. **Guardrails.** The same guardrails as `copy` apply (`docs/prompts/guardrails.md`, niche claim rules). A result that introduces a blocked claim is shown with the claim finding highlighted; Apply stays possible, but go-live stays blocked as usual.
 
 ## Assumptions made during build
-_(to be filled in by Hermes)_
+
+1. **Counter consumed on apply** (T-120): `page_edits` is checked before the AI call but incremented only when the merchant applies — EDIT_INVALID and rejected proposals never count (F16-2/4 read together).
+2. **`guarantee` add without a shop check**: the validator allows adding a `guarantee` section; the copy-time condition (Shop.guarantee_policy filled, 05 §4.3) still governs initial builds. `guarantee_allowed=None` skips the check; pass `False` to block.
+3. **`PageEdit.ai_call` stays null for now**: `call_ai` logs its own AiCall row but does not return the id; linking is a follow-up when the editor UI (T-121) needs cost display.
+4. **Facts context**: the edit prompt receives the import-step facts of the page's job when present, otherwise an empty list; BrandKit tone falls back to "friendly, direct".

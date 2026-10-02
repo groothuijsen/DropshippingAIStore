@@ -69,6 +69,7 @@ class UsageCounter(models.Model):
     period_start = models.DateField(help_text="Start of the 30-day period")
     store_generations = models.PositiveIntegerField(default=0)
     ai_images = models.PositiveIntegerField(default=0)
+    page_edits = models.PositiveIntegerField(default=0)
     reserved_store_generations = models.PositiveIntegerField(
         default=0,
         help_text="Reserved at job start, released on completion/failure",

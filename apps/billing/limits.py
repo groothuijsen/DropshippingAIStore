@@ -31,6 +31,7 @@ class LimitResult:
     remaining: int
     limit: int | None  # None = unlimited
     message: str = ""
+    reset_date: date | None = None  # when the counter resets (F16-8 UI)
 
 
 def _get_plan(shop: Shop) -> str:
@@ -138,7 +139,11 @@ def release(shop: Shop, resource: str, amount: int = 1) -> None:
 
 
 def consume(shop: Shop, resource: str, amount: int = 1) -> None:
-    """Convert reservation to consumption (on job success)."""
+    """Convert reservation to consumption (on job success).
+
+    Resources without a reservation counterpart (e.g. `page_edits`, which is
+    checked before the AI call and consumed on apply) only increment.
+    """
     period_start = get_current_period_start()
 
     with transaction.atomic():
@@ -148,11 +153,12 @@ def consume(shop: Shop, resource: str, amount: int = 1) -> None:
         # Increment consumed
         UsageCounter.objects.filter(pk=counter.pk).update(**{resource: F(resource) + amount})
 
-        # Decrement reserved
+        # Decrement reserved (when the resource reserves)
         reserved_field = f"reserved_{resource}"
-        current_reserved = getattr(counter, reserved_field)
-        new_reserved = max(0, current_reserved - amount)
-        UsageCounter.objects.filter(pk=counter.pk).update(**{reserved_field: new_reserved})
+        if hasattr(UsageCounter, reserved_field):
+            current_reserved = getattr(counter, reserved_field)
+            new_reserved = max(0, current_reserved - amount)
+            UsageCounter.objects.filter(pk=counter.pk).update(**{reserved_field: new_reserved})
 
 
 def check_pages_live(shop: Shop) -> LimitResult:
@@ -214,3 +220,35 @@ def get_usage_summary(shop: Shop) -> dict[str, Any]:
             },
         },
     }
+
+
+def check_page_edits(shop: Shop) -> LimitResult:
+    """Check the plain-language page edits used this 30-day period (12 §7).
+
+    Checked BEFORE the AI call (F16-8); the counter itself is consumed on
+    apply (F16-4: invalid edits do not count).
+    """
+    plan = _get_plan(shop)
+    limits = get_plan_limits(plan)
+    limit = limits.get("page_edits")
+
+    period_start = get_current_period_start()
+    counter = _get_or_create_counter(shop, period_start)
+    used = counter.page_edits
+
+    reset_date = None
+    if period_start.month == 12:
+        reset_date = period_start.replace(year=period_start.year + 1, month=1, day=1)
+    else:
+        reset_date = period_start.replace(month=period_start.month + 1, day=1)
+
+    if limit is not None and used >= limit:
+        return LimitResult(
+            allowed=False,
+            remaining=0,
+            limit=limit,
+            message=f"PLAN_LIMIT_REACHED: page_edits limit reached ({limit})",
+            reset_date=reset_date,
+        )
+    remaining = (limit - used) if limit is not None else -1
+    return LimitResult(allowed=True, remaining=remaining, limit=limit, reset_date=reset_date)

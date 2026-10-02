@@ -14,6 +14,8 @@ from typing import Any
 from celery import shared_task
 from django.utils import timezone
 
+from apps.ai.anthropic_client import call_ai
+
 from .errors import AiBudgetExceeded, check_job_budget
 from .models import BlueprintStatus, GenerationJob, JobStatus, JobStep, StepStatus
 
@@ -1130,3 +1132,128 @@ def run_undo_build(blueprint_id: str) -> dict:
     except StoreBlueprint.DoesNotExist:
         return {"blocked": ["blueprint_not_found"], "deleted": {}}
     return undo_store_build(bp)
+
+
+# ── F16 plain-language page edits (T-120) ──────────────────────────────────
+
+
+@shared_task(bind=True, acks_late=True, max_retries=1)
+def generate_page_edit(
+    self,
+    page_id: str,
+    locale: str,
+    instruction: str,
+    scope_section_index: int | None = None,
+) -> dict[str, Any]:
+    """Propose a plain-language page edit (F16-2, 12 §3).
+
+    Creates the PageEdit row (base_version = current Page.version), checks
+    the `page_edits` limit BEFORE the AI call (F16-8) and runs one AI call
+    whose operations are validated by the deterministic 12 §3 rules.
+    Invalid results mark the edit `failed` with EDIT_INVALID — nothing is
+    applied and the edit does not count towards the limit (consumed on apply).
+    """
+    import json as _json
+
+    from apps.ai.prompts import render_prompt
+    from apps.ai.schemas import PageEditResult
+    from apps.billing.limits import check_page_edits
+    from apps.generator.edit_ops import EDIT_LOCKED_FIELDS, PAGE_SECTION_RULES, validate_edit_ops
+    from apps.generator.models import Page, PageEdit
+
+    try:
+        page = Page.objects.select_related("shop").get(id=page_id)
+    except Page.DoesNotExist:
+        logger.error("Page %s not found for edit", page_id)
+        return {"error": "page_not_found"}
+
+    if len(instruction) > 500:
+        instruction = instruction[:500]
+
+    edit = PageEdit.objects.create(
+        page=page,
+        locale=locale,
+        instruction=instruction,
+        scope_section_index=scope_section_index,
+        base_version=page.version,
+        status=PageEdit.Status.PROPOSED,
+    )
+
+    def _fail(code: str, message: str) -> PageEdit:
+        edit.status = PageEdit.Status.FAILED
+        edit.error_code = code
+        edit.save(update_fields=["status", "error_code", "updated_at"])
+        return edit
+
+    limit = check_page_edits(page.shop)
+    if not limit.allowed:
+        return _fail("PLAN_LIMIT_REACHED", limit.message)
+
+    payload = page.sections.get(locale) or {}
+    sections = payload.get("sections") or []
+
+    facts: list[str] = []
+    if page.job_id:
+        import_step = page.job.steps.filter(name="import", status="succeeded").first()
+        if import_step and import_step.output:
+            facts = list(import_step.output.get("facts") or [])
+
+    tone = ""
+    try:
+        from apps.themes.models import BrandKit
+
+        kit = BrandKit.objects.filter(shop=page.shop).first()
+        if kit is not None:
+            tone = getattr(kit, "tone", "") or str(getattr(kit, "style_preset", "") or "")
+    except Exception:  # noqa: BLE001 — tone is best-effort context
+        pass
+
+    scope = "whole page"
+    if scope_section_index is not None:
+        scope = f"section {scope_section_index}"
+
+    indexed = [{"index": i, **sec} for i, sec in enumerate(sections)]
+    allowed = sorted(PAGE_SECTION_RULES.get(page.page_type, set()))
+    system, user = render_prompt(
+        "edit_page",
+        {
+            "locale_name": locale,
+            "ui_locale_name": locale,
+            "page_type": page.page_type,
+            "sections_json": _json.dumps(indexed, ensure_ascii=False),
+            "scope": scope,
+            "instruction": instruction,
+            "tone": tone or "friendly, direct",
+            "facts_json": _json.dumps(facts, ensure_ascii=False),
+            "allowed_sections_json": _json.dumps(allowed),
+            "locked_fields": ", ".join(sorted(EDIT_LOCKED_FIELDS)),
+            "guardrails": "No medical claims, no invented reviews, no fake scarcity, no unverifiable delivery promises.",
+        },
+    )
+
+    try:
+        result = call_ai(
+            shop=page.shop,
+            purpose="edit",
+            model_key="copy",
+            system=system,
+            user=user,
+            schema=PageEditResult,
+            tool_name="submit_page_edit",
+            temperature=0.4,
+        )
+    except Exception as exc:  # noqa: BLE001 — provider failure, nothing changed
+        logger.warning("edit_page AI call failed for %s: %s", edit.id, exc)
+        return _fail("AI_PROVIDER_ERROR", str(getattr(exc, "code", "AI_PROVIDER_ERROR"))[:60])
+
+    ops = [op.model_dump(mode="json", exclude_none=True) for op in result.operations]
+    errors = validate_edit_ops(payload, page.page_type, ops, scope_section_index=scope_section_index)
+    if errors:
+        logger.warning("edit %s invalid: %s", edit.id, errors[0]["message"])
+        return _fail("EDIT_INVALID", errors[0]["message"])
+
+    edit.operations = ops
+    edit.summary = result.summary
+    edit.status = PageEdit.Status.PROPOSED
+    edit.save(update_fields=["operations", "summary", "status", "updated_at"])
+    return edit

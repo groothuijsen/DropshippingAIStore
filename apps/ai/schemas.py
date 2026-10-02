@@ -400,3 +400,22 @@ class StandardPageContent(BaseModel):
 
 class StandardPages(BaseModel):  # tool submit_standard_pages
     pages: list[StandardPageContent] = Field(min_length=1, max_length=4)
+
+
+# ── F16 plain-language page edits (12 §3) ──────────────────────────────────
+
+EditOpKind = Literal["replace_field", "add_section", "remove_section", "move_section"]
+
+
+class EditOp(BaseModel):
+    op: EditOpKind
+    section_index: int = Field(ge=0, le=13)
+    field: str | None = None  # replace_field only; dotted path inside the section, e.g. "items.1.text"
+    value: str | None = Field(default=None, max_length=1200)  # replace_field only
+    section: Section | None = None  # add_section only (existing discriminated union, 05 §3)
+    to_index: int | None = Field(default=None, ge=0, le=13)  # move_section only
+
+
+class PageEditResult(BaseModel):  # tool submit_page_edit
+    operations: list[EditOp] = Field(min_length=1, max_length=10)
+    summary: str = Field(max_length=200)  # shown to the merchant, in the UI language

@@ -12,6 +12,7 @@ PLAN_LIMITS: dict[str, dict[str, Any]] = {
     "starter": {
         "products_per_build": 5,
         "store_generations": 3,
+        "page_edits": 50,
         "live_pages": 15,
         "ai_images": 30,
         "active_offers": 20,
@@ -22,6 +23,7 @@ PLAN_LIMITS: dict[str, dict[str, Any]] = {
     "pro": {
         "products_per_build": 20,
         "store_generations": 15,
+        "page_edits": 250,
         "live_pages": 60,
         "ai_images": 150,
         "active_offers": 20,
@@ -32,6 +34,7 @@ PLAN_LIMITS: dict[str, dict[str, Any]] = {
     "agency": {
         "products_per_build": 20,
         "store_generations": 50,
+        "page_edits": 1000,
         "live_pages": None,  # unlimited
         "ai_images": 500,
         "active_offers": 20,  # technical limit
