@@ -285,7 +285,48 @@ class TestBuildPanelGpsrLink:
         BusinessDetails.objects.create(
             shop=shop, legal_name="X", street="Y 1", postal_code="1AB", city="Z", country_code="NL", return_address_same=True
         )
+        from urllib.parse import quote
+
         token = _auth(shop)
         resp = Client().get(f"/app/start/?id_token={token}")
         text = resp.content.decode()
-        assert f"/app/products/{PRODUCT_GID}/gpsr/" in text
+        # The link is URL-encoded — raw "//" collapses in browser address bars.
+        assert f"/app/products/{quote(PRODUCT_GID, safe='')}/gpsr/" in text
+
+
+class TestGidRepair:
+    def test_single_slash_gid_repairs_and_saves(self, db, shop):
+        """A browser-pasted URL gid:/shopify/... still writes the metafield."""
+        token = _auth(shop)
+        client = _client_mock(None)
+        with patch("apps.compliance.views._get_client", return_value=client):
+            resp = Client().post(
+                "/app/products/gid:/shopify/Product/111/gpsr/?id_token=" + token,
+                data={k: v for k, v in COMPLETE.items() if isinstance(v, str)},
+            )
+        assert resp.status_code == 302
+        calls = [c for c in client.execute.call_args_list if "metafieldsSet" in c.args[0]]
+        assert len(calls) == 1
+        assert calls[0].args[1]["metafields"][0]["ownerId"] == "gid://shopify/Product/111"
+
+    def test_shopify_error_shows_message_not_500(self, db, shop):
+        token = _auth(shop)
+        client = _client_mock(None)
+
+        def raising(query, variables=None):
+            from apps.core.shopify_client import ShopifyGraphQLError
+
+            if "metafieldsSet" in query:
+                raise ShopifyGraphQLError([{"message": "Invalid global id"}])
+            return {}
+
+        client.execute.side_effect = raising
+        django_client = Client()
+        with patch("apps.compliance.views._get_client", return_value=client):
+            resp = django_client.post(
+                f"/app/products/{PRODUCT_GID}/gpsr/?id_token={token}",
+                data={k: v for k, v in COMPLETE.items() if isinstance(v, str)},
+            )
+            assert resp.status_code == 302
+            resp = django_client.get(f"/app/products/{PRODUCT_GID}/gpsr/?id_token={token}")
+        assert "Could not save" in resp.content.decode()

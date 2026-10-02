@@ -530,6 +530,11 @@ def gpsr_form(request: HttpRequest, product_gid: str) -> HttpResponse:
     if shop is None:
         return JsonResponse({"error": "Shop not found"}, status=404)
 
+    # Browsers collapse "//" in pasted URLs to "/" — repair the gid so a
+    # raw pasted link still resolves to the real product (live E2E lesson).
+    if product_gid.startswith("gid:/shopify"):
+        product_gid = product_gid.replace("gid:/shopify", "gid://shopify", 1)
+
     if request.method == "POST":
         info = GpsrInfo(
             manufacturer_name=(request.POST.get("manufacturer_name") or "").strip(),
@@ -544,7 +549,11 @@ def gpsr_form(request: HttpRequest, product_gid: str) -> HttpResponse:
             no_warnings_confirmed=request.POST.get("no_warnings_confirmed") == "on",
             content_locale=shop.ui_locale if hasattr(shop, "ui_locale") else "nl",
         )
-        errors = sync_gpsr_metafield(shop, product_gid, info, client=_get_client(shop))
+        try:
+            errors = sync_gpsr_metafield(shop, product_gid, info, client=_get_client(shop))
+        except Exception as exc:  # noqa: BLE001 — surface API failures in the form
+            logger.warning("GPSR save failed for %s: %s", product_gid, exc)
+            errors = [{"message": "Could not save GPSR data to Shopify. Please try again."}]
         if errors:
             messages.error(request, errors[0].get("message", "Could not save GPSR data."))
         else:

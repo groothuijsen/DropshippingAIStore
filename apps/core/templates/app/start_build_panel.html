@@ -107,7 +107,7 @@
   {% endfor %}
   {% for blocked in bp.publish_result.blocked_pages %}
   <li><span class="dot warn"></span> {{ blocked.page_type }} — {{ blocked.reasons|join:"; " }}
-    {% if blocked.product_gid %}<a href="/app/products/{{ blocked.product_gid }}/gpsr/?id_token={{ request.GET.id_token }}">{% trans "Fill in GPSR" %}</a>{% endif %}
+    {% if blocked.product_gid %}<a href="/app/products/{{ blocked.product_gid|urlencode:"" }}/gpsr/?id_token={{ request.GET.id_token }}">{% trans "Fill in GPSR" %}</a>{% endif %}
   </li>
   {% endfor %}
   {% if bp.publish_result.collections_published %}
