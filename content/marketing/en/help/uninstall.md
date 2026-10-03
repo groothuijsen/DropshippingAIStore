@@ -11,3 +11,5 @@ Uninstalling from your Shopify admin:
 3. App data is deleted per our retention schedule; generated content you already published stays on your store.
 
 Nothing is left behind in your theme files — Mosaiq never wrote any.
+
+[Give us feedback on why you left →](/feedback/uninstall/)
