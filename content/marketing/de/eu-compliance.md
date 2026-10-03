@@ -6,7 +6,7 @@ template: "marketing/page_default.html"
 sections:
   - type: hero
     eyebrow: "Shopify-App für Händler in Europa"
-    headline: "Die EU-Regeln, denen Ihre Produktseiten folgen müssen — geprüft, bevor Sie veröffentlichen"
+    headline: "EU-Regeln für Ihre Produktseiten — geprüft vor der Veröffentlichung"
     sub: "Behörden greifen durch: bei einer EU-weiten Kontrolle von 314 Online-Shops im März 2026 nutzten 30 % irreführende Rabatte. Mosaiq baut die Regeln in jede Seite ein."
     cta_primary: { label: "Frühen Zugang erhalten", href: "/de/fruehzugang/" }
     cta_secondary: { label: "So funktioniert's", href: "#how" }
