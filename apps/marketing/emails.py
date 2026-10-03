@@ -46,3 +46,44 @@ def send_onboarding() -> int:
                     logger.info('onboarding(dev, no RESEND_API_KEY) %s -> %s (%s)', key, lead.email, subject)
                 sent += 1
     return sent
+
+
+# --- T-155 early-access emails (restored) ---
+
+
+def _send_resend(to: str, subject: str, html: str) -> bool:
+    import json
+    import urllib.request
+
+    key = getattr(settings, 'RESEND_API_KEY', '')
+    if not key:
+        return False
+    data = json.dumps({
+        'from': getattr(settings, 'MARKETING_FROM_EMAIL', 'hello@mosaiq.marketing'),
+        'to': [to],
+        'subject': subject,
+        'html': html,
+    }).encode()
+    req = urllib.request.Request(
+        'https://api.resend.com/emails',
+        data=data,
+        headers={'Authorization': f'Bearer {key}', 'Content-Type': 'application/json'},
+        method='POST',
+    )
+    try:
+        urllib.request.urlopen(req, timeout=10)
+        return True
+    except Exception:
+        logger.exception('resend send failed')
+        return False
+
+
+def send_email(to: str, subject: str, html: str) -> bool:
+    return _send_resend(to, subject, html)
+
+
+def send_welcome_email(to: str, lang: str) -> bool:
+    href = '/nl/vroege-toegang/' if lang == 'nl' else '/early-access/'
+    subject = 'Welcome to Mosaiq' if lang == 'en' else 'Welkom bij Mosaiq'
+    html = f'<html><body><h2>{subject}</h2><p><a href="https://{settings.ALLOWED_HOSTS[0] if settings.ALLOWED_HOSTS else "shopify.mosaiq.marketing"}{href}">Get started</a></p></body></html>'
+    return _send_resend(to, subject, html)
