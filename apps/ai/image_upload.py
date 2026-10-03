@@ -157,21 +157,9 @@ def upload_image(
             error = file_data.get("fileCreate", {}).get("userErrors", [{}])[0].get("message", "No files created")
             return UploadResult(success=False, error=error)
 
-        file_gid = files[0]["id"]
-        status = files[0].get("status", "UPLOADING")
-
-        # Step 4: Wait until READY
-        if status != "READY":
-            ready = _wait_until_ready(client, file_gid)
-            if not ready:
-                logger.warning("File %s did not become READY within %ds — skipping", file_gid, MAX_READY_WAIT_SECONDS)
-                return UploadResult(
-                    success=False,
-                    file_gid=file_gid,
-                    error=f"Timeout waiting for READY ({MAX_READY_WAIT_SECONDS}s)",
-                )
-
-        return UploadResult(success=True, file_gid=file_gid)
+        # 2026-07: File has no `status` field — fileCreate returns a usable
+        # MediaImage gid synchronously (probed against the live API).
+        return UploadResult(success=True, file_gid=files[0]["id"])
 
     except Exception as e:
         logger.warning("Image upload failed: %s", e)
