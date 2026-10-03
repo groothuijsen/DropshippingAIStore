@@ -1,0 +1,25 @@
+query ProductsListSearch($first: Int!, $after: String, $query: String) {
+  products(first: $first, after: $after, query: $query) {
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    nodes {
+      id
+      title
+      createdAt
+      handle
+      vendor
+      tags
+      status
+      featuredMedia {
+        ... on MediaImage {
+          image {
+            url
+            altText
+          }
+        }
+      }
+    }
+  }
+}

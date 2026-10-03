@@ -4,28 +4,85 @@
 <div class="mq-delivery-settings">
     <h1>{% trans "Start with product" %}</h1>
     <div class="mq-panel">
-        <p class="mq-help">{% trans "Pick one of your existing products. Mosaiq researches the buyer, writes the page in your language, generates images, checks EU rules and publishes — you can edit every section before it goes live." %}</p>
+        <p class="mq-help">{% trans "Choose where your product comes from. Mosaiq researches the buyer, writes the page in your language, checks EU rules and publishes — you review everything before it goes live." %}</p>
 
         {% if messages %}{% for m in messages %}<p class="mq-help">{{ m }}</p>{% endfor %}{% endif %}
 
-        {% if products %}
-        <form method="post">
+        <div class="mq-cards" style="margin-bottom:16px;">
+            <div class="mq-card"><div class="mq-card-title">{% trans "1. Existing product" %}</div><div class="mq-card-desc">{% trans "Already in your Shopify catalog" %}</div></div>
+            <div class="mq-card"><div class="mq-card-title">{% trans "2. Manual input" %}</div><div class="mq-card-desc">{% trans "Type the product details yourself" %}</div></div>
+            <div class="mq-card"><div class="mq-card-title">{% trans "3. Supplier URL" %}</div><div class="mq-card-desc">{% trans "Paste a public product page link" %}</div></div>
+        </div>
+
+        <form method="post" id="source-form">
             {% csrf_token %}
-            <div class="mq-cards" style="flex-direction:column;">
-                {% for p in products %}
-                <label class="mq-card" style="display:flex;gap:12px;align-items:center;cursor:pointer;">
-                    <input type="radio" name="product_gid" value="{{ p.id }}" required>
-                    {% if p.featuredMedia %}<img src="{{ p.featuredMedia.image.url }}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:8px;">{% endif %}
-                    <span>
-                        <span class="mq-card-title">{{ p.title }}</span><br>
-                        <span class="mq-card-desc">{{ p.status }} · {{ p.vendor|default:"" }}</span>
-                    </span>
-                </label>
-                {% endfor %}
+            <input type="hidden" name="source" id="source-field" value="existing">
+            <input type="hidden" name="locale" value="{{ default_locale }}">
+
+            {# --- Source 1: existing products --- #}
+            <div id="source-existing">
+                <h2>{% trans "Pick an existing product" %}</h2>
+                <form method="get" action="/app/start/product/" style="margin-bottom:12px;display:flex;gap:8px;">
+                    <input type="text" name="q" value="{{ search }}" placeholder="{% trans 'Search products by title' %}" style="flex:1;padding:8px;">
+                    <button type="submit" class="mq-card" style="cursor:pointer;padding:8px 16px;">{% trans "Search" %}</button>
+                    {% if has_prev %}<a href="/app/start/product/" class="mq-card" style="padding:8px 16px;text-decoration:none;">{% trans "Clear" %}</a>{% endif %}
+                </form>
+                {% if products %}
+                <div class="mq-cards" style="flex-direction:column;">
+                    {% for p in products %}
+                    <label class="mq-card" style="display:flex;gap:12px;align-items:center;cursor:pointer;">
+                        <input type="radio" name="product_gid" value="{{ p.id }}">
+                        {% if p.featuredMedia %}<img src="{{ p.featuredMedia.image.url }}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:8px;">{% endif %}
+                        <span>
+                            <span class="mq-card-title">{{ p.title }}</span><br>
+                            <span class="mq-card-desc">{{ p.status }} · {{ p.source_label }}</span>
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+                {% if next_cursor %}
+                <p style="margin-top:8px;"><a href="/app/start/product/?{% if search %}q={{ search|urlencode }}&{% endif %}after={{ next_cursor|urlencode }}">{% trans "Next page" %} →</a></p>
+                {% endif %}
+                {% else %}
+                <p class="mq-help">{% trans "No products found. Import products with your supplier app first, or use manual input / a supplier URL below." %}</p>
+                {% endif %}
             </div>
-            <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
+
+            {# --- Source 2: manual input --- #}
+            <div id="source-manual" style="display:none;">
+                <h2>{% trans "Enter product details" %}</h2>
+                <label class="mq-help">{% trans "Title" %}
+                    <input type="text" name="title" maxlength="120" minlength="3" style="width:100%;">
+                </label>
+                <label class="mq-help">{% trans "Description" %}
+                    <textarea name="description" rows="5" minlength="20" style="width:100%;" placeholder="{% trans 'What the product is, what it does, what is included — in your own words.' %}"></textarea>
+                </label>
+                <div style="display:flex;gap:12px;">
+                    <label class="mq-help">{% trans "Price" %}
+                        <input type="text" name="price" maxlength="12" placeholder="29.99">
+                    </label>
+                    <label class="mq-help">{% trans "Currency" %}
+                        <select name="currency">
+                            <option value="EUR">EUR</option>
+                            <option value="USD">USD</option>
+                            <option value="GBP">GBP</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+
+            {# --- Source 3: supplier URL --- #}
+            <div id="source-url" style="display:none;">
+                <h2>{% trans "Paste a product URL" %}</h2>
+                <p class="mq-help">{% trans "We read the page for objective facts only — no text or images are copied. You confirm the details before anything is created." %}</p>
+                <label class="mq-help">{% trans "Product page URL" %}
+                    <input type="url" name="source_url" maxlength="2000" placeholder="https://..." style="width:100%;">
+                </label>
+            </div>
+
+            <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
                 <label class="mq-help">{% trans "Language" %}
-                    <select name="locale">
+                    <select name="locale_display" onchange="this.form.locale.value=this.value">
                         <option value="en" {% if default_locale == "en" %}selected{% endif %}>English</option>
                         <option value="nl" {% if default_locale == "nl" %}selected{% endif %}>Nederlands</option>
                         <option value="de" {% if default_locale == "de" %}selected{% endif %}>Deutsch</option>
@@ -37,10 +94,44 @@
             </div>
             <button type="submit" class="mq-card" style="margin-top:16px;cursor:pointer;">{% trans "Generate product page" %}</button>
         </form>
-        {% else %}
-        <p class="mq-help">{% trans "No products found. Import products with your supplier app (DSers, CJ, Printify) first, then reload this page." %}</p>
-        {% endif %}
+
         <p class="mq-help"><a href="/app/">{% trans "Back to dashboard" %}</a></p>
     </div>
 </div>
+
+<script>
+(function() {
+    var field = document.getElementById("source-field");
+    var sections = {
+        existing: document.getElementById("source-existing"),
+        manual: document.getElementById("source-manual"),
+        url: document.getElementById("source-url"),
+    };
+    var form = document.getElementById("source-form");
+    // Hide the nested GET search form's submit inside the POST form context — keep search as separate GET form
+    function show(source) {
+        field.value = source;
+        Object.keys(sections).forEach(function(k) {
+            sections[k].style.display = (k === source) ? "" : "none";
+        });
+        // Toggle required attributes
+        var rg = form.querySelector('input[name="product_gid"]');
+        if (rg) rg.required = (source === "existing");
+        var rt = form.querySelector('input[name="title"]');
+        if (rt) rt.required = (source === "manual");
+        var rd = form.querySelector('textarea[name="description"]');
+        if (rd) rd.required = (source === "manual");
+        var ru = form.querySelector('input[name="source_url"]');
+        if (ru) ru.required = (source === "url");
+    }
+    // Make the three cards clickable as source switchers
+    var cards = document.querySelectorAll(".mq-cards .mq-card");
+    if (cards.length >= 3) {
+        cards[0].style.cursor = "pointer"; cards[0].onclick = function() { show("existing"); };
+        cards[1].style.cursor = "pointer"; cards[1].onclick = function() { show("manual"); };
+        cards[2].style.cursor = "pointer"; cards[2].onclick = function() { show("url"); };
+    }
+    show("existing");
+})();
+</script>
 {% endblock %}

@@ -11,7 +11,7 @@ from apps.compliance.views import (
 )
 from apps.core.onboarding_views import onboarding
 from apps.generator.editor_views import apply_edit_view, editor_panel, page_editor, reject_edit_view
-from apps.generator.product_start_views import job_status_view, product_start_view
+from apps.generator.product_start_views import confirm_product_view, job_status_view, product_start_view
 from apps.generator.start_views import start_panel, start_wizard
 
 from .views import business_details, dashboard, settings_index, store_settings
@@ -42,6 +42,7 @@ urlpatterns = [
     path("start/panel/", start_panel, name="start_panel"),
     path("start/product/", product_start_view, name="product_start"),
     path("jobs/<uuid:job_id>/", job_status_view, name="job_status"),
+    path("jobs/<uuid:job_id>/confirm-product/", confirm_product_view, name="confirm_product"),
     path(
         "products/<path:product_gid>/pricing/apply/",
         price_apply,

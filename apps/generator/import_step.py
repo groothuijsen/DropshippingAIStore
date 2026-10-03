@@ -225,10 +225,11 @@ def _extract_url_facts(shop: Shop, page_text: str, source_url: str) -> dict[str,
             schema=UrlFacts,
             tool_name="submit_url_facts",
         )
-        facts = result  # type: UrlFacts
+        facts = result  # type: UrlFacts — fields: title, facts: list[str], specs: dict
+        description = "\n\n".join(facts.facts) if facts.facts else ""
         return {
             "title": facts.title,
-            "description": facts.description,
+            "description": description,
             "specs": facts.specs,
         }
     except Exception as e:

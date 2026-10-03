@@ -35,7 +35,7 @@ def _auth(monkeypatch):
 
 class TestCreatePdpJob:
     def test_creates_job_with_all_steps(self, shop):
-        job, created = create_pdp_job(shop, "gid://shopify/Product/123", "nl")
+        job, created = create_pdp_job(shop, locale="nl", product_gid="gid://shopify/Product/123")
         assert created is True
         assert job.kind == JobKind.PAGE
         assert job.page_type == PageType.PDP
@@ -46,15 +46,15 @@ class TestCreatePdpJob:
         assert steps == ["import", "research", "copy", "images", "compliance_check", "layout", "publish"]
 
     def test_reuses_inflight_job_for_same_product(self, shop):
-        job1, _ = create_pdp_job(shop, "gid://shopify/Product/123", "nl")
-        job2, created2 = create_pdp_job(shop, "gid://shopify/Product/123", "nl")
+        job1, _ = create_pdp_job(shop, locale="nl", product_gid="gid://shopify/Product/123")
+        job2, created2 = create_pdp_job(shop, locale="nl", product_gid="gid://shopify/Product/123")
         assert created2 is False
         assert job1.id == job2.id
         assert GenerationJob.objects.filter(shop=shop).count() == 1
 
     def test_creates_second_job_for_other_product(self, shop):
-        create_pdp_job(shop, "gid://shopify/Product/123", "nl")
-        job2, created2 = create_pdp_job(shop, "gid://shopify/Product/456", "nl")
+        create_pdp_job(shop, locale="nl", product_gid="gid://shopify/Product/123")
+        job2, created2 = create_pdp_job(shop, locale="nl", product_gid="gid://shopify/Product/456")
         assert created2 is True
         assert GenerationJob.objects.filter(shop=shop).count() == 2
 
@@ -63,7 +63,11 @@ class TestProductStartView:
     def test_get_renders_picker_with_products(self, shop, monkeypatch):
         monkeypatch.setattr(
             "apps.generator.product_start_views._fetch_products",
-            lambda s: [{"id": "gid://shopify/Product/1", "title": "Test product", "status": "ACTIVE", "vendor": "X", "featuredMedia": None}],
+            lambda s, **kw: ([{"id": "gid://shopify/Product/1", "title": "Test product", "status": "ACTIVE", "vendor": "X", "featuredMedia": None}], None),
+        )
+        monkeypatch.setattr(
+            "apps.generator.product_start_views._source_labels",
+            lambda s: {},
         )
         html = Client().get("/app/start/product/").content.decode()
         assert "Generate product page" in html and "Test product" in html
@@ -89,7 +93,7 @@ class TestProductStartView:
 
 class TestJobStatusView:
     def test_status_shows_steps(self, shop):
-        job, _ = create_pdp_job(shop, "gid://shopify/Product/123", "nl")
+        job, _ = create_pdp_job(shop, locale="nl", product_gid="gid://shopify/Product/123")
         html = Client().get(f"/app/jobs/{job.id}/").content.decode()
         assert "Import" in html and "Research" in html and "Publish" in html
 
@@ -100,3 +104,81 @@ class TestJobStatusView:
     def test_dashboard_has_card(self, shop):
         html = Client().get("/app/").content.decode()
         assert "/app/start/product/" in html
+
+
+class TestThreeSources:
+    def test_create_job_with_manual(self, shop):
+        manual = {"title": "Test Widget", "description": "A widget that does things well.", "price": "19.99", "currency": "EUR", "specs": {}}
+        job, created = create_pdp_job(shop, locale="en", manual=manual)
+        assert created is True
+        assert job.input["manual"]["title"] == "Test Widget"
+
+    def test_create_job_with_source_url(self, shop):
+        job, created = create_pdp_job(shop, locale="nl", source_url="https://example.com/product/1")
+        assert created is True
+        assert job.input["source_url"] == "https://example.com/product/1"
+
+    def test_create_job_rejects_multiple_sources(self, shop):
+        import pytest
+        with pytest.raises(ValueError):
+            create_pdp_job(shop, locale="en", product_gid="gid://shopify/Product/1", manual={"title": "x", "description": "y" * 20})
+
+    def test_create_job_rejects_no_source(self, shop):
+        import pytest
+        with pytest.raises(ValueError):
+            create_pdp_job(shop, locale="en")
+
+
+class TestConfirmProductView:
+    def test_confirm_requires_price(self, shop):
+        job, _ = create_pdp_job(shop, locale="en", source_url="https://example.com/p")
+        job.status = "needs_input"
+        job.save()
+        resp = Client().post(f"/app/jobs/{job.id}/confirm-product/", {"title": "Widget", "description": "A" * 25, "price": ""})
+        assert resp.status_code == 302
+        job.refresh_from_db()
+        assert job.status == "needs_input"  # stays paused
+
+    def test_confirm_resumes_with_manual(self, shop, monkeypatch):
+        monkeypatch.setattr("apps.generator.product_start_views._enqueue", lambda job: None)
+        job, _ = create_pdp_job(shop, locale="en", source_url="https://example.com/p")
+        job.status = "needs_input"
+        job.save()
+        resp = Client().post(
+            f"/app/jobs/{job.id}/confirm-product/",
+            {"title": "Widget Pro", "description": "A great widget for daily use.", "price": "24.99", "currency": "EUR"},
+        )
+        assert resp.status_code == 302
+        job.refresh_from_db()
+        assert job.status == "queued"
+        assert job.input["manual"]["title"] == "Widget Pro"
+        assert job.input["manual"]["price"] == "24.99"
+        import_step = job.steps.get(name="import")
+        assert import_step.status == "pending"  # will re-run on manual product
+
+
+class TestUrlFactsExtraction:
+    def test_extract_url_facts_maps_facts_to_description(self, shop):
+        """Bug fix: UrlFacts has title/facts:list/specs — description must be joined facts."""
+        from apps.generator.import_step import _extract_url_facts
+
+        class FakeFacts:
+            title = "Test Product"
+            facts = ["Material: steel", "Weight: 2kg", "Color: blue"]
+            specs = {"material": "steel", "weight": "2kg"}
+
+        import apps.ai.anthropic_client as ai_mod
+        original = ai_mod.call_ai
+
+        def fake_call_ai(**kwargs):
+            return FakeFacts()
+
+        ai_mod.call_ai = fake_call_ai
+        try:
+            result = _extract_url_facts(shop, "page text", "https://example.com")
+        finally:
+            ai_mod.call_ai = original
+
+        assert result["title"] == "Test Product"
+        assert "Material: steel" in result["description"]
+        assert result["specs"]["material"] == "steel"

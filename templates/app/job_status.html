@@ -9,9 +9,53 @@
             <strong>{{ job.get_status_display }}</strong>
             {% if job.content_locale %} · {{ job.content_locale|upper }}{% endif %}
             {% if job.input.product_gid %} · {{ job.input.product_gid }}{% endif %}
+            {% if job.input.source_url %} · {{ job.input.source_url }}{% endif %}
         </p>
 
         {% if messages %}{% for m in messages %}<p class="mq-help">{{ m }}</p>{% endfor %}{% endif %}
+
+        {# --- URL import: prefilled ManualProduct confirmation (05 §4.1, F01-5) --- #}
+        {% if job.status == "needs_input" and prefill %}
+        <div class="mq-card" style="margin-bottom:16px;border:2px solid #E8542F;">
+            <div class="mq-card-title">{% trans "Confirm product details" %}</div>
+            <p class="mq-card-desc">{% trans "We read the page for facts only. Review and complete the details below — a price is required to create the product." %}</p>
+            <form method="post" action="/app/jobs/{{ job.id }}/confirm-product/">
+                {% csrf_token %}
+                <label class="mq-help">{% trans "Title" %}
+                    <input type="text" name="title" value="{{ prefill.title }}" maxlength="120" minlength="3" required style="width:100%;">
+                </label>
+                <label class="mq-help">{% trans "Description (own words)" %}
+                    <textarea name="description" rows="5" minlength="20" required style="width:100%;">{{ prefill.description }}</textarea>
+                </label>
+                {% if prefill.specs %}
+                <p class="mq-help"><strong>{% trans "Extracted facts" %}:</strong>
+                    {% for k, v in prefill.specs.items %}<br>{{ k }}: {{ v }}{% endfor %}
+                </p>
+                {% endif %}
+                <div style="display:flex;gap:12px;">
+                    <label class="mq-help">{% trans "Price (required)" %}
+                        <input type="text" name="price" maxlength="12" required placeholder="29.99">
+                    </label>
+                    <label class="mq-help">{% trans "Currency" %}
+                        <select name="currency">
+                            <option value="EUR">EUR</option>
+                            <option value="USD">USD</option>
+                            <option value="GBP">GBP</option>
+                        </select>
+                    </label>
+                </div>
+                <button type="submit" class="mq-card" style="margin-top:12px;cursor:pointer;">{% trans "Confirm and generate" %}</button>
+            </form>
+        </div>
+        {% elif job.status == "needs_input" %}
+        <p class="mq-help">
+            {% if job.error_code == "IMPORT_SOURCE_BLOCKED" %}
+                {% trans "We couldn't read this link. Please enter the product details manually." %}
+            {% else %}
+                {% trans "This generation needs your input before it can continue." %}
+            {% endif %}
+        </p>
+        {% endif %}
 
         <div class="mq-cards" style="flex-direction:column;">
             {% for s in steps %}
