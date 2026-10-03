@@ -248,6 +248,8 @@ class TestImagesStepF01:
         page.refresh_from_db()
         assert page.images["hero"]["gid"] == "gid://shopify/Asset/99"
         assert layout_out["page_id"] == str(page.id)
+        # file_reference field must be the raw gid string, not JSON
+        assert layout_out["metaobject_fields"]["image_hero"] == "gid://shopify/Asset/99"
 
 
 class TestConfirmPhotoUrl:

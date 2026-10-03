@@ -63,9 +63,13 @@ def build_metaobject_fields(page: Page) -> dict[str, str]:
         "version": json.dumps(page.version or 1),
     }
 
-    hero_gid = images.get("hero", "")
+    # Page.images is {slot: {"gid", "alt"}} — the file_reference field needs
+    # the raw gid STRING (json.dumps of the dict broke the metaobject upsert:
+    # "Value must be a file reference string", fields index 4).
+    hero = images.get("hero") or {}
+    hero_gid = hero.get("gid") if isinstance(hero, dict) else hero
     if hero_gid:
-        fields["image_hero"] = json.dumps(hero_gid)
+        fields["image_hero"] = hero_gid
     if page.ai_image_disclosure:
         fields["ai_image_disclosure"] = json.dumps(bool(page.ai_image_disclosure))
 
