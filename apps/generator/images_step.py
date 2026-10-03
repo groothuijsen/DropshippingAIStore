@@ -104,9 +104,16 @@ def run_images(job: GenerationJob, step: JobStep) -> dict[str, Any] | None:
 
         signed_path = sign_image(result.image_bytes, tmp_path)
 
-        read_path = signed_path or tmp_path
-        with open(read_path, "rb") as f:
-            signed_bytes = f.read()
+        # sign_image returns None on failure and writes NOTHING — fall back to
+        # the original provider bytes (dev has no C2PA certificates; production
+        # requires them, see C2PA action for Paul). Never upload the empty
+        # temp file: GCS rejects it with EntityTooSmall (HTTP 400).
+        if signed_path and Path(signed_path).exists() and Path(signed_path).stat().st_size > 0:
+            with open(signed_path, "rb") as f:
+                signed_bytes = f.read()
+        else:
+            logger.warning("C2PA signing unavailable for slot %s — uploading unsigned original", slot)
+            signed_bytes = result.image_bytes
 
         Path(tmp_path).unlink(missing_ok=True)
         if signed_path and signed_path != tmp_path:

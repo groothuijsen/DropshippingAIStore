@@ -216,9 +216,10 @@ class TestImagesStepF01:
 
         class FakeGen:
             success = True
-            image_bytes = b"png-bytes"
+            image_bytes = b"png-bytes" * 100
 
         monkeypatch.setattr(imod, "_generate_with_providers", lambda p, r: FakeGen())
+        # C2PA fails in dev -> original bytes must be uploaded, not the empty temp file
         monkeypatch.setattr("apps.ai.c2pa.sign_image", lambda b, p: None)
         monkeypatch.setattr("apps.ai.image_upload.upload_image", lambda shop, b, filename, alt="": type("U", (), {"success": True, "file_gid": "gid://shopify/Asset/99", "error": ""})())
 
