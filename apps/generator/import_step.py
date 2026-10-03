@@ -76,6 +76,10 @@ def run_import_step(job: GenerationJob) -> dict[str, Any]:
             price=manual.get("price"),
             currency=manual.get("currency"),
         )
+        # 05 §4.1: the job continues WITH the created product — downstream
+        # steps (copy→Page.product_gid, publish→GPSR gate) read it from input.
+        job.input["product_gid"] = result.product_gid
+        job.save(update_fields=["input"])
         return {
             "product_gid": result.product_gid,
             "source_app": result.source_app,
