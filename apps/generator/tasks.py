@@ -1257,3 +1257,16 @@ def generate_page_edit(
     edit.status = PageEdit.Status.PROPOSED
     edit.save(update_fields=["operations", "summary", "status", "updated_at"])
     return edit
+
+
+@shared_task(acks_late=True, max_retries=0)
+def run_pdp_task(job_id: str) -> None:
+    """Standalone 'Start with product' PDP job with auto angle selection (F20).
+
+    Mirrors run_store_build_child: needs_input at research → auto-pick
+    the best-matching angle, then finish the pipeline.
+    """
+    from apps.generator.product_start_views import run_pdp_job
+
+    result = run_pdp_job(job_id)
+    logger.info("Standalone PDP job %s finished: %s", job_id, result)

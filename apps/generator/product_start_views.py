@@ -116,9 +116,9 @@ def product_start_view(request: HttpRequest) -> HttpResponse:
         niche_hint = request.POST.get("niche_hint", "").strip()[:300]
         job, created = create_pdp_job(shop, product_gid, locale, niche_hint)
         if created:
-            from apps.generator.tasks import run_job
+            from apps.generator.tasks import run_pdp_task
 
-            run_job.delay(str(job.id))
+            run_pdp_task.delay(str(job.id))
             messages.success(request, "Generating product page — follow the progress below.")
         else:
             messages.info(request, "A generation for this product is already running.")
@@ -163,3 +163,32 @@ def job_status_view(request: HttpRequest, job_id) -> HttpResponse:
             "is_running": not terminal,
         },
     )
+
+
+def run_pdp_job(job_id: str) -> dict:
+    """Execute a standalone PDP job end-to-end.
+
+    Mirrors the store-build child behaviour (12 §5): when the job stops
+    at needs_input because the research step produced angles, the best
+    matching angle is auto-selected and the job resumes — the merchant
+    reviews the finished page in the editor, not mid-pipeline.
+    """
+    from apps.generator.models import GenerationJob
+    from apps.generator.research_step import select_angle
+    from apps.generator.tasks import _auto_angle, execute_job
+
+    result = execute_job(job_id)
+    try:
+        job = GenerationJob.objects.get(id=job_id)
+    except GenerationJob.DoesNotExist:
+        return result
+
+    if job.status == "needs_input":
+        research = job.steps.filter(name="research").first()
+        angles = (research.output or {}).get("angles", []) if research and research.output else []
+        if angles:
+            chosen = _auto_angle(job, angles)
+            select_angle(job, chosen)
+            job.refresh_from_db()
+            result = execute_job(job_id)
+    return result
