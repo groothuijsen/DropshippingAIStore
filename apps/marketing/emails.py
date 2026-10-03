@@ -11,7 +11,7 @@ import logging
 
 from django.conf import settings
 
-from .models import Lead
+from .models import Lead, OnboardingEmail
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +37,13 @@ def send_onboarding() -> int:
     """Send day-based onboarding emails to confirmed, non-unsubscribed leads."""
     sent = 0
     for lead in Lead.objects.filter(confirmed_at__isnull=False, unsubscribed_at__isnull=True):
+        already = set(OnboardingEmail.objects.filter(lead=lead).values_list('step', flat=True))
         for day, key, *_ in SERIES:
+            if key in already:
+                continue
             if lead.days_since_confirmed == day:
-                subject, html = render_email(key, lead.language)
+                subject, html = render_email(key, lead.lang)
+                OnboardingEmail.objects.get_or_create(lead=lead, step=key)
                 if getattr(settings, 'RESEND_API_KEY', ''):
                     logger.info('onboarding %s -> %s (%s)', key, lead.email, subject)
                 else:

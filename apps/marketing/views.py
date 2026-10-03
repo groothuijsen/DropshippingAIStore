@@ -18,7 +18,7 @@ from apps.billing.plans import PLAN_LIMITS, PLAN_NAMES, PLAN_PRICES
 from .articles import get_article, list_articles
 from .content import LANGUAGES, load_page
 from .emails import send_email
-from .forms import EarlyAccessForm
+from .forms import EarlyAccessForm, UninstallFeedbackForm
 from .freshness import annotate_comparisons
 from .models import Lead, MarketingHit
 from .schemas import validate_sections
@@ -362,3 +362,35 @@ def blog_post_view(request: HttpRequest, slug: str) -> HttpResponse:
 @require_GET
 def help_article_view(request: HttpRequest, slug: str) -> HttpResponse:
     return _article_page(request, 'help', slug)
+
+
+def uninstall_feedback_view(request: HttpRequest) -> HttpResponse:
+    lang = 'nl' if request.path.startswith('/nl/') else 'en'
+    if _guard(request) == 'deny':
+        raise Http404
+    if request.method == 'POST':
+        form = UninstallFeedbackForm(request.POST)
+        if form.is_valid():
+            honeypot = request.POST.get('website', '')
+            if not honeypot and not _rate_limited(request.META.get('REMOTE_ADDR', '')):
+                form.save()
+                msg = 'Bedankt voor je feedback!' if lang == 'nl' else 'Thank you for your feedback!'
+            else:
+                msg = 'Bedankt!' if lang == 'nl' else 'Thank you!'
+            return render(request, 'marketing/uninstall_feedback.html', {
+                'form': None, 'message': msg, 'lang': lang,
+                'languages': LANGUAGES,
+                'page': {'title': 'Feedback', 'slug': f'/{"nl/" if lang == "nl" else ""}feedback/uninstall/', 'alts': [], 'jsonld': '', 'draft': False},
+                'plans': [], 'install_href': _install_href(lang), 'form_message': '',
+            })
+        form = UninstallFeedbackForm()
+        msg = 'Er ging iets mis. Probeer het opnieuw.' if lang == 'nl' else 'Something went wrong. Please try again.'
+    else:
+        form = UninstallFeedbackForm()
+        msg = ''
+    return render(request, 'marketing/uninstall_feedback.html', {
+        'form': form, 'message': msg, 'lang': lang,
+        'languages': LANGUAGES,
+        'page': {'title': 'Feedback', 'slug': f'/{"nl/" if lang == "nl" else ""}feedback/uninstall/', 'alts': [], 'jsonld': '', 'draft': False},
+        'plans': [], 'install_href': _install_href(lang), 'form_message': '',
+    })

@@ -1,0 +1,21 @@
+{% extends "marketing/base.html" %}
+{% block content %}
+<main>
+  <header class="hero shell">
+    <p class="eyebrow">{% if lang == 'nl' %}Feedback{% else %}Feedback{% endif %}</p>
+    <h1>{% if lang == 'nl' %}Waarom heb je Mosaiq verwijderd?{% else %}Why did you uninstall Mosaiq?{% endif %}</h1>
+    <p class="sub">{% if lang == 'nl' %}Je feedback helpt ons de app beter te maken. Het is anoniem en duurt 30 seconden.{% else %}Your feedback helps us improve. It's anonymous and takes 30 seconds.{% endif %}</p>
+  </header>
+  <section class="block shell">
+    {% if message %}
+      <p class="form-success">{{ message }}</p>
+    {% else %}
+      <form method="post" class="ea-form" id="uninstall-form">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-p">{% if lang == 'nl' %}Verstuur feedback{% else %}Send feedback{% endif %}</button>
+      </form>
+    {% endif %}
+  </section>
+</main>
+{% endblock %}
