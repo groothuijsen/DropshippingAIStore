@@ -169,10 +169,12 @@ def import_manual(
         }
 
         if price:
+            # 2026-07 API: variants require at least one optionValue (else productSet 400s)
             product_input["variants"] = [
                 {
                     "price": price,
                     "sku": f"MQ-{title[:20].upper().replace(' ', '-')}",
+                    "optionValues": [{"optionName": "Title", "name": "Default Title"}],
                 }
             ]
 
