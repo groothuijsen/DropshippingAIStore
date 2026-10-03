@@ -1,0 +1,54 @@
+{% extends "app/base.html" %}
+{% load i18n %}
+{% block head %}{% if is_running %}<meta http-equiv="refresh" content="4">{% endif %}{% endblock %}
+{% block content %}
+<div class="mq-delivery-settings">
+    <h1>{% trans "Generating product page" %}</h1>
+    <div class="mq-panel">
+        <p class="mq-help">
+            <strong>{{ job.get_status_display }}</strong>
+            {% if job.content_locale %} · {{ job.content_locale|upper }}{% endif %}
+            {% if job.input.product_gid %} · {{ job.input.product_gid }}{% endif %}
+        </p>
+
+        {% if messages %}{% for m in messages %}<p class="mq-help">{{ m }}</p>{% endfor %}{% endif %}
+
+        <div class="mq-cards" style="flex-direction:column;">
+            {% for s in steps %}
+            <div class="mq-card" style="display:flex;justify-content:space-between;align-items:center;">
+                <span class="mq-card-title">{{ s.get_name_display }}</span>
+                <span class="mq-card-desc">{{ s.get_status_display }}
+                    {% if s.status == "failed" and s.output.last_error %}<br>{{ s.output.last_error }}{% endif %}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if job.status == "failed" %}
+            <p class="mq-help">
+                {% if job.error_code == "GPSR_INCOMPLETE" %}
+                    {% trans "Product safety info (GPSR) is incomplete for this product." %}
+                    <a href="/app/products/{{ job.input.product_gid }}/gpsr/">{% trans "Fill in the GPSR form" %}</a>
+                    {% trans "and retry the generation." %}
+                {% elif job.error_code == "PLAN_LIMIT_REACHED" %}
+                    {% trans "Your plan limit is reached. Upgrade your plan or wait for the next billing period." %}
+                {% else %}
+                    {{ job.error_message|default:"Generation failed." }}
+                {% endif %}
+            </p>
+            <p class="mq-help"><a href="/app/start/product/">{% trans "Try another product" %}</a></p>
+        {% endif %}
+
+        {% if job.status == "succeeded" and page %}
+            <p class="mq-help">
+                {% trans "Page created:" %} <strong>{{ page.title }}</strong>
+                (compliance: {{ page.compliance_score }}) ·
+                <a href="/app/pages/{{ page.id }}/edit/">{% trans "Open editor" %}</a>
+            </p>
+            <p class="mq-help">{% trans "It is saved as draft in your theme's page sections. Review it in the Shopify editor, then set it live." %}</p>
+        {% endif %}
+
+        <p class="mq-help"><a href="/app/">{% trans "Back to dashboard" %}</a></p>
+    </div>
+</div>
+{% endblock %}

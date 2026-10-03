@@ -1,0 +1,46 @@
+{% extends "app/base.html" %}
+{% load i18n %}
+{% block content %}
+<div class="mq-delivery-settings">
+    <h1>{% trans "Start with product" %}</h1>
+    <div class="mq-panel">
+        <p class="mq-help">{% trans "Pick one of your existing products. Mosaiq researches the buyer, writes the page in your language, generates images, checks EU rules and publishes — you can edit every section before it goes live." %}</p>
+
+        {% if messages %}{% for m in messages %}<p class="mq-help">{{ m }}</p>{% endfor %}{% endif %}
+
+        {% if products %}
+        <form method="post">
+            {% csrf_token %}
+            <div class="mq-cards" style="flex-direction:column;">
+                {% for p in products %}
+                <label class="mq-card" style="display:flex;gap:12px;align-items:center;cursor:pointer;">
+                    <input type="radio" name="product_gid" value="{{ p.id }}" required>
+                    {% if p.featuredMedia %}<img src="{{ p.featuredMedia.image.url }}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:8px;">{% endif %}
+                    <span>
+                        <span class="mq-card-title">{{ p.title }}</span><br>
+                        <span class="mq-card-desc">{{ p.status }} · {{ p.vendor|default:"" }}</span>
+                    </span>
+                </label>
+                {% endfor %}
+            </div>
+            <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
+                <label class="mq-help">{% trans "Language" %}
+                    <select name="locale">
+                        <option value="en" {% if default_locale == "en" %}selected{% endif %}>English</option>
+                        <option value="nl" {% if default_locale == "nl" %}selected{% endif %}>Nederlands</option>
+                        <option value="de" {% if default_locale == "de" %}selected{% endif %}>Deutsch</option>
+                    </select>
+                </label>
+                <label class="mq-help" style="flex:1;min-width:220px;">{% trans "Niche or audience (optional)" %}
+                    <input type="text" name="niche_hint" maxlength="300" placeholder="{% trans 'e.g. eco-friendly home products for Dutch families' %}">
+                </label>
+            </div>
+            <button type="submit" class="mq-card" style="margin-top:16px;cursor:pointer;">{% trans "Generate product page" %}</button>
+        </form>
+        {% else %}
+        <p class="mq-help">{% trans "No products found. Import products with your supplier app (DSers, CJ, Printify) first, then reload this page." %}</p>
+        {% endif %}
+        <p class="mq-help"><a href="/app/">{% trans "Back to dashboard" %}</a></p>
+    </div>
+</div>
+{% endblock %}
