@@ -1,4 +1,4 @@
-mutation stagedUploadsCreate($input: StagedUploadsCreateInput!) {
+mutation stagedUploadsCreate($input: [StagedUploadCreateInput!]!) {
   stagedUploadsCreate(input: $input) {
     stagedTargets {
       url

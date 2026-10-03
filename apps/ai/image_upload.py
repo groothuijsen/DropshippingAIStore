@@ -102,12 +102,16 @@ def upload_image(
         staged_data = client.execute(
             load_query("staged_uploads_create"),
             variables={
-                "input": {
-                    "filename": filename,
-                    "resource": "IMAGE",
-                    "httpMethod": "POST",
-                    "parameters": [{"name": "key", "value": filename}],
-                }
+                # 2026-07: stagedUploadsCreate takes a LIST of
+                # StagedUploadCreateInput (singular "Create"), no parameters field.
+                "input": [
+                    {
+                        "filename": filename,
+                        "resource": "IMAGE",
+                        "httpMethod": "POST",
+                        "mimeType": "image/png",
+                    }
+                ]
             },
         )
 
