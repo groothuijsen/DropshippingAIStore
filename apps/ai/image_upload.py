@@ -102,8 +102,8 @@ def upload_image(
         staged_data = client.execute(
             load_query("staged_uploads_create"),
             variables={
-                # 2026-07: stagedUploadsCreate takes a LIST of
-                # StagedUploadCreateInput (singular "Create"), no parameters field.
+                # 2026-07: input type is [StagedUploadInput!]!; mimeType is
+                # required alongside httpMethod (probed against live API).
                 "input": [
                     {
                         "filename": filename,

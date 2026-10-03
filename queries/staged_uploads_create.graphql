@@ -1,4 +1,4 @@
-mutation stagedUploadsCreate($input: [StagedUploadCreateInput!]!) {
+mutation stagedUploadsCreate($input: [StagedUploadInput!]!) {
   stagedUploadsCreate(input: $input) {
     stagedTargets {
       url
@@ -11,7 +11,6 @@ mutation stagedUploadsCreate($input: [StagedUploadCreateInput!]!) {
     userErrors {
       field
       message
-      code
     }
   }
 }

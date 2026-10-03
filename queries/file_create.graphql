@@ -7,7 +7,6 @@ mutation fileCreate($files: [FileCreateInput!]!) {
     userErrors {
       field
       message
-      code
     }
   }
 }
