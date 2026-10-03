@@ -14,6 +14,15 @@ sections:
     cta_primary: { label: "Probeer 7 dagen gratis", href: "/nl/vroege-toegang/", claim_ids: ["C-18"] }
     claim_ids: ["C-04", "C-21"]
   - type: pricing_table
+  - type: features
+    title: "Founding-member prijzen"
+    items:
+      - icon: "✓"
+        title: "50% korting, 12 maanden"
+        text: "Meld je aan tijdens early access en krijg 50% korting op elk plan voor de eerste 12 maanden. Automatisch toegepast — geen coupon nodig."
+      - icon: "✓"
+        title: "Daarna de standaardprijs"
+        text: "Na 12 maanden geldt de standaardprijs. Opzeggen of wisselen kan altijd."
   - type: faq
     title: "Vragen over de prijzen"
     items:

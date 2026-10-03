@@ -14,6 +14,11 @@ sections:
     cta_primary: { label: "Start your 7-day trial", href: "/early-access/", claim_ids: ["C-18"] }
     claim_ids: ["C-04", "C-21"]
   - type: pricing_table
+  - type: features
+    title: "Founding-member pricing"
+    items:
+      - { icon: "✓", title: "50% off for 12 months", text: "Join during early access and get 50% off every plan for the first 12 months. Applied automatically at sign-up — no coupon needed." }
+      - { icon: "✓", title: "Then the standard price", text: "After 12 months the standard plan price resumes. Cancel or change plans anytime." }
   - type: faq
     title: "Pricing questions"
     items:
