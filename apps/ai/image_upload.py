@@ -132,10 +132,10 @@ def upload_image(
 
         with httpx.Client(timeout=30.0) as http_client:
             resp = http_client.post(upload_url, files=form_data)
-            if resp.status_code not in (200, 204):
+            if resp.status_code not in (200, 201, 204):
                 return UploadResult(
                     success=False,
-                    error=f"Upload failed: HTTP {resp.status_code}",
+                    error=f"Upload failed: HTTP {resp.status_code} {resp.text[:200]}",
                 )
 
         # Step 3: fileCreate
