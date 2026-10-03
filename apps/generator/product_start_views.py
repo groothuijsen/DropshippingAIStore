@@ -207,12 +207,3 @@ def run_pdp_job(job_id: str) -> dict:
             result = execute_job(job_id)
     return result
 
-    if job.status == "needs_input":
-        research = job.steps.filter(name="research").first()
-        angles = (research.output or {}).get("angles", []) if research and research.output else []
-        if angles:
-            chosen = _auto_angle(job, angles)
-            select_angle(job, chosen)
-            job.refresh_from_db()
-            result = execute_job(job_id)
-    return result
