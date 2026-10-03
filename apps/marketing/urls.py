@@ -58,3 +58,17 @@ urlpatterns += [
     for route, stem, name in _NL
 ]
 urlpatterns += [path("nl/vroege-toegang/confirm/", views.early_access_confirm, name="nl_early_access_confirm")]
+
+# German (T-158): enabled only after native review (MARKETING_DE_ENABLED)
+_DE = [
+    ("", "home", "de_home"),
+    ("funktionen/", "features", "de_features"),
+    ("preise/", "pricing", "de_pricing"),
+    ("eu-regeln/", "eu-compliance", "de_eu_compliance"),
+    ("von-null/", "start-from-zero", "de_start_from_zero"),
+    ("fruehzugang/", "early-access", "de_early_access"),
+]
+urlpatterns += [
+    path(f"de/{route}", views.early_access_view if stem == "early-access" else views.page_view, {"slug": stem}, name=name)
+    for route, stem, name in _DE
+]
