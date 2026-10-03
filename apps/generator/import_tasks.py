@@ -169,7 +169,9 @@ def import_manual(
         }
 
         if price:
-            # 2026-07 API: variants require at least one optionValue (else productSet 400s)
+            # 2026-07 API: variants require optionValues AND the parent input must
+            # declare the matching productOptions (else PRODUCT_OPTIONS_INPUT_MISSING).
+            product_input["productOptions"] = [{"name": "Title", "values": [{"name": "Default Title"}]}]
             product_input["variants"] = [
                 {
                     "price": price,
