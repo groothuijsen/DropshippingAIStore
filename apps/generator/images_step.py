@@ -1,10 +1,13 @@
 """Image generation step — generates images via providers and uploads to Shopify.
 
 See docs/05-ai-pipeline.md §4.4.
+- F01-7: skips when the product has no own photos (merchant must upload at
+  least 1 product photo before AI images are generated).
 - Generates hero + lifestyle + detail images via Vertex/OpenAI
-- Signs with C2PA
-- Uploads to Shopify Files
-- Stores image URLs in JobStep.output
+- Signs with C2PA (best-effort; skipped in dev without certificates)
+- Uploads to Shopify Files (staged upload + fileCreate) and stores the
+  resulting file GIDs in JobStep.output — layout copies them onto
+  Page.images, publish writes the image_hero metaobject field from there.
 """
 
 from __future__ import annotations
@@ -20,23 +23,49 @@ logger = logging.getLogger(__name__)
 # Image slots to generate (05 §4.4)
 IMAGE_SLOTS = ["hero", "lifestyle_1", "lifestyle_2", "detail_1"]
 
+# F01-7 merchant message when the product has no own photos
+NO_OWN_MEDIA_MESSAGE = "Upload at least 1 product photo for AI images."
+
+
+def _own_media(job: GenerationJob) -> list[str]:
+    """Product photos the merchant owns: Shopify product media or a photo
+    supplied on the manual/URL confirm form."""
+    import_step = job.steps.filter(name="import").first()
+    urls: list[str] = []
+    if import_step and import_step.output:
+        urls = list((import_step.output or {}).get("reference_image_urls") or [])
+    manual = (job.input or {}).get("manual") or {}
+    if manual.get("photo_url"):
+        urls.append(manual["photo_url"])
+    return urls
+
 
 def run_images(job: GenerationJob, step: JobStep) -> dict[str, Any] | None:
     """Generate images for the page.
 
-    1. Load copy output (sections) from checkpoint
-    2. Build image prompts from sections
-    3. Generate via providers (Vertex primary, OpenAI fallback)
-    4. Sign with C2PA
-    5. Upload to Shopify Files
-    6. Store URLs in output
+    F01-7: no own product photos -> step is skipped with a merchant message
+    (returning None; execute_job marks the step SKIPPED).
     """
-    import base64
+    import base64  # noqa: F401  (kept for legacy debugging)
     import tempfile
     from pathlib import Path
 
     from apps.ai.c2pa import sign_image
     from apps.ai.image_providers import get_resolution_for_slot
+    from apps.ai.image_upload import build_alt_text, upload_image
+
+    # F01-7 — skip when the merchant has no own product photos
+    if not _own_media(job):
+        step.output = {
+            "skipped": True,
+            "message": NO_OWN_MEDIA_MESSAGE,
+            "images": {},
+            "errors": [],
+            "generated": 0,
+        }
+        step.save(update_fields=["output"])
+        logger.info("Images skipped for job %s: %s", job.id, NO_OWN_MEDIA_MESSAGE)
+        return None
 
     # Load copy output
     copy_step = job.steps.filter(name="copy").first()
@@ -51,9 +80,10 @@ def run_images(job: GenerationJob, step: JobStep) -> dict[str, Any] | None:
     # Build prompts from sections
     prompts = _build_image_prompts(sections)
 
-    # Generate images
-    image_urls: dict[str, str] = {}
+    # Generate + upload images
+    uploaded: dict[str, dict[str, str]] = {}
     image_errors: list[str] = []
+    alt_seed = _alt_seed(sections, job)
 
     for slot in IMAGE_SLOTS:
         prompt = prompts.get(slot)
@@ -62,43 +92,54 @@ def run_images(job: GenerationJob, step: JobStep) -> dict[str, Any] | None:
 
         resolution = get_resolution_for_slot(slot)
 
-        # Try providers
         result = _generate_with_providers(prompt, resolution)
 
         if not result.success:
             image_errors.append(f"{slot}: {result.error}")
             continue
 
-        # Sign with C2PA (writes to temp file, returns path)
+        # Sign with C2PA (writes to temp file, returns path; None on failure)
         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
             tmp_path = tmp.name
 
         signed_path = sign_image(result.image_bytes, tmp_path)
 
-        # Read signed bytes (or original if signing failed)
         read_path = signed_path or tmp_path
         with open(read_path, "rb") as f:
             signed_bytes = f.read()
 
-        # Cleanup temp files
         Path(tmp_path).unlink(missing_ok=True)
         if signed_path and signed_path != tmp_path:
             Path(signed_path).unlink(missing_ok=True)
 
-        # Upload to Shopify (placeholder — real upload needs Shopify Files)
-        # For now, store as base64 data URL (will be replaced with real CDN URLs)
-        image_urls[slot] = f"data:image/png;base64,{base64.b64encode(signed_bytes).decode()}"
+        # Upload to Shopify Files (staged upload + fileCreate, waits for READY)
+        alt = build_alt_text(f"{alt_seed} — {slot.replace('_', ' ')}", locale=job.content_locale)
+        up = upload_image(job.shop, signed_bytes, filename=f"mosaiq-{str(job.id)[:8]}-{slot}.png", alt=alt)
+        if not up.success:
+            image_errors.append(f"{slot}: upload failed: {up.error}")
+            continue
+
+        uploaded[slot] = {"gid": up.file_gid, "alt": alt}
 
     output = {
-        "images": image_urls,
+        "images": uploaded,
         "errors": image_errors,
-        "generated": len(image_urls),
+        "generated": len(uploaded),
     }
 
-    if not image_urls:
+    if not uploaded:
         raise RuntimeError(f"Image generation failed: {', '.join(image_errors)}")
 
     return output
+
+
+def _alt_seed(sections: list[dict[str, Any]], job: GenerationJob) -> str:
+    """Short product title for alt text."""
+    for section in sections:
+        if section.get("type") == "hero":
+            return (section.get("headline") or "").strip() or "Product"
+    page = job.pages.order_by("created_at").first()
+    return (page.title if page else "Product") or "Product"
 
 
 def _build_image_prompts(sections: list[dict[str, Any]]) -> dict[str, str]:

@@ -46,6 +46,12 @@
                 {% else %}
                 <p class="mq-help">{% trans "No products found. Import products with your supplier app first, or use manual input / a supplier URL below." %}</p>
                 {% endif %}
+                {% if products %}
+                <label class="mq-help" style="display:flex;gap:8px;align-items:flex-start;margin-top:8px;">
+                    <input type="checkbox" name="rights_confirmed" value="1" style="margin-top:4px;">
+                    <span>{% trans "I confirm that I have the right to use this product's images (required once per product)." %}</span>
+                </label>
+                {% endif %}
             </div>
 
             {# --- Source 2: manual input --- #}
@@ -69,6 +75,9 @@
                         </select>
                     </label>
                 </div>
+                <label class="mq-help">{% trans "Own product photo URL (optional — required for AI images)" %}
+                    <input type="url" name="photo_url" maxlength="2000" placeholder="https://..." style="width:100%;">
+                </label>
             </div>
 
             {# --- Source 3: supplier URL --- #}

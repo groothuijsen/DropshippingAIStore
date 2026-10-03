@@ -44,6 +44,9 @@
                         </select>
                     </label>
                 </div>
+                <label class="mq-help">{% trans "Own product photo URL (optional — required for AI images)" %}
+                    <input type="url" name="photo_url" maxlength="2000" placeholder="https://..." style="width:100%;">
+                </label>
                 <button type="submit" class="mq-card" style="margin-top:12px;cursor:pointer;">{% trans "Confirm and generate" %}</button>
             </form>
         </div>

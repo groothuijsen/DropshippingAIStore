@@ -86,6 +86,38 @@ def _fetch_products(shop, *, search: str = "", cursor: str | None = None) -> tup
         return [], None
 
 
+def _needs_media_rights_confirmation(shop, product_gid: str) -> bool:
+    """F01-9: sync-app product images need a one-time merchant confirmation.
+
+    Manual products are the merchant's own — no confirmation needed. For
+    every other source the confirmation is required once per product; after
+    the first AuditLog entry it is remembered.
+    """
+    from apps.core.models import AuditLog
+    from apps.sources.models import ProductSource
+
+    ps = ProductSource.objects.filter(shop=shop, product_gid=product_gid).first()
+    if ps and ps.source_app == "manual":
+        return False
+    return not AuditLog.objects.filter(
+        shop=shop, action="media_rights_confirmed", payload__product_gid=product_gid
+    ).exists()
+
+
+def _log_media_rights_confirmation(shop, product_gid: str) -> None:
+    """F01-9: record the merchant's image-rights confirmation."""
+    from apps.core.models import AuditLog
+    from apps.sources.models import ProductSource
+
+    ps = ProductSource.objects.filter(shop=shop, product_gid=product_gid).first()
+    AuditLog.objects.create(
+        shop=shop,
+        actor="merchant",
+        action="media_rights_confirmed",
+        payload={"product_gid": product_gid, "source_app": ps.source_app if ps else "unknown"},
+    )
+
+
 def create_pdp_job(shop, *, locale: str, niche_hint: str = "", product_gid: str | None = None,
                    manual: dict | None = None, source_url: str | None = None):
     """Create (or reuse) a standalone PDP job. Exactly one source is allowed (05 §3).
@@ -174,6 +206,18 @@ def product_start_view(request: HttpRequest) -> HttpResponse:
             if not product_gid.startswith("gid://shopify/Product/"):
                 messages.error(request, "Select a product first.")
                 return redirect("/app/start/product/")
+
+            # F01-9 — confirm the right to use this product's images (once
+            # per product); the confirmation is written to the audit log.
+            if _needs_media_rights_confirmation(shop, product_gid):
+                if not request.POST.get("rights_confirmed"):
+                    messages.error(
+                        request,
+                        "Confirm that you have the right to use this product's images before generating.",
+                    )
+                    return redirect("/app/start/product/")
+                _log_media_rights_confirmation(shop, product_gid)
+
             job, created = create_pdp_job(shop, locale=locale, niche_hint=niche_hint, product_gid=product_gid)
 
         elif source == "url":
@@ -249,6 +293,7 @@ def confirm_product_view(request: HttpRequest, job_id) -> HttpResponse:
     description = request.POST.get("description", "").strip()[:5000]
     price = request.POST.get("price", "").strip()[:12]
     currency = request.POST.get("currency", "").strip()[:3] or None
+    photo_url = request.POST.get("photo_url", "").strip()[:2000]
 
     if len(title) < 3:
         messages.error(request, "Title must be at least 3 characters.")
@@ -259,19 +304,25 @@ def confirm_product_view(request: HttpRequest, job_id) -> HttpResponse:
     if not price:
         messages.error(request, "A price is required to create the product.")
         return redirect(f"/app/jobs/{job.id}/")
+    if photo_url and not photo_url.startswith(("http://", "https://")):
+        messages.error(request, "The product photo must be an http(s) URL.")
+        return redirect(f"/app/jobs/{job.id}/")
 
     # Carry over specs extracted from the URL (facts only)
     import_step = job.steps.filter(name="import").first()
     prefill = (import_step.output or {}).get("prefill", {}) if import_step and import_step.output else {}
     specs = prefill.get("specs", {}) if isinstance(prefill.get("specs"), dict) else {}
 
-    job.input["manual"] = {
+    manual = {
         "title": title,
         "description": description,
         "specs": specs,
         "price": price,
         "currency": currency,
     }
+    if photo_url:
+        manual["photo_url"] = photo_url  # F01-7: own photo gates AI image generation
+    job.input["manual"] = manual
     job.input.pop("source_url", None)  # import re-runs on the confirmed manual product
     job.status = JobStatus.QUEUED
     job.error_code = None

@@ -97,6 +97,14 @@ def run_layout(job: GenerationJob, step: JobStep) -> dict[str, Any] | None:
         logger.error("No page found for job %s", job.id)
         raise PageNotFound()
 
+    # Wire the generated images (Shopify file GIDs) onto the page — publish
+    # writes the image_hero metaobject field from page.images["hero"]["gid"].
+    images_step = job.steps.filter(name="images").first()
+    generated = ((images_step.output or {}).get("images") or {}) if images_step and images_step.output else {}
+    if generated:
+        page.images = generated
+        page.save(update_fields=["images"])
+
     # Build metaobject fields
     fields = build_metaobject_fields(page)
 
