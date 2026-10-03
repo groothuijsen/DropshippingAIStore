@@ -168,13 +168,13 @@ def job_status_view(request: HttpRequest, job_id) -> HttpResponse:
 def run_pdp_job(job_id: str) -> dict:
     """Execute a standalone PDP job end-to-end.
 
-    Mirrors the store-build child behaviour (12 §5): when the job stops
-    at needs_input because the research step produced angles, the best
-    matching angle is auto-selected and the job resumes — the merchant
-    reviews the finished page in the editor, not mid-pipeline.
+    Mirrors the store-build child behaviour (12 §5): whenever the job is
+    waiting for an angle (needs_input) or failed because no angle was
+    chosen yet (copy raises COPY_INPUT_MISSING), the best-matching angle
+    is auto-selected, the copy step is reset and the job resumes — the
+    merchant reviews the finished page in the editor, not mid-pipeline.
     """
-    from apps.generator.models import GenerationJob
-    from apps.generator.research_step import select_angle
+    from apps.generator.models import GenerationJob, JobStatus, StepStatus
     from apps.generator.tasks import _auto_angle, execute_job
 
     result = execute_job(job_id)
@@ -182,6 +182,30 @@ def run_pdp_job(job_id: str) -> dict:
         job = GenerationJob.objects.get(id=job_id)
     except GenerationJob.DoesNotExist:
         return result
+
+    research = job.steps.filter(name="research", status="succeeded").first()
+    angle_missing = research and research.output and not (
+        (research.output or {}).get("chosen_angle") or (job.input or {}).get("angle_id")
+    )
+    if angle_missing and job.status in ("needs_input", "failed"):
+        angles = (research.output or {}).get("angles") or []
+        if angles:
+            chosen_id = _auto_angle(job, angles)
+            angle = next((a for a in angles if a.get("id") == chosen_id), angles[0])
+            research.output["chosen_angle"] = angle
+            research.save(update_fields=["output"])
+            job.input["angle_id"] = angle.get("id")
+            job.status = JobStatus.QUEUED
+            job.current_step = None
+            job.error_code = None
+            job.error_message = None
+            job.finished_at = None
+            job.save(update_fields=[
+                "input", "status", "current_step", "error_code", "error_message", "finished_at",
+            ])
+            job.steps.filter(status=StepStatus.FAILED).update(status=StepStatus.PENDING)
+            result = execute_job(job_id)
+    return result
 
     if job.status == "needs_input":
         research = job.steps.filter(name="research").first()
