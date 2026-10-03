@@ -40,8 +40,10 @@ def _guard(request: HttpRequest) -> str | None:
 
 @require_GET
 def page_view(request: HttpRequest, slug: str = "home") -> HttpResponse:
-    lang = "nl" if request.path.startswith("/nl/") else "en"
+    lang = "de" if request.path.startswith("/de/") else ("nl" if request.path.startswith("/nl/") else "en")
     mode = _guard(request)
+    if request.path.startswith("/de/") and not settings.MARKETING_DE_ENABLED:
+        raise Http404  # T-158 native review gate: German ships only after approval
     if mode == "app":
         if slug == "home" and not request.path.startswith("/nl/"):
             return HttpResponseRedirect("/app/")
@@ -109,7 +111,7 @@ def blog_index(request: HttpRequest) -> HttpResponse:
     _mode = _guard(request)
     if _mode != "en" and not (request.path.startswith("/nl/") and _mode == "en"):
         raise Http404
-    lang = "nl" if request.path.startswith("/nl/") else "en"
+    lang = "de" if request.path.startswith("/de/") else ("nl" if request.path.startswith("/nl/") else "en")
     blog_page = {"title": "Blog", "slug": "/blog/", "description": "", "sections": [], "body": "", "lang": lang, "alts": [], "jsonld": ""}
     return render(request, "marketing/page_default.html", {
         "page": blog_page,
@@ -217,7 +219,7 @@ def _resolve_placeholders(text: str) -> str:
 def _install_href(lang: str) -> str:
     if settings.MARKETING_APP_LISTED and settings.MARKETING_APP_HANDLE:
         return f'https://apps.shopify.com/{settings.MARKETING_APP_HANDLE}/install'
-    return '/nl/vroege-toegang/' if lang == 'nl' else '/early-access/'
+    return {'nl': '/nl/vroege-toegang/', 'de': '/de/fruehzugang/'}.get(lang, '/early-access/')
 
 def _rate_limited(ip: str) -> bool:
     key = f'mkt:ea:{ip}'
@@ -230,9 +232,11 @@ def _rate_limited(ip: str) -> bool:
 
 @csrf_protect
 def early_access_view(request: HttpRequest, slug: str = 'early-access') -> HttpResponse:
-    lang = 'nl' if request.path.startswith('/nl/') else 'en'
+    lang = 'de' if request.path.startswith('/de/') else ('nl' if request.path.startswith('/nl/') else 'en')
     if _guard(request) == 'deny':
         raise Http404
+    if request.path.startswith('/de/') and not settings.MARKETING_DE_ENABLED:
+        raise Http404  # T-158 native review gate
     try:
         page = load_page(lang, slug)
     except FileNotFoundError:
@@ -267,7 +271,7 @@ def early_access_confirm(request: HttpRequest) -> HttpResponse:
     if _guard(request) == 'deny':
         raise Http404
     token = request.GET.get('token', '')
-    lang = 'nl' if request.path.startswith('/nl/') else 'en'
+    lang = 'de' if request.path.startswith('/de/') else ('nl' if request.path.startswith('/nl/') else 'en')
     lead = Lead.objects.filter(confirm_token=token, confirmed_at__isnull=True).first()
     if lead is None:
         ok = False
@@ -287,7 +291,7 @@ import markdown as _md
 
 
 def _article_page(request, section, slug):
-    lang = 'nl' if request.path.startswith('/nl/') else 'en'
+    lang = 'de' if request.path.startswith('/de/') else ('nl' if request.path.startswith('/nl/') else 'en')
     if _guard(request) == 'deny':
         raise Http404
     show = getattr(settings, 'MARKETING_SHOW_DRAFTS', False)
@@ -318,7 +322,7 @@ def help_index_view(request: HttpRequest) -> HttpResponse:
 
 
 def _article_list(request, section):
-    lang = 'nl' if request.path.startswith('/nl/') else 'en'
+    lang = 'de' if request.path.startswith('/de/') else ('nl' if request.path.startswith('/nl/') else 'en')
     if _guard(request) == 'deny':
         raise Http404
     show = getattr(settings, 'MARKETING_SHOW_DRAFTS', False)
