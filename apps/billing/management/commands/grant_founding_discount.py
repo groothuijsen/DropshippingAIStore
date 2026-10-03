@@ -34,7 +34,7 @@ class Command(BaseCommand):
         try:
             shop = Shop.objects.get(domain=domain)
         except Shop.DoesNotExist:
-            raise CommandError(f"Shop not found: {domain}")
+            raise CommandError(f"Shop not found: {domain}") from None
 
         valid_until = timezone.now() + timedelta(days=months * 30)
         discount, created = FoundingDiscount.objects.update_or_create(
