@@ -137,7 +137,8 @@ class TestUploadImage:
     @patch("apps.ai.image_upload._wait_until_ready", return_value=False)
     @patch("apps.ai.image_upload.httpx.Client")
     @patch("apps.ai.image_upload._get_client")
-    def test_upload_timeout_waiting_ready(self, mock_get_client, mock_http, mock_wait, shop):
+    def test_upload_returns_gid_synchronously(self, mock_get_client, mock_http, mock_wait, shop):
+        """2026-07: File has no `status` — fileCreate gid is usable immediately."""
         mock_client = MagicMock()
         mock_get_client.return_value = mock_client
         mock_client.execute.side_effect = [
@@ -152,13 +153,14 @@ class TestUploadImage:
                     ]
                 }
             },
-            {"fileCreate": {"files": [{"id": "gid://shopify/MediaImage/1", "status": "UPLOADING"}]}},
+            {"fileCreate": {"files": [{"id": "gid://shopify/MediaImage/1"}]}},
         ]
-        mock_http.return_value.__enter__.return_value.post.return_value.status_code = 200
+        mock_http.return_value.__enter__.return_value.post.return_value.status_code = 201
 
         result = upload_image(shop, b"fake-image", "file.png")
-        assert result.success is False
-        assert "Timeout" in result.error
+        assert result.success is True
+        assert result.file_gid == "gid://shopify/MediaImage/1"
+        mock_wait.assert_not_called()
 
     @patch("apps.ai.image_upload._get_client")
     def test_upload_exception(self, mock_get_client, shop):
