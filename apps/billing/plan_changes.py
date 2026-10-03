@@ -14,7 +14,7 @@ from typing import Any
 from apps.core.shopify_client import ShopifyGraphQLClient, load_query
 
 from .models import Subscription  # noqa: TC001
-from .plans import PLAN_NAMES, get_plan_price
+from .plans import PLAN_NAMES, get_founding_price, get_plan_price
 
 logger = logging.getLogger(__name__)
 
@@ -65,8 +65,13 @@ def change_plan(
     upgrade = is_upgrade(current_plan, new_plan)
     replacement_behavior = get_replacement_behavior(current_plan, new_plan)
 
-    # Get price
-    price = get_plan_price(new_plan, interval)
+    # Get price — founding discount takes priority when active (T-160)
+    founding = getattr(shop, "founding_discount", None)
+    if founding is not None and founding.is_active:
+        price = get_founding_price(new_plan, interval, founding.percent_off)
+        logger.info("Founding discount applied for %s: %s%% off → %s", shop.domain, founding.percent_off, price)
+    else:
+        price = get_plan_price(new_plan, interval)
 
     # Build line item
     line_item = {

@@ -117,3 +117,30 @@ class TrialLedger(models.Model):
 
     def __str__(self) -> str:
         return f"Trial: {self.domain_sha256[:16]}..."
+
+
+class FoundingDiscount(models.Model):
+    """Founding-member discount (T-160 / S13).
+
+    Granted to early merchants at sign-up. Applies for 12 months from
+    created_at. The discount percentage is stored per-shop so it can be
+    audited and adjusted. When valid_until passes, the full price resumes
+    automatically — no manual cancellation needed.
+    """
+
+    shop = models.OneToOneField("core.Shop", on_delete=models.CASCADE, related_name="founding_discount")
+    percent_off = models.PositiveSmallIntegerField(default=50, help_text="e.g. 50 = 50% off")
+    valid_until = models.DateTimeField(help_text="Discount expires automatically after this date")
+    note = models.CharField(max_length=200, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"Founding {self.percent_off}% off — {self.shop.domain}"
+
+    @property
+    def is_active(self) -> bool:
+        from django.utils import timezone
+        return timezone.now() < self.valid_until

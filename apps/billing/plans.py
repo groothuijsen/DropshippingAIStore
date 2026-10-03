@@ -103,3 +103,15 @@ def get_replacement_behavior(old_plan: str, new_plan: str) -> str:
     if is_upgrade(old_plan, new_plan):
         return "APPLY_IMMEDIATELY"
     return "APPLY_ON_NEXT_BILLING_CYCLE"
+
+
+def get_founding_price(plan: str, interval: str, percent_off: int) -> "Decimal":
+    """Return the founding-member price for a plan+interval.
+
+    percent_off: 50 = 50% off. Result is rounded to 2 decimal places.
+    """
+    from decimal import ROUND_HALF_UP
+
+    base_price = get_plan_price(plan, interval)
+    discount = base_price * Decimal(percent_off) / Decimal(100)
+    return (base_price - discount).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
